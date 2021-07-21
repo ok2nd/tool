@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CSSリーダーサンプル：目次、索引</title>
+<style>
+body {
+	margin:20px 40px; padding:0;
+}
+#index {
+	width: 260px;
+}
+.line {
+	position: relative;
+	height: 1.5em;
+}
+.line::before {
+	content: "";
+	display: block;
+	width: 100%;
+	position: absolute;
+	margin-top: 0.5em;
+	border-top: 1px dashed silver;
+}
+.line .name {
+	position: absolute;
+	padding-right: 1ex;
+	background-color: white;
+}
+.line .page {
+	right: 0;
+	position: absolute;
+	padding-left: 1ex;
+	background-color: white;
+}
+</style>
+</head>
+<body>
+<h3>--- 目次 ---</h3>
+<div id="index">
+<div class="line"><span class="name">アオジ</span><span class="page">4</span></div>
+<div class="line"><span class="name">アトリ</span><span class="page">6</span></div>
+<div class="line"><span class="name">イスカ</span><span class="page">8</span></div>
+<div class="line"><span class="name">イソヒヨドリ</span><span class="page">8</span></div>
+<div class="line"><span class="name">ウグイス</span><span class="page">10</span></div>
+<div class="line"><span class="name">エナガ</span><span class="page">12</span></div>
+<div class="line"><span class="name">オオヨシキリ</span><span class="page">14</span></div>
+<div class="line"><span class="name">カシラダカ</span><span class="page">16</span></div>
+<div class="line"><span class="name">カワセミ</span><span class="page">18</span></div>
+<div class="line"><span class="name">カワラヒワ</span><span class="page">22</span></div>
+<div class="line"><span class="name">キセキレイ</span><span class="page">24</span></div>
+<div class="line"><span class="name">キビタキ</span><span class="page">26</span></div>
+<div class="line"><span class="name">キレンジャク</span><span class="page">28</span></div>
+<div class="line"><span class="name">ケリ</span><span class="page">30</span></div>
+<div class="line"><span class="name">コゲラ</span><span class="page">32</span></div>
+<div class="line"><span class="name">コサメビタキ</span><span class="page">34</span></div>
+<div class="line"><span class="name">シジュウカラ</span><span class="page">36</span></div>
+<div class="line"><span class="name">シメ</span><span class="page">38</span></div>
+<div class="line"><span class="name">ジョウビタキ</span><span class="page">40</span></div>
+<div class="line"><span class="name">シロハラ</span><span class="page">44</span></div>
+<div class="line"><span class="name">セグロセキレイ</span><span class="page">46</span></div>
+<div class="line"><span class="name">センダイムシクイ</span><span class="page">48</span></div>
+<div class="line"><span class="name">ソウシチョウ</span><span class="page">50</span></div>
+<div class="line"><span class="name">ツグミ</span><span class="page">52</span></div>
+<div class="line"><span class="name">ツバメ</span><span class="page">54</span></div>
+<div class="line"><span class="name">トラツグミ</span><span class="page">56</span></div>
+<div class="line"><span class="name">ハクセキレイ</span><span class="page">56</span></div>
+<div class="line"><span class="name">ヒバリ</span><span class="page">58</span></div>
+<div class="line"><span class="name">ヒヨドリ</span><span class="page">60</span></div>
+<div class="line"><span class="name">ホオジロ</span><span class="page">62</span></div>
+<div class="line"><span class="name">マヒワ</span><span class="page">64</span></div>
+<div class="line"><span class="name">ムクドリ</span><span class="page">66</span></div>
+<div class="line"><span class="name">メジロ</span><span class="page">68</span></div>
+<div class="line"><span class="name">モズ</span><span class="page">70</span></div>
+<div class="line"><span class="name">ヤマガラ</span><span class="page">72</span></div>
+<div class="line"><span class="name">リュウキュウサンヨウクイ</span><span class="page">74</span></div>
+<div class="line"><span class="name">ルリビタキ</span><span class="page">76</span></div>
+<div class="line"><span class="name">ウソ</span><span class="page">82</span></div>
+<div class="line"><span class="name">オオルリ</span><span class="page">83</span></div>
+<div class="line"><span class="name">カケス</span><span class="page">84</span></div>
+<div class="line"><span class="name">キクイタダキ</span><span class="page">85</span></div>
+<div class="line"><span class="name">キジバト</span><span class="page">86</span></div>
+<div class="line"><span class="name">コムクドリ</span><span class="page">87</span></div>
+<div class="line"><span class="name">サメビタキ</span><span class="page">88</span></div>
+<div class="line"><span class="name">セッカ</span><span class="page">89</span></div>
+<div class="line"><span class="name">ハッカチョウ</span><span class="page">90</span></div>
+<div class="line"><span class="name">ビンズイ</span><span class="page">91</span></div>
+<div class="line"><span class="name">ミヤマホオジロ</span><span class="page">92</span></div>
+</div>
+</body>
+</html>
