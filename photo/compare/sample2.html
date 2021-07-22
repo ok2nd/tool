@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="author" content="晴歩雨描：https://2ndart.hatenablog.com/">
+<title>写真比較（RX100M6 vs HX90V）</title>
+<!--
+	JavaScript オリジナル：	https://studio-key.com/719.html
+	JavaScript 改修版：	https://jsfiddle.net/Lhankor_Mhy/jw91yx3p/
+-->
+<style type="text/css">
+#image_expansion {
+	position: relative;
+}
+#image_expansion2 {
+	position: relative;
+}
+.pan_image {
+	float: left;
+	border: 2px solid #FF00B6;
+}
+.pan_mouse {
+	position: absolute;
+	border: 2px solid #FF00B6;
+	cursor: move;
+}
+</style>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+<script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min.js"></script>
+<script src="js/jquery.ImageExpansion-multi.js"></script>
+<script src="js/compare.js"></script>
+</head>
+<body>
+<table>
+<tr>
+	<td>DSC-RX100M6（手持ち:100mm）4864×3648</td>
+	<td>DSC-HX90V（手持ち:100mm）4896×3672</td>
+</tr>
+<tr>
+<td>
+	<div id="image_expansion">
+		<div class="pan_mouse"></div>
+	<img id="img1" src="img/100-2-rx.jpg">
+		<div class="pan_image"></div>
+	</div>
+</td>
+<td>
+	<div id="image_expansion2">
+		<div class="pan_mouse"></div>
+	<img id="img2" src="img/100-2-hx.jpg">
+		<div class="pan_image"></div>
+	</div>
+</td>
+</tr>
+</table>
+<script type="text/javascript">
+window.onload = function() {
+	compare_image('#image_expansion', '#image_expansion2', 'img1', 'img2');
+}
+</script>
+</body>
+</html>
