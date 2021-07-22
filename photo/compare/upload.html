@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="author" content="晴歩雨描：https://2ndart.hatenablog.com/">
+<title>写真比較（アップロード版）</title>
+<style type="text/css">
+#image_expansion1 {
+	position: relative;
+}
+#image_expansion2 {
+	position: relative;
+}
+.pan_image {
+	float: left;
+	border: 2px solid #FF00B6;
+}
+.pan_mouse {
+	position: absolute;
+	border: 2px solid #FF00B6;
+	cursor: move;
+}
+img {
+	border: 1px solid #888;
+}
+</style>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+<script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min.js"></script>
+<script src="js/jquery.ImageExpansion-multi.js"></script>
+<!--
+	JavaScript オリジナル：	https://studio-key.com/719.html
+	JavaScript 改修版：	https://jsfiddle.net/Lhankor_Mhy/jw91yx3p/
+-->
+</head>
+<body>
+<table>
+<tr>
+<td>
+	<div id="image_expansion1">
+		<div class="pan_mouse"></div>
+	<img id="img1" src="img/mes.jpg">
+		<div class="pan_image"></div>
+	</div>
+</td>
+<td>
+	<div id="image_expansion2">
+		<div class="pan_mouse"></div>
+	<img id="img2" src="img/mes.jpg">
+		<div class="pan_image"></div>
+	</div>
+</td>
+</tr>
+</table>
+<script type="text/javascript">
+drag_drop('1');
+drag_drop('2');
+function drag_drop(no) {
+	var image_expansion = document.getElementById('image_expansion'+no);
+	image_expansion.addEventListener('dragover', function (e) {
+		e.preventDefault();
+		e.stopPropagation();
+		e.dataTransfer.dropEffect = 'copy';
+	});
+	image_expansion.addEventListener('drop', function (e) {
+		e.stopPropagation();
+		e.preventDefault();
+		const reader = new FileReader();
+		reader.onload = function (e) {
+			document.getElementById('img'+no).src = e.target.result;
+			window.setTimeout( function() { image_expand('#image_expansion'+no, 'img'+no) }, 3 );
+		}
+		reader.readAsDataURL(e.dataTransfer.files[0]);
+	});
+}
+function image_expand(div, img) {
+	var ih = document.getElementById(img).naturalHeight;
+	var iw = document.getElementById(img).naturalWidth;
+	if (ih > iw) {
+		var pan = ih / 500;
+		var drag = 180000 / ih;
+	} else {
+		var pan = iw / 600;
+		var drag = 240000 / iw;
+	}
+	$(function() {
+		$(div).ImageExpansion({
+			'pan' : pan,	//倍率
+			'drag' : drag	//ドラッグ枠の大きさ
+		});
+	});
+}
+</script>
+</body>
+</html>
