@@ -10,7 +10,7 @@
 	JavaScript 改修版：	https://jsfiddle.net/Lhankor_Mhy/jw91yx3p/
 -->
 <style type="text/css">
-#image_expansion {
+#image_expansion1 {
 	position: relative;
 }
 #image_expansion2 {
@@ -39,7 +39,7 @@
 </tr>
 <tr>
 <td>
-	<div id="image_expansion">
+	<div id="image_expansion1">
 		<div class="pan_mouse"></div>
 	<img id="img1" src="img/050-1-rx.jpg">
 		<div class="pan_image"></div>
@@ -56,7 +56,8 @@
 </table>
 <script type="text/javascript">
 window.onload = function() {
-	compare_image('#image_expansion', '#image_expansion2', 'img1', 'img2');
+	image_expand('#image_expansion1', 'img1');
+	image_expand('#image_expansion2', 'img2');
 }
 </script>
 </body>
