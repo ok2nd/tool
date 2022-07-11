@@ -602,7 +602,7 @@ th, td {
 let table = document.getElementById('fukaiShisuu');
 for (let row of table.rows) {
 	for(let cell of row.cells){
-		if (cell.tagName != "TH") {	// TH 大文字でないと駄目
+		if (cell.tagName == "TD") {	// TD 大文字でないと駄目
 			if (Number(cell.innerText) >= 85) {
 				cell.classList.add("d85");
 			} else if (Number(cell.innerText) >= 80) {
