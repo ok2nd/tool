@@ -40,6 +40,9 @@ th, td {
 	background: #FF6868;
 	color: #fff;
 }
+.other {
+	background: #AFFFFF;
+}
 </style>
 </head>
 <body>
@@ -486,14 +489,14 @@ th, td {
 	<td>30</td>
 	<td>8/31</td>
 	<td>31.2</td>
-	<td>&nbsp;</td>
-	<td>&nbsp;</td>
+	<td></td>
+	<td></td>
 	<td>7/31</td>
 	<td>30.3</td>
 	<td>8/31</td>
 	<td>29.5</td>
-	<td>&nbsp;</td>
-	<td>&nbsp;</td>
+	<td></td>
+	<td></td>
 </tr>
 </tbody>
 </table>
@@ -521,7 +524,7 @@ th, td {
 	<td>運動や激しい作業をする際は定期的に充分に休息を取り入れる。</td>
 </tr>
 <tr>
-	<td>注意<br>(25未満)</td>
+	<td class="other">注意<br>(25未満)</td>
 	<td>強い生活活動で<br>おこる危険性</td>
 	<td style="width:320px;">一般に危険性は少ないが激しい運動や重労働時には発生する危険性がある。</td>
 </tr>
@@ -533,14 +536,18 @@ th, td {
 let table = document.getElementById('data-table');
 for (let row of table.rows) {
 	for(let cell of row.cells){
-		if (Number(cell.innerText) >= 31) {
-			cell.classList.add("d31");
-		} else if (Number(cell.innerText) >= 28) {
-			cell.classList.add("d28");
-		} else if (Number(cell.innerText) >= 25) {
-			cell.classList.add("d25");
+		if (cell.tagName == "TD" && cell.innerText != "" && cell.innerText.indexOf("/") === -1) {	// TD 大文字でないと駄目
+			if (Number(cell.innerText) >= 31) {
+				cell.classList.add("d31");
+			} else if (Number(cell.innerText) >= 28) {
+				cell.classList.add("d28");
+			} else if (Number(cell.innerText) >= 25) {
+				cell.classList.add("d25");
+			} else {
+				cell.classList.add("other");
+			}
 		}
-}
+	}
 }
 </script>
 </body>
