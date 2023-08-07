@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CSS Filter「hue-rotate」適用</title>
+<style>
+#image-container {
+	text-align: center;
+}
+#image {
+	max-width: 100%;
+	height: auto;
+	transition: filter 0.3s;
+}
+#hue-slider {
+	width: 100%;
+	max-width: 300px;
+	margin: 20px auto;
+}
+#drop-area {
+	border: 2px dashed #ccc;
+	padding: 20px;
+	text-align: center;
+}
+#download-button {
+	margin-top: 10px;
+	display: none;
+}
+</style>
+</head>
+<body>
+<div id="image-container">
+<div id="drop-area">
+	<p>画像をここにドラッグ＆ドロップしてください。</p>
+	<input type="file" id="image-upload" accept="image/*">
+</div>
+</div>
+<div style="margin-bottom:20px;">
+hue値（0～360）：<input type="range" id="hue-slider" min="0" max="360" step="1" value="0">
+<button id="download-button">hue値適用画像ダウンロード</button>
+</div>
+<div>
+<img id="image" src="img/blank.jpg">
+</div>
+<script>
+const image = document.getElementById('image');
+const hueSlider = document.getElementById('hue-slider');
+const dropArea = document.getElementById('drop-area');
+const imageUpload = document.getElementById('image-upload');
+const downloadButton = document.getElementById('download-button');
+const canvas = document.createElement('canvas');
+const ctx = canvas.getContext('2d');
+let originalImage = new Image();
+let filteredImage = new Image();
+let uploadedFileName = ''; // アップロードしたファイル名を保持
+hueSlider.addEventListener('input', () => {
+	const hueValue = hueSlider.value;
+	image.style.filter = `hue-rotate(${hueValue}deg)`;
+	updateCanvas();
+});
+dropArea.addEventListener('dragover', (event) => {
+	event.preventDefault();
+	dropArea.style.border = '2px dashed #aaa';
+});
+dropArea.addEventListener('dragleave', () => {
+	dropArea.style.border = '2px dashed #ccc';
+});
+dropArea.addEventListener('drop', (event) => {
+	event.preventDefault();
+	dropArea.style.border = '2px dashed #ccc';
+	const droppedFile = event.dataTransfer.files[0];
+	if (droppedFile && droppedFile.type.startsWith('image/')) {
+		const imageUrl = URL.createObjectURL(droppedFile);
+		originalImage = new Image();
+		originalImage.src = imageUrl;
+		image.src = imageUrl;
+		image.style.filter = `hue-rotate(${hueSlider.value}deg)`; // 現在のdeg値を適用
+		downloadButton.style.display = 'block';
+		// アップロードしたファイル名から拡張子を取り除く
+		uploadedFileName = droppedFile.name.replace(/\.[^/.]+$/, ""); // 拡張子を削除
+	}
+});
+imageUpload.addEventListener('change', (event) => {
+	const selectedImage = event.target.files[0];
+	if (selectedImage) {
+		const imageUrl = URL.createObjectURL(selectedImage);
+		originalImage = new Image();
+		originalImage.src = imageUrl;
+		image.src = imageUrl;
+		image.style.filter = `hue-rotate(${hueSlider.value}deg)`; // 現在のdeg値を適用
+		downloadButton.style.display = 'block';
+		uploadedFileName = selectedImage.name.replace(/\.[^/.]+$/, ""); // 拡張子を削除
+	}
+});
+downloadButton.addEventListener('click', () => {
+	canvas.width = originalImage.width;
+	canvas.height = originalImage.height;
+	ctx.filter = `hue-rotate(${hueSlider.value}deg)`;
+	ctx.drawImage(originalImage, 0, 0, canvas.width, canvas.height);
+	filteredImage.src = canvas.toDataURL('image/png');
+	const fileExtension = ".png";
+	const downloadFileName = `${uploadedFileName}_hue_${hueSlider.value}deg${fileExtension}`;
+	const link = document.createElement('a');
+	link.href = filteredImage.src;
+	link.download = downloadFileName;
+	link.click();
+});
+function updateCanvas() {
+	canvas.width = originalImage.width;
+	canvas.height = originalImage.height;
+	ctx.filter = `hue-rotate(${hueSlider.value}deg)`;
+	ctx.drawImage(originalImage, 0, 0, canvas.width, canvas.height);
+}
+</script>
+</body>
+</html>
