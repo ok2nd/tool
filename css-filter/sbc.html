@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CSS Filter 変換（彩度、明度、コントラスト）</title>
+<style>
+#image-container {
+	text-align: center;
+}
+#image {
+	max-width: 100%;
+	height: auto;
+	transition: filter 0.3s;
+}
+.filter-controls {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	width: 100%;
+	max-width: 400px;
+	margin: 10px auto;
+}
+#saturate-slider,
+#brightness-slider,
+#contrast-slider {
+	flex: 1;
+}
+#reset-saturate,
+#reset-brightness,
+#reset-contrast {
+	margin-left: 10px;
+}
+#drop-area {
+	border: 2px dashed #ccc;
+	padding: 20px;
+	text-align: center;
+}
+#download-button {
+	margin-top: 10px;
+	display: none;
+}
+</style>
+</head>
+<body>
+<div id="image-container">
+<div id="drop-area">
+	<p>画像をここにドラッグ＆ドロップしてください。</p>
+	<input type="file" id="image-upload" accept="image/*">
+</div>
+</div>
+<div>
+<div class="filter-controls">
+	<div>
+	Saturate：<input type="range" id="saturate-slider" min="0" max="200" step="1" value="100">
+	<button id="reset-saturate">Reset</button>
+	</div>
+	<div>
+	Brightness：<input type="range" id="brightness-slider" min="0" max="200" step="1" value="100">
+	<button id="reset-brightness">Reset</button>
+	</div>
+	<div>
+	Contrast：<input type="range" id="contrast-slider" min="0" max="200" step="1" value="100">
+	<button id="reset-contrast">Reset</button>
+	</div>
+</div>
+<div style="margin-bottom:20px;">
+<button id="download-button">画像ダウンロード</button>
+</div>
+</div>
+<div>
+<img id="image" src="img/blank.jpg">
+</div>
+<script>
+const image = document.getElementById('image');
+const saturateSlider = document.getElementById('saturate-slider');
+const brightnessSlider = document.getElementById('brightness-slider');
+const contrastSlider = document.getElementById('contrast-slider');
+const resetSaturateButton = document.getElementById('reset-saturate');
+const resetBrightnessButton = document.getElementById('reset-brightness');
+const resetContrastButton = document.getElementById('reset-contrast');
+const dropArea = document.getElementById('drop-area');
+const imageUpload = document.getElementById('image-upload');
+const downloadButton = document.getElementById('download-button');
+const canvas = document.createElement('canvas');
+const ctx = canvas.getContext('2d');
+let originalImage = new Image();
+let filteredImage = new Image();
+let uploadedFileName = '';
+saturateSlider.addEventListener('input', updateImageFilters);
+brightnessSlider.addEventListener('input', updateImageFilters);
+contrastSlider.addEventListener('input', updateImageFilters);
+resetSaturateButton.addEventListener('click', resetFilterValue.bind(null, saturateSlider, 100));
+resetBrightnessButton.addEventListener('click', resetFilterValue.bind(null, brightnessSlider, 100));
+resetContrastButton.addEventListener('click', resetFilterValue.bind(null, contrastSlider, 100));
+dropArea.addEventListener('dragover', handleDragOver);
+dropArea.addEventListener('dragleave', handleDragLeave);
+dropArea.addEventListener('drop', handleDrop);
+imageUpload.addEventListener('change', handleImageUpload);
+downloadButton.addEventListener('click', downloadFilteredImage);
+function handleDragOver(event) {
+	event.preventDefault();
+	dropArea.style.border = '2px dashed #aaa';
+}
+function handleDragLeave() {
+	dropArea.style.border = '2px dashed #ccc';
+}
+function handleDrop(event) {
+	event.preventDefault();
+	dropArea.style.border = '2px dashed #ccc';
+	const droppedFile = event.dataTransfer.files[0];
+	handleImageFile(droppedFile);
+}
+function handleImageUpload(event) {
+	const selectedImage = event.target.files[0];
+	handleImageFile(selectedImage);
+}
+function handleImageFile(file) {
+	if (file && file.type.startsWith('image/')) {
+		const imageUrl = URL.createObjectURL(file);
+		originalImage = new Image();
+		originalImage.src = imageUrl;
+		image.src = imageUrl;
+		updateImageFilters();
+		downloadButton.style.display = 'block';
+		uploadedFileName = file.name.replace(/\.[^/.]+$/, '');
+	}
+}
+function updateImageFilters() {
+	const saturateValue = saturateSlider.value;
+	const brightnessValue = brightnessSlider.value;
+	const contrastValue = contrastSlider.value;
+	image.style.filter = `saturate(${saturateValue}%) brightness(${brightnessValue}%) contrast(${contrastValue}%)`;
+	updateCanvas();
+}
+function resetFilterValue(slider, defaultValue) {
+	slider.value = defaultValue;
+	updateImageFilters();
+}
+function downloadFilteredImage() {
+	canvas.width = originalImage.width;
+	canvas.height = originalImage.height;
+	const saturateValue = saturateSlider.value;
+	const brightnessValue = brightnessSlider.value;
+	const contrastValue = contrastSlider.value;
+	ctx.filter = `saturate(${saturateValue}%) brightness(${brightnessValue}%) contrast(${contrastValue}%)`;
+	ctx.drawImage(originalImage, 0, 0, canvas.width, canvas.height);
+	filteredImage.src = canvas.toDataURL('image/png');
+	const fileExtension = '.png';
+	const downloadFileName = `${uploadedFileName}_s${saturateValue}_b${brightnessValue}_c${contrastValue}${fileExtension}`;
+	const link = document.createElement('a');
+	link.href = filteredImage.src;
+	link.download = downloadFileName;
+	link.click();
+}
+function updateCanvas() {
+	canvas.width = originalImage.width;
+	canvas.height = originalImage.height;
+	const saturateValue = saturateSlider.value;
+	const brightnessValue = brightnessSlider.value;
+	const contrastValue = contrastSlider.value;
+	ctx.filter = `saturate(${saturateValue}%) brightness(${brightnessValue}%) contrast(${contrastValue}%)`;
+	ctx.drawImage(originalImage, 0, 0, canvas.width, canvas.height);
+}
+</script>
+</body>
+</html>
