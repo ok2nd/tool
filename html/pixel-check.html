@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no">
+<title>ブラウザの表示幅・ピクセル(pixel)チェック</title>
+<style>
+body {
+	color: #666;
+	background: #f5f5dc;
+	font-family: Helvetica, Arial, sans-serif;
+	margin: 20px 0px 60px 0px;
+}
+h1 {
+	text-align: center;
+}
+.contents {
+	margin: 0;
+	text-align: left;
+	clear: both;
+	white-space: nowrap;
+}
+.box50 {
+	display: inline-block;
+	text-align: left;
+	height: 22px;
+	margin: -1px 0 0 -1px;
+	padding: 5px 0 0 0;
+	background-color: #fff;
+	color: #000;
+	width: 49px;
+	border: solid 1px #888;
+}
+.box100 {
+	display: inline-block;
+	text-align: left;
+	height: 22px;
+	margin: -1px 0 0 -1px;
+	padding: 5px 0 0 0;
+	background-color: #fff;
+	color: #000;
+	width: 99px;
+	border: solid 1px #888;
+}
+.box500 {
+	display: inline-block;
+	text-align: left;
+	height: 22px;
+	margin: 0 0 0 -1px;
+	padding: 5px 0 0 0;
+	background-color: #fff;
+	color: #000;
+	width: 499px;
+	border: solid 1px #888;
+}
+.check-box {
+	text-align: left;
+	height: 22px;
+	margin: 0 0 10px 0;
+	padding: 5px 0 0 0;
+	background-color: #4a7c4d;
+	color: #fff;
+}
+</style>
+</head>
+<body>
+<h1>ブラウザの表示幅・ピクセル(pixel)チェック</h1>
+<div class="contents">
+<div class="box500">500px</div><div class="box500">500px</div><div class="box500">500px</div><div class="box500">500px</div>
+</div>
+<div class="contents">
+<div class="box100">100px</div><div class="box100">100px</div><div class="box100">100px</div><div class="box100">100px</div><div class="box100">100px</div><div class="box100">100px</div><div class="box100">100px</div><div class="box100">100px</div><div class="box100">100px</div><div class="box100">100px</div><div class="box100">100px</div><div class="box100">100px</div><div class="box100">100px</div><div class="box100">100px</div><div class="box100">100px</div><div class="box100">100px</div><div class="box100">100px</div><div class="box100">100px</div><div class="box100">100px</div><div class="box100">100px</div>
+</div>
+<div class="contents">
+<div class="box50">50px</div><div class="box50">50px</div><div class="box50">50px</div><div class="box50">50px</div><div class="box50">50px</div><div class="box50">50px</div><div class="box50">50px</div><div class="box50">50px</div><div class="box50">50px</div><div class="box50">50px</div><div class="box50">50px</div><div class="box50">50px</div><div class="box50">50px</div><div class="box50">50px</div><div class="box50">50px</div><div class="box50">50px</div><div class="box50">50px</div><div class="box50">50px</div><div class="box50">50px</div><div class="box50">50px</div><div class="box50">50px</div><div class="box50">50px</div><div class="box50">50px</div><div class="box50">50px</div><div class="box50">50px</div><div class="box50">50px</div><div class="box50">50px</div><div class="box50">50px</div><div class="box50">50px</div><div class="box50">50px</div><div class="box50">50px</div><div class="box50">50px</div><div class="box50">50px</div><div class="box50">50px</div><div class="box50">50px</div><div class="box50">50px</div><div class="box50">50px</div><div class="box50">50px</div><div class="box50">50px</div><div class="box50">50px</div>
+</div>
+<div class="contents" style="margin-top: 10px;">
+	<div class="check-box" style="width:320px;">320px</div>
+	<div class="check-box" style="width:360px;">360px</div>
+	<div class="check-box" style="width:375px;">375px</div>
+	<div class="check-box" style="width:414px;">414px</div>
+	<div class="check-box" style="width:480px;">480px</div>
+	<div class="check-box" style="width:600px;">600px</div>
+	<div class="check-box" style="width:640px;">640px</div>
+	<div class="check-box" style="width:720px;">720px</div>
+	<div class="check-box" style="width:768px;">768px</div>
+	<div class="check-box" style="width:800px;">800px</div>
+	<div class="check-box" style="width:1024px;">1024px</div>
+	<div class="check-box" style="width:1280px;">1280px</div>
+	<div class="check-box" style="width:1400px;">1400px</div>
+	<div class="check-box" style="width:1680px;">1680px</div>
+	<div class="check-box" style="width:1920px;">1920px</div>
+</div>
+</body>
+</html>
