@@ -1,0 +1,90 @@
+body, div, img, ul, ol, li, p, th, td, form, pre, dl, dt, dd, fieldset, blockquote, caption, h1, h2, h3, h4, h5, h6 {
+	margin: 0;
+	padding: 0;
+}
+body {margin: 10px; }
+input, select, textarea { margin: 0; }
+img { border: 0; }
+body {
+	background-color: #ffffff;
+	text-align: left;
+}
+* {
+	font-family: "MS PGothic","Osaka",Arial,sans-serif;
+	font-size: 12px;
+}
+input.text {
+	padding: 2px 1px 3px 1px\9;	/* IE */
+}
+input.password {
+	padding: 2px 1px 3px 1px\9;	/* IE */
+}
+input[type="radio"], input[type="checkbox"] {
+	vertical-align: middle;
+}
+th, td {
+	text-align: left;
+}
+body, input, select, button, textarea {
+	line-height: 1.2;
+}
+select {
+	height: 1.7em;
+}
+button, input[type="button"], input[type="submit"], input[type="reset"], input[type="file"] {
+	overflow: visible;
+	margin: 1px 0;
+	padding: 2px 3px;
+	padding: 0 2px\9;	/* IE */
+}
+button, input[type="button"], input[type="submit"], input[type="reset"], input[type="file"], x:-moz-any-link {	/* Firefox */
+	height: 1.8em;
+}
+body:not(:target) {
+	padding: 0 2px\9;	/* IE9 */
+}
+h1 { font-size: 22px; }
+h2 { font-size: 18px; }
+h3 { font-size: 14px; }
+h4 { font-size: 12px; }
+td { text-align: left; vertical-align: top; }
+div#footer {
+	margin: 20px 0 10px 0;
+}
+p#tool_title_area {
+	margin: 5px 0;
+}
+#tool_title {
+	font-size: 14px;
+	font-weight: bold;
+}
+a { text-decoration: underline; font-weight: normal; }
+a:link { color: #2128e0; font-weight: normal; }
+a:visited { color: #2128e0; font-weight: normal; }
+a:hover { color: #f43316; font-weight: normal; background-color: #ffffc0; }
+a:active { color: #f43316; font-weight: normal; background-color: #ffffc0; }
+a.a_cancel_back {
+	text-decoration: underline;
+	text-align: center;
+	margin: 0 0 0 10px;
+	padding: 0;
+	font-size: 12px;
+}
+.error_msg { color: red; margin: 20px; padding: 0; }
+a.return_index { text-decoration: none; font-weight: normal;}
+a.return_index:link { color: #e0e0e0; }
+a.return_index:visited { color: #e0e0e0; }
+a.return_index:hover { color: #ffc080; }
+a.return_index:active { color: #ffc080; }
+.block_left {
+	float: left;
+	text-align: left;
+	padding: 0;
+}
+.list_filter_true {
+	background-color: #ffe0c0;
+}
+a.a_cancel_back:link { color: #ff8000; font-weight: normal; }
+a.a_cancel_back:visited { color: #ff8000; font-weight: normal; }
+a.a_cancel_back:hover { color: #ff0000; font-weight: normal; }
+a.a_cancel_back:active { color: #ff0000; font-weight: normal; }

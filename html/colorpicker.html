@@ -1,0 +1,933 @@
+
+<!--
+Copyright (c) 2007 John Dyer (http://johndyer.name)
+
+Permission is hereby granted, free of charge, to any person
+obtaining a copy of this software and associated documentation
+files (the "Software"), to deal in the Software without
+restriction, including without limitation the rights to use,
+copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following
+conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS IN THE SOFTWARE.
+-->
+<!-- <!DOCTYPE html> を指定するとレイアウトが崩れる。-->
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>HTML カラーチャート ＋ Color Picker</title>
+<link rel="stylesheet" href="style/tools_common.css?20120406">
+<style>
+td {
+	font-size: 13px;
+	line-height: 1.2;
+}
+</style>
+<script src="refresh_web/prototype.js"></script>
+<script src="refresh_web/colorpicker/ColorMethods.js"></script>
+<script src="refresh_web/colorpicker/ColorValuePicker.js"></script>
+<script src="refresh_web/colorpicker/Slider.js"></script>
+<script src="refresh_web/colorpicker/ColorPicker.js"></script>
+</head>
+<body>
+<p id="tool_title_area">
+<a href="../tools/" class="return_index">■</a>
+<span id="tool_title">HTML カラーチャート ＋ Photoshop-like JavaScript Color Picker</span>
+</p>
+	<table><tr><td valign=top><!-- ************ -->
+<table>
+<tr>
+<td valign="top">
+	<div id="cp1_ColorMap"></div>
+</td>
+<td valign="top">
+	<div id="cp1_ColorBar"></div>
+</td>
+<td valign="top">
+	<table>
+	<tr>
+		<td colspan="3">
+			<div id="cp1_Preview" style="background-color: #fff; width: 60px; height: 60px; padding: 0; margin: 0; border: solid 1px #000;">
+				<br />
+			</div>
+		</td>
+	</tr>
+	<tr>
+		<td>
+			<input type="radio" id="cp1_HueRadio" name="cp1_Mode" value="0" />
+		</td>
+		<td>
+			<label for="cp1_HueRadio">H:</label>
+		</td>
+		<td nowrap>
+			<input class="text" type="text" id="cp1_Hue" value="0" style="width: 40px;" /> &deg;
+		</td>
+	</tr>
+	<tr>
+		<td>
+			<input type="radio" id="cp1_SaturationRadio" name="cp1_Mode" value="1" />
+		</td>
+		<td>
+			<label for="cp1_SaturationRadio">S:</label>
+		</td>
+		<td nowrap>
+			<input class="text" type="text" id="cp1_Saturation" value="100" style="width: 40px;" /> %
+		</td>
+	</tr>
+	<tr>
+		<td>
+			<input type="radio" id="cp1_BrightnessRadio" name="cp1_Mode" value="2" />
+		</td>
+		<td>
+			<label for="cp1_BrightnessRadio">B:</label>
+		</td>
+		<td nowrap>
+			<input class="text" type="text" id="cp1_Brightness" value="100" style="width: 40px;" /> %
+		</td>
+	</tr>
+	<tr>
+		<td colspan="3" height="5">
+		</td>
+	</tr>
+	<tr>
+		<td>
+			<input type="radio" id="cp1_RedRadio" name="cp1_Mode" value="r" />
+		</td>
+		<td>
+			<label for="cp1_RedRadio">R:</label>
+		</td>
+		<td>
+			<input class="text" type="text" id="cp1_Red" value="255" style="width: 40px;" />
+		</td>
+	</tr>
+	<tr>
+		<td>
+			<input type="radio" id="cp1_GreenRadio" name="cp1_Mode" value="g" />
+		</td>
+		<td>
+			<label for="cp1_GreenRadio">G:</label>
+		</td>
+		<td>
+			<input class="text" type="text" id="cp1_Green" value="0" style="width: 40px;" />
+		</td>
+	</tr>
+	<tr>
+		<td>
+			<input type="radio" id="cp1_BlueRadio" name="cp1_Mode" value="b" />
+		</td>
+		<td>
+			<label for="cp1_BlueRadio">B:</label>
+		</td>
+		<td>
+			<input class="text" type="text" id="cp1_Blue" value="0" style="width: 40px;" />
+		</td>
+	</tr>
+	<tr>
+		<td align="right">
+			#:
+		</td>
+		<td colspan="2">
+			<input class="text" type="text" id="cp1_Hex" value="FF0000" style="width: 60px;" />
+		</td>
+	</tr>
+	</table>
+</td>
+</tr>
+</table>
+<div style="display:none;">
+	<img src="refresh_web/colorpicker/images/rangearrows.gif" />
+	<img src="refresh_web/colorpicker/images/mappoint.gif" />
+	<img src="refresh_web/colorpicker/images/bar-saturation.png" />
+	<img src="refresh_web/colorpicker/images/bar-brightness.png" />
+	<img src="refresh_web/colorpicker/images/bar-blue-tl.png" />
+	<img src="refresh_web/colorpicker/images/bar-blue-tr.png" />
+	<img src="refresh_web/colorpicker/images/bar-blue-bl.png" />
+	<img src="refresh_web/colorpicker/images/bar-blue-br.png" />
+	<img src="refresh_web/colorpicker/images/bar-red-tl.png" />
+	<img src="refresh_web/colorpicker/images/bar-red-tr.png" />
+	<img src="refresh_web/colorpicker/images/bar-red-bl.png" />
+	<img src="refresh_web/colorpicker/images/bar-red-br.png" />
+	<img src="refresh_web/colorpicker/images/bar-green-tl.png" />
+	<img src="refresh_web/colorpicker/images/bar-green-tr.png" />
+	<img src="refresh_web/colorpicker/images/bar-green-bl.png" />
+	<img src="refresh_web/colorpicker/images/bar-green-br.png" />
+	<img src="refresh_web/colorpicker/images/map-red-max.png" />
+	<img src="refresh_web/colorpicker/images/map-red-min.png" />
+	<img src="refresh_web/colorpicker/images/map-green-max.png" />
+	<img src="refresh_web/colorpicker/images/map-green-min.png" />
+	<img src="refresh_web/colorpicker/images/map-blue-max.png" />
+	<img src="refresh_web/colorpicker/images/map-blue-min.png" />
+	<img src="refresh_web/colorpicker/images/map-saturation.png" />
+	<img src="refresh_web/colorpicker/images/map-saturation-overlay.png" />
+	<img src="refresh_web/colorpicker/images/map-brightness.png" />
+	<img src="refresh_web/colorpicker/images/map-hue.png" />
+</div>
+<table><tr><td>
+<div id="cp1_Text" style="color:#000000; line-height:16px; padding:0 5px 0 5px;">
+<p>
+中級プログラマの自宅でPHP<br>
+MyHome Portal MyHome Portal<br>
+PHP JavaScript MySQL Apache<br>
+オープンソース オープンソース<br>
+東京都 大阪市 名古屋市<br>
+</p>
+<p style="text-decoration: underline;">
+中級プログラマの自宅でPHP<br>
+MyHome Portal MyHome Portal<br>
+PHP JavaScript MySQL Apache<br>
+オープンソース オープンソース<br>
+東京都 大阪市 名古屋市<br>
+</p>
+</div>
+</td><td>
+<div id="cp1_TextBg" style="background-color:#000000; line-height:16px; padding:0 5px 0 5px;">
+<p>
+中級プログラマの自宅でPHP<br>
+MyHome Portal MyHome Portal<br>
+PHP JavaScript MySQL Apache<br>
+オープンソース オープンソース<br>
+東京都 大阪市 名古屋市<br>
+</p>
+<p style="color:#ffffff;">
+中級プログラマの自宅でPHP<br>
+MyHome Portal MyHome Portal<br>
+PHP JavaScript MySQL Apache<br>
+オープンソース オープンソース<br>
+東京都 大阪市 名古屋市<br>
+</p>
+</div>
+</td></tr>
+</table>
+	</td><td valign=top><!-- ************ -->
+<table>
+<tr>
+<td valign=top>
+<table>
+		<tr>
+		<td style="background-color:#ffffff; color:#DB7093;">#DB7093</td>
+		<td style="background-color:#DB7093; color:#000000;">#DB7093</td>
+		<td style="background-color:#DB7093; color:#ffffff;">#DB7093</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#F08080;">#F08080</td>
+		<td style="background-color:#F08080; color:#000000;">#F08080</td>
+		<td style="background-color:#F08080; color:#ffffff;">#F08080</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#FF69B4;">#FF69B4</td>
+		<td style="background-color:#FF69B4; color:#000000;">#FF69B4</td>
+		<td style="background-color:#FF69B4; color:#ffffff;">#FF69B4</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#FF1493;">#FF1493</td>
+		<td style="background-color:#FF1493; color:#000000;">#FF1493</td>
+		<td style="background-color:#FF1493; color:#ffffff;">#FF1493</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#DC143C;">#DC143C</td>
+		<td style="background-color:#DC143C; color:#000000;">#DC143C</td>
+		<td style="background-color:#DC143C; color:#ffffff;">#DC143C</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#FF4500;">#FF4500</td>
+		<td style="background-color:#FF4500; color:#000000;">#FF4500</td>
+		<td style="background-color:#FF4500; color:#ffffff;">#FF4500</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#FF0000;">#FF0000</td>
+		<td style="background-color:#FF0000; color:#000000;">#FF0000</td>
+		<td style="background-color:#FF0000; color:#ffffff;">#FF0000</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#FA8072;">#FA8072</td>
+		<td style="background-color:#FA8072; color:#000000;">#FA8072</td>
+		<td style="background-color:#FA8072; color:#ffffff;">#FA8072</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#FF6347;">#FF6347</td>
+		<td style="background-color:#FF6347; color:#000000;">#FF6347</td>
+		<td style="background-color:#FF6347; color:#ffffff;">#FF6347</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#FF7F50;">#FF7F50</td>
+		<td style="background-color:#FF7F50; color:#000000;">#FF7F50</td>
+		<td style="background-color:#FF7F50; color:#ffffff;">#FF7F50</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#FFA07A;">#FFA07A</td>
+		<td style="background-color:#FFA07A; color:#000000;">#FFA07A</td>
+		<td style="background-color:#FFA07A; color:#ffffff;">#FFA07A</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#FF8C00;">#FF8C00</td>
+		<td style="background-color:#FF8C00; color:#000000;">#FF8C00</td>
+		<td style="background-color:#FF8C00; color:#ffffff;">#FF8C00</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#F4A460;">#F4A460</td>
+		<td style="background-color:#F4A460; color:#000000;">#F4A460</td>
+		<td style="background-color:#F4A460; color:#ffffff;">#F4A460</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#FFA500;">#FFA500</td>
+		<td style="background-color:#FFA500; color:#000000;">#FFA500</td>
+		<td style="background-color:#FFA500; color:#ffffff;">#FFA500</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#E9967A;">#E9967A</td>
+		<td style="background-color:#E9967A; color:#000000;">#E9967A</td>
+		<td style="background-color:#E9967A; color:#ffffff;">#E9967A</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#BC8F8F;">#BC8F8F</td>
+		<td style="background-color:#BC8F8F; color:#000000;">#BC8F8F</td>
+		<td style="background-color:#BC8F8F; color:#ffffff;">#BC8F8F</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#CD5C5C;">#CD5C5C</td>
+		<td style="background-color:#CD5C5C; color:#000000;">#CD5C5C</td>
+		<td style="background-color:#CD5C5C; color:#ffffff;">#CD5C5C</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#B22222;">#B22222</td>
+		<td style="background-color:#B22222; color:#000000;">#B22222</td>
+		<td style="background-color:#B22222; color:#ffffff;">#B22222</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#A52A2A;">#A52A2A</td>
+		<td style="background-color:#A52A2A; color:#000000;">#A52A2A</td>
+		<td style="background-color:#A52A2A; color:#ffffff;">#A52A2A</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#8B0000;">#8B0000</td>
+		<td style="background-color:#8B0000; color:#000000;">#8B0000</td>
+		<td style="background-color:#8B0000; color:#ffffff;">#8B0000</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#800000;">#800000</td>
+		<td style="background-color:#800000; color:#000000;">#800000</td>
+		<td style="background-color:#800000; color:#ffffff;">#800000</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#8B4513;">#8B4513</td>
+		<td style="background-color:#8B4513; color:#000000;">#8B4513</td>
+		<td style="background-color:#8B4513; color:#ffffff;">#8B4513</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#A0522D;">#A0522D</td>
+		<td style="background-color:#A0522D; color:#000000;">#A0522D</td>
+		<td style="background-color:#A0522D; color:#ffffff;">#A0522D</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#B8860B;">#B8860B</td>
+		<td style="background-color:#B8860B; color:#000000;">#B8860B</td>
+		<td style="background-color:#B8860B; color:#ffffff;">#B8860B</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#D2691E;">#D2691E</td>
+		<td style="background-color:#D2691E; color:#000000;">#D2691E</td>
+		<td style="background-color:#D2691E; color:#ffffff;">#D2691E</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#CD853F;">#CD853F</td>
+		<td style="background-color:#CD853F; color:#000000;">#CD853F</td>
+		<td style="background-color:#CD853F; color:#ffffff;">#CD853F</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#DAA520;">#DAA520</td>
+		<td style="background-color:#DAA520; color:#000000;">#DAA520</td>
+		<td style="background-color:#DAA520; color:#ffffff;">#DAA520</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#808000;">#808000</td>
+		<td style="background-color:#808000; color:#000000;">#808000</td>
+		<td style="background-color:#808000; color:#ffffff;">#808000</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#556B2F;">#556B2F</td>
+		<td style="background-color:#556B2F; color:#000000;">#556B2F</td>
+		<td style="background-color:#556B2F; color:#ffffff;">#556B2F</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#6B8E23;">#6B8E23</td>
+		<td style="background-color:#6B8E23; color:#000000;">#6B8E23</td>
+		<td style="background-color:#6B8E23; color:#ffffff;">#6B8E23</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#9ACD32;">#9ACD32</td>
+		<td style="background-color:#9ACD32; color:#000000;">#9ACD32</td>
+		<td style="background-color:#9ACD32; color:#ffffff;">#9ACD32</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#32CD32;">#32CD32</td>
+		<td style="background-color:#32CD32; color:#000000;">#32CD32</td>
+		<td style="background-color:#32CD32; color:#ffffff;">#32CD32</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#3CB371;">#3CB371</td>
+		<td style="background-color:#3CB371; color:#000000;">#3CB371</td>
+		<td style="background-color:#3CB371; color:#ffffff;">#3CB371</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#228B22;">#228B22</td>
+		<td style="background-color:#228B22; color:#000000;">#228B22</td>
+		<td style="background-color:#228B22; color:#ffffff;">#228B22</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#008000;">#008000</td>
+		<td style="background-color:#008000; color:#000000;">#008000</td>
+		<td style="background-color:#008000; color:#ffffff;">#008000</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#006400;">#006400</td>
+		<td style="background-color:#006400; color:#000000;">#006400</td>
+		<td style="background-color:#006400; color:#ffffff;">#006400</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#2E8B57;">#2E8B57</td>
+		<td style="background-color:#2E8B57; color:#000000;">#2E8B57</td>
+		<td style="background-color:#2E8B57; color:#ffffff;">#2E8B57</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#008080;">#008080</td>
+		<td style="background-color:#008080; color:#000000;">#008080</td>
+		<td style="background-color:#008080; color:#ffffff;">#008080</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#008B8B;">#008B8B</td>
+		<td style="background-color:#008B8B; color:#000000;">#008B8B</td>
+		<td style="background-color:#008B8B; color:#ffffff;">#008B8B</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#5F9EA0;">#5F9EA0</td>
+		<td style="background-color:#5F9EA0; color:#000000;">#5F9EA0</td>
+		<td style="background-color:#5F9EA0; color:#ffffff;">#5F9EA0</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#20B2AA;">#20B2AA</td>
+		<td style="background-color:#20B2AA; color:#000000;">#20B2AA</td>
+		<td style="background-color:#20B2AA; color:#ffffff;">#20B2AA</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#00CED1;">#00CED1</td>
+		<td style="background-color:#00CED1; color:#000000;">#00CED1</td>
+		<td style="background-color:#00CED1; color:#ffffff;">#00CED1</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#48D1CC;">#48D1CC</td>
+		<td style="background-color:#48D1CC; color:#000000;">#48D1CC</td>
+		<td style="background-color:#48D1CC; color:#ffffff;">#48D1CC</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#66CDAA;">#66CDAA</td>
+		<td style="background-color:#66CDAA; color:#000000;">#66CDAA</td>
+		<td style="background-color:#66CDAA; color:#ffffff;">#66CDAA</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#40E0D0;">#40E0D0</td>
+		<td style="background-color:#40E0D0; color:#000000;">#40E0D0</td>
+		<td style="background-color:#40E0D0; color:#ffffff;">#40E0D0</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#00BFFF;">#00BFFF</td>
+		<td style="background-color:#00BFFF; color:#000000;">#00BFFF</td>
+		<td style="background-color:#00BFFF; color:#ffffff;">#00BFFF</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#1E90FF;">#1E90FF</td>
+		<td style="background-color:#1E90FF; color:#000000;">#1E90FF</td>
+		<td style="background-color:#1E90FF; color:#ffffff;">#1E90FF</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#6495ED;">#6495ED</td>
+		<td style="background-color:#6495ED; color:#000000;">#6495ED</td>
+		<td style="background-color:#6495ED; color:#ffffff;">#6495ED</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#0000FF;">#0000FF</td>
+		<td style="background-color:#0000FF; color:#000000;">#0000FF</td>
+		<td style="background-color:#0000FF; color:#ffffff;">#0000FF</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#0000CD;">#0000CD</td>
+		<td style="background-color:#0000CD; color:#000000;">#0000CD</td>
+		<td style="background-color:#0000CD; color:#ffffff;">#0000CD</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#4169E1;">#4169E1</td>
+		<td style="background-color:#4169E1; color:#000000;">#4169E1</td>
+		<td style="background-color:#4169E1; color:#ffffff;">#4169E1</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#4682B4;">#4682B4</td>
+		<td style="background-color:#4682B4; color:#000000;">#4682B4</td>
+		<td style="background-color:#4682B4; color:#ffffff;">#4682B4</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#7B68EE;">#7B68EE</td>
+		<td style="background-color:#7B68EE; color:#000000;">#7B68EE</td>
+		<td style="background-color:#7B68EE; color:#ffffff;">#7B68EE</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#6A5ACD;">#6A5ACD</td>
+		<td style="background-color:#6A5ACD; color:#000000;">#6A5ACD</td>
+		<td style="background-color:#6A5ACD; color:#ffffff;">#6A5ACD</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#9370DB;">#9370DB</td>
+		<td style="background-color:#9370DB; color:#000000;">#9370DB</td>
+		<td style="background-color:#9370DB; color:#ffffff;">#9370DB</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#8A2BE2;">#8A2BE2</td>
+		<td style="background-color:#8A2BE2; color:#000000;">#8A2BE2</td>
+		<td style="background-color:#8A2BE2; color:#ffffff;">#8A2BE2</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#483D8B;">#483D8B</td>
+		<td style="background-color:#483D8B; color:#000000;">#483D8B</td>
+		<td style="background-color:#483D8B; color:#ffffff;">#483D8B</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#4B0082;">#4B0082</td>
+		<td style="background-color:#4B0082; color:#000000;">#4B0082</td>
+		<td style="background-color:#4B0082; color:#ffffff;">#4B0082</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#800080;">#800080</td>
+		<td style="background-color:#800080; color:#000000;">#800080</td>
+		<td style="background-color:#800080; color:#ffffff;">#800080</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#8B008B;">#8B008B</td>
+		<td style="background-color:#8B008B; color:#000000;">#8B008B</td>
+		<td style="background-color:#8B008B; color:#ffffff;">#8B008B</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#9400D3;">#9400D3</td>
+		<td style="background-color:#9400D3; color:#000000;">#9400D3</td>
+		<td style="background-color:#9400D3; color:#ffffff;">#9400D3</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#9932CC;">#9932CC</td>
+		<td style="background-color:#9932CC; color:#000000;">#9932CC</td>
+		<td style="background-color:#9932CC; color:#ffffff;">#9932CC</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#BA55D3;">#BA55D3</td>
+		<td style="background-color:#BA55D3; color:#000000;">#BA55D3</td>
+		<td style="background-color:#BA55D3; color:#ffffff;">#BA55D3</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#DA70D6;">#DA70D6</td>
+		<td style="background-color:#DA70D6; color:#000000;">#DA70D6</td>
+		<td style="background-color:#DA70D6; color:#ffffff;">#DA70D6</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#EE82EE;">#EE82EE</td>
+		<td style="background-color:#EE82EE; color:#000000;">#EE82EE</td>
+		<td style="background-color:#EE82EE; color:#ffffff;">#EE82EE</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#FF00FF;">#FF00FF</td>
+		<td style="background-color:#FF00FF; color:#000000;">#FF00FF</td>
+		<td style="background-color:#FF00FF; color:#ffffff;">#FF00FF</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#FF00FF;">#FF00FF</td>
+		<td style="background-color:#FF00FF; color:#000000;">#FF00FF</td>
+		<td style="background-color:#FF00FF; color:#ffffff;">#FF00FF</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#C71585;">#C71585</td>
+		<td style="background-color:#C71585; color:#000000;">#C71585</td>
+		<td style="background-color:#C71585; color:#ffffff;">#C71585</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#00008B;">#00008B</td>
+		<td style="background-color:#00008B; color:#000000;">#00008B</td>
+		<td style="background-color:#00008B; color:#ffffff;">#00008B</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#000080;">#000080</td>
+		<td style="background-color:#000080; color:#000000;">#000080</td>
+		<td style="background-color:#000080; color:#ffffff;">#000080</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#191970;">#191970</td>
+		<td style="background-color:#191970; color:#000000;">#191970</td>
+		<td style="background-color:#191970; color:#ffffff;">#191970</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#2F4F4F;">#2F4F4F</td>
+		<td style="background-color:#2F4F4F; color:#000000;">#2F4F4F</td>
+		<td style="background-color:#2F4F4F; color:#ffffff;">#2F4F4F</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#708090;">#708090</td>
+		<td style="background-color:#708090; color:#000000;">#708090</td>
+		<td style="background-color:#708090; color:#ffffff;">#708090</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#778899;">#778899</td>
+		<td style="background-color:#778899; color:#000000;">#778899</td>
+		<td style="background-color:#778899; color:#ffffff;">#778899</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#000000;">#000000</td>
+		<td style="background-color:#000000; color:#000000;">#000000</td>
+		<td style="background-color:#000000; color:#ffffff;">#000000</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#696969;">#696969</td>
+		<td style="background-color:#696969; color:#000000;">#696969</td>
+		<td style="background-color:#696969; color:#ffffff;">#696969</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ffffff; color:#808080;">#808080</td>
+		<td style="background-color:#808080; color:#000000;">#808080</td>
+		<td style="background-color:#808080; color:#ffffff;">#808080</td>
+		</tr>
+</table>
+</td>
+<td valign=top>
+<table>
+		<tr>
+		<td style="background-color:#FFC0CB; color:#202020;">#FFC0CB</td>
+		<td style="background-color:#ffffff; color:#FFC0CB;">#FFC0CB</td>
+		<td style="background-color:#FFC0CB; color:#ffffff;">#FFC0CB</td>
+		</tr>
+		<tr>
+		<td style="background-color:#FFB6C1; color:#202020;">#FFB6C1</td>
+		<td style="background-color:#ffffff; color:#FFB6C1;">#FFB6C1</td>
+		<td style="background-color:#FFB6C1; color:#ffffff;">#FFB6C1</td>
+		</tr>
+		<tr>
+		<td style="background-color:#FFE4E1; color:#202020;">#FFE4E1</td>
+		<td style="background-color:#ffffff; color:#FFE4E1;">#FFE4E1</td>
+		<td style="background-color:#FFE4E1; color:#ffffff;">#FFE4E1</td>
+		</tr>
+		<tr>
+		<td style="background-color:#FFF0F5; color:#202020;">#FFF0F5</td>
+		<td style="background-color:#ffffff; color:#FFF0F5;">#FFF0F5</td>
+		<td style="background-color:#FFF0F5; color:#ffffff;">#FFF0F5</td>
+		</tr>
+		<tr>
+		<td style="background-color:#FFD700; color:#202020;">#FFD700</td>
+		<td style="background-color:#ffffff; color:#FFD700;">#FFD700</td>
+		<td style="background-color:#FFD700; color:#ffffff;">#FFD700</td>
+		</tr>
+		<tr>
+		<td style="background-color:#FFFF00; color:#202020;">#FFFF00</td>
+		<td style="background-color:#ffffff; color:#FFFF00;">#FFFF00</td>
+		<td style="background-color:#FFFF00; color:#ffffff;">#FFFF00</td>
+		</tr>
+		<tr>
+		<td style="background-color:#FDF5E6; color:#202020;">#FDF5E6</td>
+		<td style="background-color:#ffffff; color:#FDF5E6;">#FDF5E6</td>
+		<td style="background-color:#FDF5E6; color:#ffffff;">#FDF5E6</td>
+		</tr>
+		<tr>
+		<td style="background-color:#FAF0E6; color:#202020;">#FAF0E6</td>
+		<td style="background-color:#ffffff; color:#FAF0E6;">#FAF0E6</td>
+		<td style="background-color:#FAF0E6; color:#ffffff;">#FAF0E6</td>
+		</tr>
+		<tr>
+		<td style="background-color:#FAEBD7; color:#202020;">#FAEBD7</td>
+		<td style="background-color:#ffffff; color:#FAEBD7;">#FAEBD7</td>
+		<td style="background-color:#FAEBD7; color:#ffffff;">#FAEBD7</td>
+		</tr>
+		<tr>
+		<td style="background-color:#FFEFD5; color:#202020;">#FFEFD5</td>
+		<td style="background-color:#ffffff; color:#FFEFD5;">#FFEFD5</td>
+		<td style="background-color:#FFEFD5; color:#ffffff;">#FFEFD5</td>
+		</tr>
+		<tr>
+		<td style="background-color:#FFEBCD; color:#202020;">#FFEBCD</td>
+		<td style="background-color:#ffffff; color:#FFEBCD;">#FFEBCD</td>
+		<td style="background-color:#FFEBCD; color:#ffffff;">#FFEBCD</td>
+		</tr>
+		<tr>
+		<td style="background-color:#FFE4C4; color:#202020;">#FFE4C4</td>
+		<td style="background-color:#ffffff; color:#FFE4C4;">#FFE4C4</td>
+		<td style="background-color:#FFE4C4; color:#ffffff;">#FFE4C4</td>
+		</tr>
+		<tr>
+		<td style="background-color:#FFE4B5; color:#202020;">#FFE4B5</td>
+		<td style="background-color:#ffffff; color:#FFE4B5;">#FFE4B5</td>
+		<td style="background-color:#FFE4B5; color:#ffffff;">#FFE4B5</td>
+		</tr>
+		<tr>
+		<td style="background-color:#FFDEAD; color:#202020;">#FFDEAD</td>
+		<td style="background-color:#ffffff; color:#FFDEAD;">#FFDEAD</td>
+		<td style="background-color:#FFDEAD; color:#ffffff;">#FFDEAD</td>
+		</tr>
+		<tr>
+		<td style="background-color:#FFDAB9; color:#202020;">#FFDAB9</td>
+		<td style="background-color:#ffffff; color:#FFDAB9;">#FFDAB9</td>
+		<td style="background-color:#FFDAB9; color:#ffffff;">#FFDAB9</td>
+		</tr>
+		<tr>
+		<td style="background-color:#F5F5DC; color:#202020;">#F5F5DC</td>
+		<td style="background-color:#ffffff; color:#F5F5DC;">#F5F5DC</td>
+		<td style="background-color:#F5F5DC; color:#ffffff;">#F5F5DC</td>
+		</tr>
+		<tr>
+		<td style="background-color:#FFF8DC; color:#202020;">#FFF8DC</td>
+		<td style="background-color:#ffffff; color:#FFF8DC;">#FFF8DC</td>
+		<td style="background-color:#FFF8DC; color:#ffffff;">#FFF8DC</td>
+		</tr>
+		<tr>
+		<td style="background-color:#FFFFE0; color:#202020;">#FFFFE0</td>
+		<td style="background-color:#ffffff; color:#FFFFE0;">#FFFFE0</td>
+		<td style="background-color:#FFFFE0; color:#ffffff;">#FFFFE0</td>
+		</tr>
+		<tr>
+		<td style="background-color:#FAFAD2; color:#202020;">#FAFAD2</td>
+		<td style="background-color:#ffffff; color:#FAFAD2;">#FAFAD2</td>
+		<td style="background-color:#FAFAD2; color:#ffffff;">#FAFAD2</td>
+		</tr>
+		<tr>
+		<td style="background-color:#FFFACD; color:#202020;">#FFFACD</td>
+		<td style="background-color:#ffffff; color:#FFFACD;">#FFFACD</td>
+		<td style="background-color:#FFFACD; color:#ffffff;">#FFFACD</td>
+		</tr>
+		<tr>
+		<td style="background-color:#F5DEB3; color:#202020;">#F5DEB3</td>
+		<td style="background-color:#ffffff; color:#F5DEB3;">#F5DEB3</td>
+		<td style="background-color:#F5DEB3; color:#ffffff;">#F5DEB3</td>
+		</tr>
+		<tr>
+		<td style="background-color:#DEB887; color:#202020;">#DEB887</td>
+		<td style="background-color:#ffffff; color:#DEB887;">#DEB887</td>
+		<td style="background-color:#DEB887; color:#ffffff;">#DEB887</td>
+		</tr>
+		<tr>
+		<td style="background-color:#D2B48C; color:#202020;">#D2B48C</td>
+		<td style="background-color:#ffffff; color:#D2B48C;">#D2B48C</td>
+		<td style="background-color:#D2B48C; color:#ffffff;">#D2B48C</td>
+		</tr>
+		<tr>
+		<td style="background-color:#F0E68C; color:#202020;">#F0E68C</td>
+		<td style="background-color:#ffffff; color:#F0E68C;">#F0E68C</td>
+		<td style="background-color:#F0E68C; color:#ffffff;">#F0E68C</td>
+		</tr>
+		<tr>
+		<td style="background-color:#EEE8AA; color:#202020;">#EEE8AA</td>
+		<td style="background-color:#ffffff; color:#EEE8AA;">#EEE8AA</td>
+		<td style="background-color:#EEE8AA; color:#ffffff;">#EEE8AA</td>
+		</tr>
+		<tr>
+		<td style="background-color:#BDB76B; color:#202020;">#BDB76B</td>
+		<td style="background-color:#ffffff; color:#BDB76B;">#BDB76B</td>
+		<td style="background-color:#BDB76B; color:#ffffff;">#BDB76B</td>
+		</tr>
+		<tr>
+		<td style="background-color:#98FB98; color:#202020;">#98FB98</td>
+		<td style="background-color:#ffffff; color:#98FB98;">#98FB98</td>
+		<td style="background-color:#98FB98; color:#ffffff;">#98FB98</td>
+		</tr>
+		<tr>
+		<td style="background-color:#90EE90; color:#202020;">#90EE90</td>
+		<td style="background-color:#ffffff; color:#90EE90;">#90EE90</td>
+		<td style="background-color:#90EE90; color:#ffffff;">#90EE90</td>
+		</tr>
+		<tr>
+		<td style="background-color:#00FF00; color:#202020;">#00FF00</td>
+		<td style="background-color:#ffffff; color:#00FF00;">#00FF00</td>
+		<td style="background-color:#00FF00; color:#ffffff;">#00FF00</td>
+		</tr>
+		<tr>
+		<td style="background-color:#7CFC00; color:#202020;">#7CFC00</td>
+		<td style="background-color:#ffffff; color:#7CFC00;">#7CFC00</td>
+		<td style="background-color:#7CFC00; color:#ffffff;">#7CFC00</td>
+		</tr>
+		<tr>
+		<td style="background-color:#7FFF00; color:#202020;">#7FFF00</td>
+		<td style="background-color:#ffffff; color:#7FFF00;">#7FFF00</td>
+		<td style="background-color:#7FFF00; color:#ffffff;">#7FFF00</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ADFF2F; color:#202020;">#ADFF2F</td>
+		<td style="background-color:#ffffff; color:#ADFF2F;">#ADFF2F</td>
+		<td style="background-color:#ADFF2F; color:#ffffff;">#ADFF2F</td>
+		</tr>
+		<tr>
+		<td style="background-color:#00FF7F; color:#202020;">#00FF7F</td>
+		<td style="background-color:#ffffff; color:#00FF7F;">#00FF7F</td>
+		<td style="background-color:#00FF7F; color:#ffffff;">#00FF7F</td>
+		</tr>
+		<tr>
+		<td style="background-color:#00FA9A; color:#202020;">#00FA9A</td>
+		<td style="background-color:#ffffff; color:#00FA9A;">#00FA9A</td>
+		<td style="background-color:#00FA9A; color:#ffffff;">#00FA9A</td>
+		</tr>
+		<tr>
+		<td style="background-color:#8FBC8F; color:#202020;">#8FBC8F</td>
+		<td style="background-color:#ffffff; color:#8FBC8F;">#8FBC8F</td>
+		<td style="background-color:#8FBC8F; color:#ffffff;">#8FBC8F</td>
+		</tr>
+		<tr>
+		<td style="background-color:#7FFFD4; color:#202020;">#7FFFD4</td>
+		<td style="background-color:#ffffff; color:#7FFFD4;">#7FFFD4</td>
+		<td style="background-color:#7FFFD4; color:#ffffff;">#7FFFD4</td>
+		</tr>
+		<tr>
+		<td style="background-color:#E0FFFF; color:#202020;">#E0FFFF</td>
+		<td style="background-color:#ffffff; color:#E0FFFF;">#E0FFFF</td>
+		<td style="background-color:#E0FFFF; color:#ffffff;">#E0FFFF</td>
+		</tr>
+		<tr>
+		<td style="background-color:#00FFFF; color:#202020;">#00FFFF</td>
+		<td style="background-color:#ffffff; color:#00FFFF;">#00FFFF</td>
+		<td style="background-color:#00FFFF; color:#ffffff;">#00FFFF</td>
+		</tr>
+		<tr>
+		<td style="background-color:#00FFFF; color:#202020;">#00FFFF</td>
+		<td style="background-color:#ffffff; color:#00FFFF;">#00FFFF</td>
+		<td style="background-color:#00FFFF; color:#ffffff;">#00FFFF</td>
+		</tr>
+		<tr>
+		<td style="background-color:#AFEEEE; color:#202020;">#AFEEEE</td>
+		<td style="background-color:#ffffff; color:#AFEEEE;">#AFEEEE</td>
+		<td style="background-color:#AFEEEE; color:#ffffff;">#AFEEEE</td>
+		</tr>
+		<tr>
+		<td style="background-color:#B0E0E6; color:#202020;">#B0E0E6</td>
+		<td style="background-color:#ffffff; color:#B0E0E6;">#B0E0E6</td>
+		<td style="background-color:#B0E0E6; color:#ffffff;">#B0E0E6</td>
+		</tr>
+		<tr>
+		<td style="background-color:#ADD8E6; color:#202020;">#ADD8E6</td>
+		<td style="background-color:#ffffff; color:#ADD8E6;">#ADD8E6</td>
+		<td style="background-color:#ADD8E6; color:#ffffff;">#ADD8E6</td>
+		</tr>
+		<tr>
+		<td style="background-color:#87CEFA; color:#202020;">#87CEFA</td>
+		<td style="background-color:#ffffff; color:#87CEFA;">#87CEFA</td>
+		<td style="background-color:#87CEFA; color:#ffffff;">#87CEFA</td>
+		</tr>
+		<tr>
+		<td style="background-color:#87CEEB; color:#202020;">#87CEEB</td>
+		<td style="background-color:#ffffff; color:#87CEEB;">#87CEEB</td>
+		<td style="background-color:#87CEEB; color:#ffffff;">#87CEEB</td>
+		</tr>
+		<tr>
+		<td style="background-color:#80C4DE; color:#202020;">#80C4DE</td>
+		<td style="background-color:#ffffff; color:#80C4DE;">#80C4DE</td>
+		<td style="background-color:#80C4DE; color:#ffffff;">#80C4DE</td>
+		</tr>
+		<tr>
+		<td style="background-color:#E6E6FA; color:#202020;">#E6E6FA</td>
+		<td style="background-color:#ffffff; color:#E6E6FA;">#E6E6FA</td>
+		<td style="background-color:#E6E6FA; color:#ffffff;">#E6E6FA</td>
+		</tr>
+		<tr>
+		<td style="background-color:#DDA0DD; color:#202020;">#DDA0DD</td>
+		<td style="background-color:#ffffff; color:#DDA0DD;">#DDA0DD</td>
+		<td style="background-color:#DDA0DD; color:#ffffff;">#DDA0DD</td>
+		</tr>
+		<tr>
+		<td style="background-color:#D8BFD8; color:#202020;">#D8BFD8</td>
+		<td style="background-color:#ffffff; color:#D8BFD8;">#D8BFD8</td>
+		<td style="background-color:#D8BFD8; color:#ffffff;">#D8BFD8</td>
+		</tr>
+		<tr>
+		<td style="background-color:#F0FFF0; color:#202020;">#F0FFF0</td>
+		<td style="background-color:#ffffff; color:#F0FFF0;">#F0FFF0</td>
+		<td style="background-color:#F0FFF0; color:#ffffff;">#F0FFF0</td>
+		</tr>
+		<tr>
+		<td style="background-color:#F5FFFA; color:#202020;">#F5FFFA</td>
+		<td style="background-color:#ffffff; color:#F5FFFA;">#F5FFFA</td>
+		<td style="background-color:#F5FFFA; color:#ffffff;">#F5FFFA</td>
+		</tr>
+		<tr>
+		<td style="background-color:#F0FFFF; color:#202020;">#F0FFFF</td>
+		<td style="background-color:#ffffff; color:#F0FFFF;">#F0FFFF</td>
+		<td style="background-color:#F0FFFF; color:#ffffff;">#F0FFFF</td>
+		</tr>
+		<tr>
+		<td style="background-color:#F0F8FF; color:#202020;">#F0F8FF</td>
+		<td style="background-color:#ffffff; color:#F0F8FF;">#F0F8FF</td>
+		<td style="background-color:#F0F8FF; color:#ffffff;">#F0F8FF</td>
+		</tr>
+		<tr>
+		<td style="background-color:#FFFAFA; color:#202020;">#FFFAFA</td>
+		<td style="background-color:#ffffff; color:#FFFAFA;">#FFFAFA</td>
+		<td style="background-color:#FFFAFA; color:#ffffff;">#FFFAFA</td>
+		</tr>
+		<tr>
+		<td style="background-color:#F8F8FF; color:#202020;">#F8F8FF</td>
+		<td style="background-color:#ffffff; color:#F8F8FF;">#F8F8FF</td>
+		<td style="background-color:#F8F8FF; color:#ffffff;">#F8F8FF</td>
+		</tr>
+		<tr>
+		<td style="background-color:#FFFAF0; color:#202020;">#FFFAF0</td>
+		<td style="background-color:#ffffff; color:#FFFAF0;">#FFFAF0</td>
+		<td style="background-color:#FFFAF0; color:#ffffff;">#FFFAF0</td>
+		</tr>
+		<tr>
+		<td style="background-color:#FFF5EE; color:#202020;">#FFF5EE</td>
+		<td style="background-color:#ffffff; color:#FFF5EE;">#FFF5EE</td>
+		<td style="background-color:#FFF5EE; color:#ffffff;">#FFF5EE</td>
+		</tr>
+		<tr>
+		<td style="background-color:#FFFFF0; color:#202020;">#FFFFF0</td>
+		<td style="background-color:#ffffff; color:#FFFFF0;">#FFFFF0</td>
+		<td style="background-color:#FFFFF0; color:#ffffff;">#FFFFF0</td>
+		</tr>
+		<tr>
+		<td style="background-color:#A9A9A9; color:#202020;">#A9A9A9</td>
+		<td style="background-color:#ffffff; color:#A9A9A9;">#A9A9A9</td>
+		<td style="background-color:#A9A9A9; color:#ffffff;">#A9A9A9</td>
+		</tr>
+		<tr>
+		<td style="background-color:#C0C0C0; color:#202020;">#C0C0C0</td>
+		<td style="background-color:#ffffff; color:#C0C0C0;">#C0C0C0</td>
+		<td style="background-color:#C0C0C0; color:#ffffff;">#C0C0C0</td>
+		</tr>
+		<tr>
+		<td style="background-color:#D3D3D3; color:#202020;">#D3D3D3</td>
+		<td style="background-color:#ffffff; color:#D3D3D3;">#D3D3D3</td>
+		<td style="background-color:#D3D3D3; color:#ffffff;">#D3D3D3</td>
+		</tr>
+		<tr>
+		<td style="background-color:#DCDCDC; color:#202020;">#DCDCDC</td>
+		<td style="background-color:#ffffff; color:#DCDCDC;">#DCDCDC</td>
+		<td style="background-color:#DCDCDC; color:#ffffff;">#DCDCDC</td>
+		</tr>
+		<tr>
+		<td style="background-color:#F5F5F5; color:#202020;">#F5F5F5</td>
+		<td style="background-color:#ffffff; color:#F5F5F5;">#F5F5F5</td>
+		<td style="background-color:#F5F5F5; color:#ffffff;">#F5F5F5</td>
+		</tr>
+		<tr>
+		<td style="background-color:#FFFFFF; color:#202020;">#FFFFFF</td>
+		<td style="background-color:#ffffff; color:#FFFFFF;">#FFFFFF</td>
+		<td style="background-color:#FFFFFF; color:#ffffff;">#FFFFFF</td>
+		</tr>
+</table>
+</td>
+</tr>
+</table>
+	</td></tr></table><!-- ************ -->
+<script>
+Event.observe(window,'load',function() {
+	cp1 = new Refresh.Web.ColorPicker('cp1',{startHex: '0080E0', startMode:'s'});
+});
+</script>
+</body>
+</html>
