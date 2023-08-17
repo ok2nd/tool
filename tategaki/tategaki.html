@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP&display=swap" rel="stylesheet">
+<style>
+html {
+	margin: 0px;
+	padding: 80px;
+	font-size: 16pt;
+	font-family: "Yu Mincho",serif,sans-serif;
+	line-height: 1.7;
+	font-weight: normal;
+	-webkit-writing-mode: vertical-rl;
+	-ms-writing-mode: tb-rl;
+	writing-mode: vertical-rl;
+}
+h1 {
+	font-size: 36pt;
+	text-indent: 1em;
+}
+h2 {
+	font-size: 26pt;
+	text-align: right;
+	padding-bottom: 2em;
+}
+</style>
+<title id="page_title"></title>
+</head>
+<body>
+<h1 id="title"></h1>
+<h2 id="subtitle"></h2>
+<p id="honbun"></p>
+</body>
+<script>
+document.body.style.fontSize = window.opener.document.getElementById("fontsize").value + "pt";
+document.getElementById("title").style.fontSize = Number(window.opener.document.getElementById("fontsize").value) + 20 + "pt";
+document.getElementById("subtitle").style.fontSize = Number(window.opener.document.getElementById("fontsize").value) + 10 + "pt";
+
+document.body.style.fontFamily = '"' + window.opener.document.getElementById("fontfamily").value + '",serif,sans-serif';
+document.body.style.fontWeight = window.opener.document.getElementById("fontweight").value;
+document.getElementById("honbun").style.lineHeight  = window.opener.document.getElementById("lineheight").value;
+
+document.getElementById("page_title").innerHTML = window.opener.document.getElementById("title").value + "：" + window.opener.document.getElementById("subtitle").value;
+document.getElementById("title").innerHTML = window.opener.document.getElementById("title").value;
+document.getElementById("subtitle").innerHTML = window.opener.document.getElementById("subtitle").value;
+
+var honbun = window.opener.document.getElementById("honbun").value;
+document.getElementById("honbun").innerHTML = honbun.replace(/\n/g, '<br>');
+</script>
+</html>
