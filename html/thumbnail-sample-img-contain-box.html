@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no">
+<title>画像サムネイル（影付きの枠＋ビネット効果）</title>
+<style>
+body {
+	color: #666;
+	background: #f8f8f4;
+	font-family: Helvetica, Arial, sans-serif;
+	margin: 40px 40px 120px 40px;
+}
+#contents {
+	margin: 0 auto;
+}
+#gallery {
+	margin: 0 auto;
+	padding: 0;
+	text-align: left;
+}
+h1 {
+	text-align: center;
+	font-size: 24px;
+}
+img {
+	display: block;			/* これがないと余分な枠が付いてしまう。*/
+}
+.box-frame {
+	margin: 4px;
+	width: 240px;
+	height: 240px;
+
+	float: left;			/* 横並び display:inline-block; ではうまくいかない */
+
+	display: flex;			/* flex box */
+	justify-content: center;	/* ブロック内で左右中央揃え */
+	align-items: center;		/* ブロック内で上下中央揃え */
+					/* https://qiita.com/HiromuMasuda0228/items/6a51c2ce24c69c937092 */
+
+	padding:7px;			/* ↓ 影付きフレーム */
+	border:1px solid #ccc;
+	background:#fff;
+	box-shadow: 1px 1px 5px rgba(20,20,20,0.2);
+	border-radius: 4px;
+}
+.vignette {
+	position: relative;
+}
+.vignette:after {
+	position: absolute;
+	content: "";
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.6),
+	inset 0 0 100px rgba(0, 0, 0, 0.4);
+}
+</style>
+</head>
+<body>
+<h1>画像サムネイル（影付きの枠＋ビネット効果）</h1>
+<div id="contents">
+<div id="gallery">
+	<div class="box-frame">
+		<div class="vignette">
+			<img src="thumbs/001.jpg">
+		</div>
+	</div>
+	<div class="box-frame">
+		<div class="vignette">
+			<img src="thumbs/002.jpg">
+		</div>
+	</div>
+	<div class="box-frame">
+		<div class="vignette">
+			<img src="thumbs/003.jpg">
+		</div>
+	</div>
+	<div class="box-frame">
+		<div class="vignette">
+			<img src="thumbs/004.jpg">
+		</div>
+	</div>
+	<div class="box-frame">
+		<div class="vignette">
+			<img src="thumbs/005.jpg">
+		</div>
+	</div>
+	<div class="box-frame">
+		<div class="vignette">
+			<img src="thumbs/006.jpg">
+		</div>
+	</div>
+	<div class="box-frame">
+		<div class="vignette">
+			<img src="thumbs/007.jpg">
+		</div>
+	</div>
+	<div class="box-frame">
+		<div class="vignette">
+			<img src="thumbs/008.jpg">
+		</div>
+	</div>
+</div>
+</div>
+</body>
+</html>

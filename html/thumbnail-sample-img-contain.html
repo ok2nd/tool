@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no">
+<title>画像サムネイルHTMLサンプル</title>
+<style>
+body {
+	color: #666;
+	background: #f8f8e8;
+	font-family: Helvetica, Arial, sans-serif;
+	margin: 40px 40px 120px 40px;
+}
+#contents {
+	margin: 0 auto;
+}
+#gallery {
+	margin: 0 auto;
+	padding: 0;
+	text-align: left;
+}
+#gallery img {
+	object-fit: contain;
+	margin: 2px;
+	width: 240px;
+	height: 240px;
+}
+h1 {
+	text-align: center;
+}
+#description {
+	margin: 0 auto;
+	max-width: 800px;
+}
+p {
+	max-width: 800px;
+	text-align: left;
+	font-size: 0.9em;
+}
+</style>
+<script>
+// Thanks to oishii_mahou (chiebukuro.yahoo.co.jp)
+// <div id="gallery">の横幅を中の画像の数に合わせて調整し、余分の余白が出来ないようにする。
+function initGallery() {
+	gallery = document.getElementById("gallery");
+	imgItem = gallery.getElementsByTagName("img");
+	gallery.innerHTML = gallery.innerHTML.replace( /\r?\n|\r/g, "" );	// 改行コードを除去
+	adjustGallery();
+}
+function adjustGallery() {
+	var imgStyle = imgItem[0].currentStyle || document.defaultView.getComputedStyle(imgItem[0], "");
+	var imgMargin = parseInt(imgStyle.marginLeft, 10) + parseInt(imgStyle.marginRight, 10);
+	var imgWidth = imgItem[0].offsetWidth + 5;
+	var winWidth = document.body.offsetWidth || document.documentElement.offsetWidth;	// ウィンドウ幅
+	var imgNum = Math.min(Math.floor(winWidth/imgWidth), imgItem.length);	// 横に並んでいる画像の数
+	gallery.style.width = imgNum * imgWidth + (imgNum - 1) * imgMargin + "px";
+}
+window.addEventListener( "load", initGallery, false );
+window.addEventListener( "resize", adjustGallery, false );
+</script>
+</head>
+<body>
+<h1>画像サムネイルHTMLサンプル</h1>
+<div id="description">
+<p>写真/画像をサムネイル一覧するHTMLサンプル。<br>サムネイル一覧のブロック全体はページ内で左右中央揃えし、ブロック内の画像は左寄せする。（ブロック全体を左右中央揃えするのにJavaScriptを使用。）<br>各画像はそれぞれの正方形ボックス内で上下左右中央揃えする。（&lt;img&gt;タグのobject-fit:contain;を使っている。）
+<a href="thumbnail-sample.html">→→→&lt;span&gt;タグのbackground-imageを使っているサンプル</a></p>
+</div>
+<div id="contents">
+	<div id="gallery">
+		<img src="thumbs/001.jpg">
+		<img src="thumbs/002.jpg">
+		<img src="thumbs/003.jpg">
+		<img src="thumbs/004.jpg">
+		<img src="thumbs/005.jpg">
+		<img src="thumbs/006.jpg">
+		<img src="thumbs/007.jpg">
+		<img src="thumbs/008.jpg">
+		<img src="thumbs/009.jpg">
+		<img src="thumbs/010.jpg">
+		<img src="thumbs/011.jpg">
+		<img src="thumbs/012.jpg">
+		<img src="thumbs/013.jpg">
+		<img src="thumbs/014.jpg">
+	</div>
+</div>
+</body>
+</html>

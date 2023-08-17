@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no">
+<title>画像サムネイルHTMLサンプル</title>
+<style>
+body {
+	color: #666;
+	background: #f8f8e8;
+	font-family: Helvetica, Arial, sans-serif;
+	margin: 40px 40px 120px 40px;
+}
+#contents {
+	margin: 0 auto;
+}
+#gallery {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	width: 992px;
+	margin: auto;
+}
+@media screen and (max-width: 1052px) { /* 992+60 */
+	#gallery {
+		width: 744px;
+	}
+}
+@media screen and (max-width: 804px) {	/* 744+60 */
+	#gallery {
+		width: 496px;
+	}
+}
+@media screen and (max-width: 556px) {	/* 496+60 */
+	#gallery {
+		width: 248px;
+	}
+}
+#gallery span {
+	display: flex;
+	background-position: center center;
+	background-repeat: no-repeat;
+	margin: 4px;
+	width: 240px;
+	height: 240px;
+	background-size: contain;
+}
+h1 {
+	text-align: center;
+}
+#description {
+	margin: 0 auto;
+	max-width: 800px;
+}
+p {
+	max-width: 800px;
+	text-align: left;
+	font-size: 0.9em;
+}
+</style>
+</head>
+<body>
+<h1>画像サムネイルHTMLサンプル</h1>
+<div id="description">
+<p>写真/画像をサムネイル一覧するHTMLサンプル。<br>サムネイル一覧のブロック全体はページ内で左右中央揃えし、ブロック内の画像は左寄せする。（ブロック全体を左右中央揃えするのにMedia Queriesを使用。）<a href="thumbnail-sample.html">→→→JavaScriptを使っているサンプル</a><br>
+各画像はそれぞれの正方形ボックス内で上下左右中央揃えする。（&lt;span&gt;タグのbackground-imageとbackground-sizeを使っている。）
+</div>
+<div id="contents">
+	<div id="gallery">
+		<span style="background-image: url('thumbs/001.jpg')"></span>
+		<span style="background-image: url('thumbs/002.jpg')"></span>
+		<span style="background-image: url('thumbs/003.jpg')"></span>
+		<span style="background-image: url('thumbs/004.jpg')"></span>
+		<span style="background-image: url('thumbs/005.jpg')"></span>
+		<span style="background-image: url('thumbs/006.jpg')"></span>
+		<span style="background-image: url('thumbs/007.jpg')"></span>
+		<span style="background-image: url('thumbs/008.jpg')"></span>
+		<span style="background-image: url('thumbs/009.jpg')"></span>
+		<span style="background-image: url('thumbs/010.jpg')"></span>
+		<span style="background-image: url('thumbs/011.jpg')"></span>
+		<span style="background-image: url('thumbs/012.jpg')"></span>
+		<span style="background-image: url('thumbs/013.jpg')"></span>
+		<span style="background-image: url('thumbs/014.jpg')"></span>
+	</div>
+</div>
+</body>
+</html>
