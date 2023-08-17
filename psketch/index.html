@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>physicSketch サンプル</title>
+<style>
+body {
+	margin: 10px 10px 800px 10px;
+	text-align: center;
+}
+h1 {
+	font-size: 16px;
+}
+p {
+	font-size: 12px;
+}
+#screen {
+	margin: 20px auto;
+	width: 1520px;
+}
+@media screen and (max-width: 1560px) {
+	#screen {
+		width: 760px;
+	}
+}
+.psketch {
+	margin: 0;
+	width: 750px;
+	height: 550px;
+}
+</style>
+</head>
+<body>
+<h1>physicSketch サンプル</h1>
+<p>物理エンジンを使った物体落下シミュレーションゲーム<br>
+JavaScript by <a href="http://d.hatena.ne.jp/technohippy/20110308#1299593240" target="_blank">http://d.hatena.ne.jp/technohippy/20110308#1299593240</a></p>
+<div id="screen">
+	<iframe class="psketch" src="psketch.html" scrolling="no"></iframe>
+	<iframe class="psketch" src="psketch2.html" scrolling="no"></iframe>
+</div>
+</body>
+</html>

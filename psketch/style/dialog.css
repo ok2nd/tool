@@ -1,0 +1,121 @@
+#dialog-back {
+  position:absolute; 
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background-color:#000;
+  opacity:0.5;
+}
+
+.dialog {
+  border:1px solid #FFF;
+  position:absolute;
+  top:0;
+  left:0;
+  border:1px solid #FFF;
+
+  background: -webkit-gradient(linear, left top, left bottom, 
+    from(#CCC), 
+    color-stop(0.20, #CCC),
+    color-stop(0.60, #FFF),
+    to(#CCC)
+  );
+}
+
+.dialog .dialog-header {
+  width:100%;
+  height:25px;
+  border:1px solid #333;
+  background: -webkit-gradient(linear, left top, left bottom, 
+    from(#333), 
+    to(#000)
+  );
+}
+
+.dialog .dialog-header a {
+  color:#FF0;
+}
+
+.dialog .dialog-header .dialog-header-title {
+  float:left;
+  font-weight:bold;
+  color:#FFF;
+  margin-top:5px;
+  margin-left:5px;
+}
+
+.dialog .dialog-header .dialog-header-close {
+  float:right;
+  margin-top:5px;
+  margin-right:5px;
+}
+
+.dialog .dialog-body {
+  width:100%;
+  line-height:1em;
+}
+
+/* Color chooser */
+.color-item {
+  color:black;
+  float:left;
+  margin:3px;
+  padding:5px;
+  width:60px;
+  height:35px;
+  border-top:1px solid #666;
+  border-left:1px solid #666;
+  border-bottom:1px solid #EEE;
+  border-right:1px solid #EEE;
+}
+
+/* input dataname name */
+#input-dataname-dialog input {
+  width:185px;
+  margin:3px 5px;
+}
+
+#input-dataname-dialog button {
+  padding:5px 10px;
+  margin-left:70px;
+}
+
+/* choose dataname dialog */
+#datanames {
+  margin:0;
+  padding:5px;
+}
+#datanames ul {
+  margin:5px;
+  padding:0;
+  height:155px;
+  overflow:auto;
+}
+#datanames li {
+  list-style-type:none;
+  margin:1px;
+  padding:1px 5px;
+  border-top:1px solid gray;
+  border-bottom:1px solid gray;
+}
+#datanames li a {
+  text-decoration:none;
+}
+
+/* upload dialog */
+#upload-dialog input {
+  width:185px;
+  margin:3px 5px;
+}
+
+#upload-dialog textarea {
+  width:185px;
+  height:150px;
+  margin:3px 5px;
+}
+
+#upload-dialog button {
+  padding:5px 10px;
+  margin-left:70px;
+}
