@@ -1,0 +1,112 @@
+﻿<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>DOF Simulator</title>
+
+  <style>
+    .container {
+      width: 500px;
+      height: 500px;
+      margin: 0 auto;
+    }
+
+    .camera {
+      width: 500px;
+      height: 500px;
+      border: 1px solid black;
+    }
+
+    .focus {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 100px;
+      height: 100px;
+      background-color: red;
+    }
+
+    .scene {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 400px;
+      height: 400px;
+    }
+
+    .controls {
+      width: 500px;
+      height: 100px;
+      margin-top: 20px;
+    }
+
+    input {
+      width: 100px;
+      height: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="camera">
+      <div class="focus"></div>
+      <div class="scene">
+        <img src="images/scene.jpg" alt="シーン">
+      </div>
+    </div>
+    <div class="controls">
+      <div class="focal-length">
+        <label for="focal-length">焦点距離</label>
+        <input type="range" id="focal-length" min="1" max="1000" value="50">
+      </div>
+      <div class="aperture">
+        <label for="aperture">絞り値</label>
+        <input type="range" id="aperture" min="1" max="64" value="16">
+      </div>
+      <div class="iso">
+        <label for="iso">感度</label>
+        <input type="range" id="iso" min="100" max="3200" value="800">
+      </div>
+    </div>
+  </div>
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <script>
+    $(function() {
+      // 焦点位置を計算する関数
+      function calculateFocus(focalLength, aperture, iso) {
+        // 焦点距離をメートルに変換
+        const focalLengthInMeters = focalLength / 1000;
+
+        // 絞り値をF値に変換
+        const apertureInFStops = 2 ** (-aperture / 10);
+
+        // 感度をフォトナー数に変換
+        const isoInPhotons = iso * 10 ** 6;
+
+        // 焦点位置を計算
+        const focus = focalLengthInMeters * apertureInFStops / isoInPhotons;
+
+        return focus;
+      }
+
+      // DOMContentLoadedイベントで、最初に焦点位置を計算して画面に反映する
+      $(document).ready(function() {
+        const focus = calculateFocus(
+          document.getElementById("focal-length").value,
+          document.getElementById("aperture").value,
+          document.getElementById("iso").value
+        );
+
+        document.getElementById("focus").style.top = focus.top + "px";
+        document.getElementById("focus").style.left = focus.left + "px";
+      });
+
+      // フォーカス距離、絞り値、感度を変更したときに、焦点位置を再計算する
+      $(document).on("change", "#focal-length, #aperture, #iso", function() {
+        const focus = calculateFocus(
+          document.getElementById("focal-length").value,
+          document.getElementById("aperture").value,
+          document

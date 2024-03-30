@@ -1,0 +1,35 @@
+﻿<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>DOF Simulator</title>
+<link href="my.css" rel="stylesheet">
+<script src="my.js"></script>
+</head>
+<body>
+<div class="container">
+	<div class="camera">
+		<div class="focus">
+			<img src="images/focus.png" alt="フォーカスの位置">
+		</div>
+		<div class="scene">
+			<img src="images/scene.jpg" alt="シーン">
+		</div>
+	</div>
+	<div class="controls">
+		<div class="focal-length">
+			<label for="focal-length">焦点距離</label>
+			<input type="range" id="focal-length" min="1" max="1000" value="50">
+		</div>
+		<div class="aperture">
+			<label for="aperture">絞り値</label>
+			<input type="range" id="aperture" min="1" max="64" value="16">
+		</div>
+		<div class="iso">
+			<label for="iso">感度</label>
+			<input type="range" id="iso" min="100" max="3200" value="800">
+		</div>
+	</div>
+</div>
+</body>
+</html>
