@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="author" content="ok.2nd">
+<meta name="description" content="Google Maps API V3による複数地点＆ルート表示">
+<!-- Powered by ok.2nd -- http://ok2nd.web.fc2.com/ -->
+<meta name="keywords" content="地図,マップ,ルート表示">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>京都 ギャラリー マップ</title>
+<link rel="shortcut icon" href="favicon/earth.ico" type="image/ico">
+<link rel="icon" href="favicon/earth.ico" type="image/ico">
+<link rel="apple-touch-icon" href="favicon/earth.jpg">
+<link rel="stylesheet" href="css/common-103.css?201700704">
+<xxx rel="stylesheet" href="css/button.css" media="only screen and (max-width: 480px)">
+<style>
+#form_box {
+	position: absolute; top: 0px; left: 0px;
+	background-color: rgba(255, 255, 255, 0.8); /* 100% 透明 */
+	width: 600px;
+	height: 0px;
+}
+@media screen and (max-width: 600px) {
+	#form_box { width: 370px; }
+	#route_navi { top: 52px; }
+	#route_navi_open { top: 52px; }
+}
+@media screen and (max-width: 450px) {
+	#side_bar { top: 56px; }
+}
+.label {
+	background-color: #fff;
+}
+</style>
+<style>
+.labels-r {
+	color: #000;
+	background: #FFC9D0;
+	font-size: 12px;
+	font-weight: bold;
+	text-align: center;
+	padding: 0 2px;
+	border: solid 1px red;
+	border-radius: 4px;
+}
+.labels-y {
+	color: #000;
+	background: #FFFF6B;
+	font-size: 12px;
+	font-weight: bold;
+	text-align: center;
+	padding: 0 2px;
+	border: solid 1px #444;
+	border-radius: 4px;
+}
+.labels-b {
+	color: #000;
+	background: #CCF2FF;
+	font-size: 12px;
+	font-weight: bold;
+	text-align: center;
+	padding: 0 2px;
+	border: solid 1px #444;
+	border-radius: 4px;
+}
+</style>
+<script src="//maps.google.com/maps/api/js?libraries=geometry,places"></script>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js"></script>
+<script src="js/ok2nd.js"></script>
+<script src="js/markerwithlabel.js"></script>
+<script src="js/map-spots-plotRoute-111.js"></script>
+<script>
+var points = [];
+points[0] = [34.99731721587087, 135.76740145683289, '画箋堂'];
+points[1] = [34.9973905, 135.77091819999998, 'あじき路地'];
+points[2] = [35.00933286977055, 135.78486263751984, 'ギャラリーモーニング'];
+points[3] = [35.0093366, 135.76697949999993, 'ギャラリーヒルゲート'];
+points[4] = [35.024388, 135.7882194, '京都・アートゾーン神楽岡'];
+points[5] = [35.00851782086625, 135.76652705669403, '同時代ギャラリー'];
+points[6] = [35.009393284123455, 135.7707166671753, 'ギャラリー中井'];
+points[7] = [35.0145887515434, 135.7673491537571, '宮脇ギャルリー'];
+points[8] = [35.01626594930761, 135.76739072799683, 'アートスペースメイセイ'];
+points[9] = [35.012941176045565, 135.7671044021845, 'ギャラリーＫ'];
+points[10] = [35.00949763608247, 135.76705679297447, 'ギャリエ・ヤマシタ1号館'];
+points[11] = [35.01258145098081, 135.76710507273674, '芸艸堂画廊'];
+points[12] = [35.0093134, 135.78677930000003, 'アートスペース虹'];
+points[13] = [35.00958221599367, 135.78294284641743, 'ギャラリー美楽堂'];
+points[14] = [35.01107058843174, 135.78297436237335, 'ギャラリー唯'];
+points[15] = [35.009452599990176, 135.782954916358, 'GALLERY はねうさぎ'];
+points[16] = [35.010076512426906, 135.78070655465126, 'ギャラリー16'];
+points[17] = [35.011382539074226, 135.7830011844635, 'ギャルリー百音（もね）'];
+points[18] = [35.00964922079627, 135.78291401267052, '星野画廊'];
+points[19] = [35.009102196376325, 135.7822260260582, '画廊たづアートプラザ'];
+points[20] = [35.00964922079627, 135.7679781317711, 'ヤマモトギャラリー'];
+points[21] = [35.015541035044684, 135.76737463474274, '松本松栄堂'];
+points[22] = [35.00055130000001, 135.76489370000002, 'MATSUO MEGUMI +VOICE GALLERY'];
+points[23] = [35.008880309926155, 135.76830133795738, 'ギャラリーみすや'];
+points[24] = [35.010844313629676, 135.7826203107834, 'GALLERY FUKUMI SHIMURA'];
+points[25] = [35.00966240206247, 135.7683764398098, 'まるごのギャラリー'];
+points[26] = [35.0088215, 135.7622798, '京都文化博物館'];
+points[27] = [35.010769620839135, 135.78295558691025, '博宝堂'];
+points[28] = [35.003104459806394, 135.75937628746033, 'kara-s (3F)'];
+points[29] = [35.00991614102257, 135.77026203274727, 'ギャラリーなかむら'];
+points[30] = [35.01103763582959, 135.7826042175293, '画廊おかざき'];
+points[31] = [35.00922851760137, 135.76710104942322, 'ギャリエ・ヤマシタ2号館'];
+points[32] = [34.9971571, 135.76522699999998, 'galleryMain'];
+points[33] = [35.0124779, 135.77601759999993, '芦屋画廊Kyoto'];
+points[34] = [35.00872762533612, 135.76226770877838, 'arton art gallery'];
+points[35] = [35.0094976, 135.78295320000007, 'ぎゃらりーあーとぺーじ唯心'];
+points[36] = [35.01012923720349, 135.76705813407898, 'ギャラリーカト'];
+points[37] = [35.0039787, 135.77422619999993, 'ギャラリー 祇園小舎'];
+points[38] = [35.00554809622019, 135.76943390071392, 'ギャラリー・マロニエ'];
+var others = [];
+others[0] = [35.0127966, 135.78364899999997, '京都市美術館', ''];
+others[1] = [35.0123776, 135.78197079999995, '京都国立近代美術館', ''];
+others[2] = [34.9899887, 135.77311599999996, '京都国立博物館', ''];
+</script>
+</head>
+<body onload="initialize()">
+<div id="map_canvas"></div>
+
+<div id="form_box">
+<form id="form">
+<button onClick="zoomMarkerAll();return false;">全体表示</button>
+<!--
+<button onClick="viewPresentLocation();return false;">現在地</button>
+<button onClick="viewPresentOff();return false;">Off</button>
+-->
+<!--
+<span id="plotRoute">
+<span id="travelModeSelect">
+<label class="cb_pw_label" style="display:none;color:red;background-color:yellow;"><input class="cb_pw" type="checkbox" value="on" onClick="plotWalkOff()" style="margin-left:3px;">徒歩ルート</label>
+<span id="plotAllRoute">
+<select id="travel_mode" onChange="travelModeSelect()" style="display:none;">
+	<option value="w">徒歩
+	<option value="d">車(有料有)
+	<option value="t">車(有料無)
+</select>
+</span>
+</span>
+-->
+<span id="travelModeWalk">
+<label class="cb_pw_label" style="display:none;color:red;background-color:yellow;"><input class="cb_pw" type="checkbox" value="on" onClick="plotWalkOff()" style="margin-left:3px;">徒歩ルート</label>
+</span>
+</span>
+<span id="c_distance">
+<label><input id="cb_path" type="checkbox" value="on" onClick="LinePathOnOff()" style="margin-left:3px;"><span class="label">距離</span></label><input type="text" id="lineLength" style="width:50px;"><span class="label">m</span><input onClick="clearLinePath();" type="button" value="ｸﾘｱ">
+</span>
+<label id="c_streetview"><input id="cb_sv" type="checkbox" value="on" onClick="StreetViewOnOff()" style="margin-left:3px;"><span class="label">ストリート</span></label>
+<span id="c_placessearch">
+<select id="places">
+	<optgroup label="食べる">
+	<option value="restaurant">レストラン</option>
+	<option value="bar">居酒屋</option>
+	<optgroup label="食料品">
+	<option value="convenience_store">コンビニ</option>
+	<option value="grocery_or_supermarket">スーパー</option>
+	<option value="food">食料品店</option>
+	<option value="liquor_store">酒店</option>
+	<option value="bakery">パン屋</option>
+	<optgroup label="買いもの">
+	<option value="store">小売店</option>
+	<option value="book_store">書店</option>
+	<option value="department_store">百貨店</option>
+	<option value="shopping_mall">ｼｮｯﾋﾟﾝｸﾞﾓｰﾙ</option>
+	<option value="clothing_store">衣料品店</option>
+	<option value="shoe_store">靴屋</option>
+	<option value="florist">花屋</option>
+	<option value="laundry">クリーニング屋</option>
+	<option value="furniture_store">家具屋</option>
+	<option value="home_goods_store">日用品店</option>
+	<optgroup label="交通">
+	<option value="train_station">駅</option>
+	<option value="subway_station">地下鉄駅</option>
+	<option value="bus_station">バスターミナル</option>
+	<option value="airport">空港</option>
+	<option value="parking">駐車場</option>
+	<option value="gas_station">ｶﾞｿﾘﾝｽﾀﾝﾄﾞ</option>
+	<option value="car_rental">レンタカー</option>
+	<optgroup label="レジャー">
+	<option value="lodging">ホテル・旅館</option>
+	<option value="travel_agency">旅行代理店</option>
+	<option value="art_gallery">ｱｰﾄｷﾞｬﾗﾘｰ</option>
+	<option value="museum">美術館/博物館</option>
+	<option value="aquarium">水族館</option>
+	<option value="amusement_park">遊園地</option>
+	<option value="zoo">動物園</option>
+	<optgroup label="病院">
+	<option value="hospital">病院</option>
+	<option value="doctor">医者</option>
+	<option value="dentist">歯医者</option>
+	<option value="pharmacy">薬局</option>
+	<optgroup label="生活">
+	<option value="post_office">郵便局</option>
+	<option value="bank">銀行</option>
+	<option value="atm">ATM</option>
+	<option value="establishment">施設</option>
+	<option value="city_hall">市役所</option>
+	<option value="police">警察</option>
+	<option value="real_estate_agency">不動産屋</option>
+	<option value="embassy">大使館</option>
+	<option value="place_of_worship">寺院・礼拝堂</option>
+	<option value="church">教会</option>
+	<optgroup label="美容・健康">
+	<option value="health">健康</option>
+	<option value="hair_care">ヘアケア</option>
+	<option value="beauty_salon">美容院</option>
+	<optgroup label="学校">
+	<option value="university">大学</option>
+	<option value="school">学校</option>
+</select><button onClick="PlacesSearch();return false;">探す</button><button onClick="clearPlacesMarker();return false;">ｸﾘｱ</button>
+<label><input id="cb_ci" type="checkbox" value="on" onClick="CurrentInfoOnOff()" style="margin-left:3px;"><span class="label">場所</span></label>
+</span>
+</form>
+</div>
+<div id="side_bar" style="display:none;"></div>
+<div id="route_navi_hidden" style="display:none;"></div>
+<div id="route_navi" style="display:none;">
+<!--<div id="route_navi_close"><a href="javascript:route_naviOff()">×</a> <a href="javascript:route_naviOff()"><span id="c_navioff_msg"></span>閉じる</a><br></div>-->
+<span id="route_all_time"></span><br>
+</div>
+<div id="route_navi_open" style="display:none;"><a href="javascript:route_naviOn()">▽</a></div>
+<div id="panorama" style="display:none;">
+人形マークを、道路上にドラッグ＆ドロップしてください。
+<a href="javascript:StreetViewOff()">閉じる</a><br>
+<div id="panowin"></div></div>
+</body>
+</html>

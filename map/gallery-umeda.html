@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="author" content="ok.2nd">
+<meta name="description" content="Google Maps API V3による複数地点＆ルート表示">
+<!-- Powered by ok.2nd -- http://ok2nd.web.fc2.com/ -->
+<meta name="keywords" content="地図,マップ,ルート表示">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>大阪（梅田）ギャラリー マップ</title>
+<link rel="shortcut icon" href="favicon/earth.ico" type="image/ico">
+<link rel="icon" href="favicon/earth.ico" type="image/ico">
+<link rel="apple-touch-icon" href="favicon/earth.jpg">
+<link rel="stylesheet" href="css/common-103.css?201700704">
+<xxx rel="stylesheet" href="css/button.css" media="only screen and (max-width: 480px)">
+<style>
+#form_box {
+	position: absolute; top: 0px; left: 0px;
+	background-color: rgba(255, 255, 255, 0.8); /* 100% 透明 */
+	width: 600px;
+	height: 0px;
+}
+@media screen and (max-width: 600px) {
+	#form_box { width: 370px; }
+	#route_navi { top: 52px; }
+	#route_navi_open { top: 52px; }
+}
+@media screen and (max-width: 450px) {
+	#side_bar { top: 56px; }
+}
+.label {
+	background-color: #fff;
+}
+</style>
+<style>
+.labels-r {
+	color: #000;
+	background: #FFC9D0;
+	font-size: 12px;
+	font-weight: bold;
+	text-align: center;
+	padding: 0 2px;
+	border: solid 1px red;
+	border-radius: 4px;
+}
+.labels-y {
+	color: #000;
+	background: #FFFF6B;
+	font-size: 12px;
+	font-weight: bold;
+	text-align: center;
+	padding: 0 2px;
+	border: solid 1px #444;
+	border-radius: 4px;
+}
+.labels-b {
+	color: #000;
+	background: #CCF2FF;
+	font-size: 12px;
+	font-weight: bold;
+	text-align: center;
+	padding: 0 2px;
+	border: solid 1px #444;
+	border-radius: 4px;
+}
+</style>
+<script src="//maps.google.com/maps/api/js?libraries=geometry,places"></script>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js"></script>
+<script src="js/ok2nd.js"></script>
+<script src="js/markerwithlabel.js"></script>
+<script src="js/map-spots-plotRoute-111.js"></script>
+<script>
+var points = [];
+points[0] = [34.6965171, 135.50521070000002, '現代クラフトギャラリー'];
+points[1] = [34.6969796, 135.5057958, 'ギャラリー白'];
+points[2] = [34.69640700000001, 135.50539530000003, 'ギャラリー帝塚山企画展ショールーム'];
+points[3] = [34.6961208, 135.50247609999997, '乙画廊'];
+points[4] = [34.6919852, 135.50304000000006, 'アート遊'];
+points[5] = [34.697043, 135.50348710000003, 'Ｏギャラリーアイズ'];
+points[6] = [34.70461911686101, 135.5031180381775, 'Y.Art-Gallery (ACT3)'];
+points[7] = [34.7076305, 135.4963292, '芝田町画廊'];
+points[8] = [34.707281, 135.49963400000001, '茶屋町画廊'];
+points[9] = [34.6965708, 135.50573439999994, 'ギャラリーベルンアート'];
+points[10] = [34.6973207, 135.50370929999997, 'ギャラリー菊＆蜂の巣会'];
+points[11] = [34.6973207, 135.50370929999997, 'ギャラリー菊＆蜂の巣会'];
+points[12] = [34.69043840000001, 135.48447409999994, 'ラッズギャラリー'];
+points[13] = [34.7065281, 135.50559780000003, 'イロリムラ'];
+points[14] = [34.6976318, 135.50390370000002, 'YOD Gallery'];
+points[15] = [34.6967736, 135.5044259, 'ギャラリー&ブックス エッジedge'];
+points[16] = [34.6965654, 135.50795340000002, 'ＧａｌｌｅｒｙＨＯＴ'];
+points[17] = [34.69688237563612, 135.50668269395828, 'GALLERY wks'];
+points[18] = [34.697096, 135.50394400000005, '4+2+3GALLERY'];
+points[19] = [34.6922741, 135.50415099999998, 'ギャラリー風'];
+points[20] = [34.706311, 135.500087, 'gallery 4匹の猫'];
+var others = [];
+others[0] = [34.70536110917471, 135.49822568893433, '画材トゥールズ', ''];
+others[1] = [34.705537510528686, 135.49812376499176, '画材カワチ', ''];
+others[2] = [34.704633449613624, 135.50302952528, '静風堂', ''];
+</script>
+</head>
+<body onload="initialize()">
+<div id="map_canvas"></div>
+
+<div id="form_box">
+<form id="form">
+<button onClick="zoomMarkerAll();return false;">全体表示</button>
+<!--
+<button onClick="viewPresentLocation();return false;">現在地</button>
+<button onClick="viewPresentOff();return false;">Off</button>
+-->
+<!--
+<span id="plotRoute">
+<span id="travelModeSelect">
+<label class="cb_pw_label" style="display:none;color:red;background-color:yellow;"><input class="cb_pw" type="checkbox" value="on" onClick="plotWalkOff()" style="margin-left:3px;">徒歩ルート</label>
+<span id="plotAllRoute">
+<select id="travel_mode" onChange="travelModeSelect()" style="display:none;">
+	<option value="w">徒歩
+	<option value="d">車(有料有)
+	<option value="t">車(有料無)
+</select>
+</span>
+</span>
+-->
+<span id="travelModeWalk">
+<label class="cb_pw_label" style="display:none;color:red;background-color:yellow;"><input class="cb_pw" type="checkbox" value="on" onClick="plotWalkOff()" style="margin-left:3px;">徒歩ルート</label>
+</span>
+</span>
+<span id="c_distance">
+<label><input id="cb_path" type="checkbox" value="on" onClick="LinePathOnOff()" style="margin-left:3px;"><span class="label">距離</span></label><input type="text" id="lineLength" style="width:50px;"><span class="label">m</span><input onClick="clearLinePath();" type="button" value="ｸﾘｱ">
+</span>
+<label id="c_streetview"><input id="cb_sv" type="checkbox" value="on" onClick="StreetViewOnOff()" style="margin-left:3px;"><span class="label">ストリート</span></label>
+<span id="c_placessearch">
+<select id="places">
+	<optgroup label="食べる">
+	<option value="restaurant">レストラン</option>
+	<option value="bar">居酒屋</option>
+	<optgroup label="食料品">
+	<option value="convenience_store">コンビニ</option>
+	<option value="grocery_or_supermarket">スーパー</option>
+	<option value="food">食料品店</option>
+	<option value="liquor_store">酒店</option>
+	<option value="bakery">パン屋</option>
+	<optgroup label="買いもの">
+	<option value="store">小売店</option>
+	<option value="book_store">書店</option>
+	<option value="department_store">百貨店</option>
+	<option value="shopping_mall">ｼｮｯﾋﾟﾝｸﾞﾓｰﾙ</option>
+	<option value="clothing_store">衣料品店</option>
+	<option value="shoe_store">靴屋</option>
+	<option value="florist">花屋</option>
+	<option value="laundry">クリーニング屋</option>
+	<option value="furniture_store">家具屋</option>
+	<option value="home_goods_store">日用品店</option>
+	<optgroup label="交通">
+	<option value="train_station">駅</option>
+	<option value="subway_station">地下鉄駅</option>
+	<option value="bus_station">バスターミナル</option>
+	<option value="airport">空港</option>
+	<option value="parking">駐車場</option>
+	<option value="gas_station">ｶﾞｿﾘﾝｽﾀﾝﾄﾞ</option>
+	<option value="car_rental">レンタカー</option>
+	<optgroup label="レジャー">
+	<option value="lodging">ホテル・旅館</option>
+	<option value="travel_agency">旅行代理店</option>
+	<option value="art_gallery">ｱｰﾄｷﾞｬﾗﾘｰ</option>
+	<option value="museum">美術館/博物館</option>
+	<option value="aquarium">水族館</option>
+	<option value="amusement_park">遊園地</option>
+	<option value="zoo">動物園</option>
+	<optgroup label="病院">
+	<option value="hospital">病院</option>
+	<option value="doctor">医者</option>
+	<option value="dentist">歯医者</option>
+	<option value="pharmacy">薬局</option>
+	<optgroup label="生活">
+	<option value="post_office">郵便局</option>
+	<option value="bank">銀行</option>
+	<option value="atm">ATM</option>
+	<option value="establishment">施設</option>
+	<option value="city_hall">市役所</option>
+	<option value="police">警察</option>
+	<option value="real_estate_agency">不動産屋</option>
+	<option value="embassy">大使館</option>
+	<option value="place_of_worship">寺院・礼拝堂</option>
+	<option value="church">教会</option>
+	<optgroup label="美容・健康">
+	<option value="health">健康</option>
+	<option value="hair_care">ヘアケア</option>
+	<option value="beauty_salon">美容院</option>
+	<optgroup label="学校">
+	<option value="university">大学</option>
+	<option value="school">学校</option>
+</select><button onClick="PlacesSearch();return false;">探す</button><button onClick="clearPlacesMarker();return false;">ｸﾘｱ</button>
+<label><input id="cb_ci" type="checkbox" value="on" onClick="CurrentInfoOnOff()" style="margin-left:3px;"><span class="label">場所</span></label>
+</span>
+</form>
+</div>
+<div id="side_bar" style="display:none;"></div>
+<div id="route_navi_hidden" style="display:none;"></div>
+<div id="route_navi" style="display:none;">
+<!--<div id="route_navi_close"><a href="javascript:route_naviOff()">×</a> <a href="javascript:route_naviOff()"><span id="c_navioff_msg"></span>閉じる</a><br></div>-->
+<span id="route_all_time"></span><br>
+</div>
+<div id="route_navi_open" style="display:none;"><a href="javascript:route_naviOn()">▽</a></div>
+<div id="panorama" style="display:none;">
+人形マークを、道路上にドラッグ＆ドロップしてください。
+<a href="javascript:StreetViewOff()">閉じる</a><br>
+<div id="panowin"></div></div>
+</body>
+</html>
