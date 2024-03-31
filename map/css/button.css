@@ -1,0 +1,93 @@
+button, input[type=button], input[type=reset], input[type=submit] {
+	font-family: Arial;
+	margin: 2px 0;
+	display: inline-block;
+	padding: 4px 6px;
+	color: #fff;
+	cursor: pointer;
+	outline: none;
+	text-align: center;
+	text-decoration: none;
+	border-radius: 6px;
+	background-color: #999;
+/*;
+	background-image: -moz-linear-gradient(top, #ffffff, #e1e1e1);
+	background-image: -ms-linear-gradient(top, #ffffff, #e1e1e1);
+	background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#ffffff), to(#e1e1e1));
+	background-image: -webkit-linear-gradient(top, #ffffff, #e1e1e1);
+	background-image: -o-linear-gradient(top, #ffffff, #e1e1e1);
+	background-image: linear-gradient(top, #ffffff, #e1e1e1);
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffffff', endColorstr='#e1e1e1', GradientType=0);
+*/
+	border: 1px solid #dadada;
+	border-left: 1px solid #d2d2d2;
+	border-right: 1px solid #d2d2d2;
+	border-bottom-color: #a9a9a9;
+	font-weight: bold;
+	line-height: 1;
+/*
+	box-shadow: 0 1px 0 rgba(0, 0, 0, 0.15), inset 0 1px 1px 0 rgba(255, 255, 255, 0.6);
+	text-shadow: 0 1px 0px #ffffff;
+*/
+	text-shadow: 0 -1px 1px rgba(0,0,0,0.25);
+}
+button:hover, input[type=button]:hover, input[type=reset]:hover, input[type=submit]:hover {
+	filter: none;
+	color: #fff;
+	background: #333;
+	text-shadow: 0 1px 0px rgba(255, 255, 255, 0.8);
+	text-decoration: none;
+	box-shadow: 0 1px 0 rgba(0, 0, 0, 0.15);
+}
+.cButton, .cButton:visited {
+	font-family:Arial;
+	display: inline-block;
+	padding: 4px 5px 4px;
+	color: #fff;
+	text-decoration: none;
+	-moz-border-radius: 6px;
+	-webkit-border-radius: 6px;
+	-moz-box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+	-webkit-box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+	text-shadow: 0 -1px 1px rgba(0,0,0,0.25);
+	border-bottom: 1px solid rgba(0,0,0,0.25);
+	position: relative;
+	cursor: pointer;
+	margin-bottom:6px;
+}
+.cButton:hover{ background-color: #111; color: #fff; }
+.cButton:active{ top: 1px; }
+.cbSmall.cButton, .cbSmall.cButton:visited { font-size: 16px}
+.cButton, .cButton:visited {
+	font-weight: bold;
+	line-height: 1;
+}
+.cbcGray.cButton, .cbcGray.cButton:visited { background-color: #505050; }
+.cbcGray.cButton:hover{ background-color: #808080; }
+
+.cbcLightGray.cButton, .cbcGray.cButton:visited { background-color: #a0a0a0; }
+.cbcLightGray.cButton:hover{ background-color: #808080; }
+
+.cbcBlue.cButton, .cbcBlue.cButton:visited { background-color: #2981e4; }
+.cbcBlue.cButton:hover{ background-color: #4C96E0; }
+
+.cbcGreen.cButton, .cbcGreen.cButton:visited { background-color: #218424; }
+.cbcGreen.cButton:hover { background-color: #2BAF2E; }
+
+.cbcLightGreen.cButton, .cbcLightGreen.cButton:visited { background-color: #91bd09; }
+.cbcLightGreen.cButton:hover { background-color: #749a02; }
+
+.cbcOlive.cButton, .cbcOlive.cButton:visited { background-color: #6B8E23; }
+.cbcOlive.cButton:hover { background-color: #93C130; }
+
+.cbcYellow.cButton, .cbcYellow.cButton:visited { background-color: #fc9200; }
+.cbcYellow.cButton:hover{ background-color: #ffb515; }
+
+.cbcOrange.cButton, .cbcOrange.cButton:visited { background-color: #ff5c00; }
+.cbcOrange.cButton:hover{ background-color: #FF8A4C; }
+
+.cbcRed.cButton, .cbcRed.cButton:visited { background-color: #DD1900; }
+.cbcRed.cButton:hover{ background-color: #DB4B3B; }
+
+.cbcPink.cButton, .cbcPink.cButton:visited { background-color: #EF239A; }
+.cbcPink.cButton:hover{ background-color: #ED5EAF; }

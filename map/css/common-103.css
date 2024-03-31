@@ -1,0 +1,144 @@
+body, div, img, ul, ol, li, p, th, td, form, pre, dl, dt, dd, fieldset, blockquote, caption, h1, h2, h3, h4, h5, h6 {
+	margin: 0;
+	padding: 0;
+}
+body {margin: 10px; }
+input, select, textarea { margin: 0; }
+img { border: 0; }
+.error_msg { color: red; margin: 20px; padding: 0; }
+body {
+	background-color: #ffffff;
+	text-align: left;
+	font-family: "MS PGothic","Osaka",Arial,sans-serif;
+}
+body, input, button, textarea {
+	font-size: 12px;
+	line-height: 1.2;
+}
+button, input[type="button"], input[type="submit"], input[type="reset"] {
+	overflow: visible;
+	margin: 1px 0;
+	padding: 1px 3px;
+	padding: 0 2px\9;	/* IE8以下 */
+}
+body:not(:target) {
+	padding: 0 2px\9;	/* IE9 */
+}
+html {
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+}
+body {
+	margin: 0;
+	width: 100%;
+	height: 100%;
+}
+#form {
+	margin: 5px 0 0 5px;
+}
+#map_canvas {
+	width: 100%;
+	height: 100%;
+}
+#panorama {
+	position: absolute; bottom: 5px; right: 40px; width: 45%; height: 45%;
+	border: 1px solid #666; padding: 0px; line-height: 1.4; overflow: hidden;
+	background: #ffffff;
+	z-index: 999;
+}
+#panowin {
+	position: relative; width: 100%; height: 100%;
+	border-top: 1px solid #666; padding: 0px;
+}
+#route_navi {
+	position: absolute;
+	top: 30px; left: 0px; width: 100px; height: 32px;
+	border: 1px solid #666; padding: 6px; line-height: 1.4;;
+	background-color: rgba( 255, 255, 255, 0.8 );
+}
+#route_navi_open {
+	position: absolute;
+	top: 30px; left: 0px; width: 14px; height: 16px;
+	border: 1px solid #666; padding: 6px; line-height: 1.4; overflow:hidden;
+	background-color: rgba( 255, 255, 255, 0.8 );
+}
+a { color: blue; }
+#side_bar {
+	position: absolute; top: 34px; right: 6px; width: 140px; height: 300px;
+	border: 1px solid #666; padding: 6px; line-height: 1.4; overflow:scroll;
+	background-color: rgba( 255, 255, 255, 0.7 );
+}
+#side_bar li {
+	white-space: nowrap;
+}
+@media print {
+	#form { display: none; }
+	#side_bar { display: none; }
+	#route_navi { top: 0px; left: 0px; width: 190px; }
+	#route_navi_open { display: none; }
+	#route_navi_close { display: none; }
+	#map_canvas { position: absolute; top: 0px; left: 0px; }
+}
+a.suggest_onoff {
+	text-decoration: none;
+	font-size: xx-small;
+}
+div.infowin {
+	overflow: hidden;
+}
+div.infowin .ttl a {
+	color: #000;
+	font-weight: bold;
+	white-space: nowrap;
+}
+div.infowin .ttl img {
+	float: left;
+	margin-right: 5px;
+	width: 16px;
+	height: 16px;
+}
+a.suggest_onoff {
+	text-decoration: none;
+	font-size: xx-small;
+}
+#comment {
+	position: absolute; bottom: 5px; right: 6px;
+	border: 1px solid #666; padding: 0px; line-height: 1.4;
+	background-color: rgba( 255, 255, 255, 0.7 );
+	overflow: auto;
+}
+.gm-style-iw {
+	min-width:160px !important;
+}
+/* 20170630 廃止
+@media only screen and (max-width: 359px) {
+	#travelModeSelect { display: none; }
+}
+
+@media only screen and (max-width: 359px) {
+	#travelModeWalk { display: inline; }
+}
+@media only screen and (min-width: 360px) {
+	#travelModeWalk { display: none; }
+}
+@media only screen and (max-width: 480px) {
+	#c_distance { display: none; }
+}
+@media only screen and (max-width: 760px) {
+	#c_streetview { display: none; }
+	#c_placessearch { display: none; }
+	#c_panoramio { display: none; }
+	#c_navioff_msg { display: none; }
+	.c_route_desc { display: none; }
+	#route_navi { top: 30px; left: 0px; width: 100px; }
+}
+@media only screen and (min-width: 761px) {
+	#route_navi { top: 30px; left: 0px; width: 190px; }
+}
+@media only screen and (max-width: 480px) {
+	form * {
+		font-size: 14px;
+	}
+}
+*/
