@@ -1,0 +1,57 @@
+// ファイルシステムオブジェクトの作成
+var fso = WScript.CreateObject("Scripting.FileSystemObject");
+var ado = WScript.CreateObject("ADODB.Stream");
+
+// インプットファイルとアウトプットファイルのパス
+var inputFile = "input.txt";	// Shift-JIS
+var outputFile = "output.html";	// UTF-8
+
+// インプットファイルが存在するかチェック
+if (!fso.FileExists(inputFile)) {
+	WScript.Echo("インプットファイルが見つかりません: " + inputFile);
+	WScript.Quit(1);
+}
+
+// インプットファイルをShift-JISで読み込み
+ado.Type = 2; // テキストモード
+ado.Mode = 3; // 読み取り/書き込み
+ado.Charset = "Shift-JIS";
+ado.Open();
+ado.LoadFromFile(inputFile);
+var content = ado.ReadText();
+ado.Close();
+
+// 各行を配列に分割
+var lines = content.split("\r\n");
+
+// アウトプットファイルをUTF-8で作成
+ado.Type = 2; // テキストモード
+ado.Mode = 3; // 読み取り/書き込み
+ado.Charset = "UTF-8";
+ado.Open();
+ado.WriteText('<html lang="ja">\n<head>\n<meta charset="utf-8">\n<title>サンプル</title>\n</head>\n<body>\n<h1>サンプル</h1>\n');
+
+// リンク部分を生成する関数
+function generateLink(title, url) {
+	return '<p><a href="' + url + '" target="_blank">' + title + '</a></p>\n';
+}
+
+// インプットファイルの内容を読み込み、リンク部分を書き込み
+var currentTitle = '';
+for (var i = 0; i < lines.length; i++) {
+	var line = lines[i];
+	if (line.indexOf('http') === 0) { // 'http'で始まるかチェック
+		ado.WriteText(generateLink(currentTitle, line));
+		currentTitle = '';
+	} else {
+		currentTitle = line;
+	}
+}
+
+// HTMLテンプレートの終了部分を書き込み
+ado.WriteText('</body>\n</html>');
+ado.SaveToFile(outputFile, 2); // ファイルを保存
+ado.Close();
+
+// 完了メッセージを表示
+WScript.Echo("HTMLファイルが生成されました: " + outputFile);
