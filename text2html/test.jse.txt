@@ -1,46 +1,46 @@
-// ƒtƒ@ƒCƒ‹ƒVƒXƒeƒ€ƒIƒuƒWƒFƒNƒg‚Ìì¬
+// ãƒ•ã‚¡ã‚¤ãƒ«ã‚·ã‚¹ãƒ†ãƒ ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã®ä½œæˆ
 var fso = WScript.CreateObject("Scripting.FileSystemObject");
 var ado = WScript.CreateObject("ADODB.Stream");
 
-// ƒCƒ“ƒvƒbƒgƒtƒ@ƒCƒ‹‚ÆƒAƒEƒgƒvƒbƒgƒtƒ@ƒCƒ‹‚ÌƒpƒX
+// ã‚¤ãƒ³ãƒ—ãƒƒãƒˆãƒ•ã‚¡ã‚¤ãƒ«ã¨ã‚¢ã‚¦ãƒˆãƒ—ãƒƒãƒˆãƒ•ã‚¡ã‚¤ãƒ«ã®ãƒ‘ã‚¹
 var inputFile = "input.txt";	// Shift-JIS
 var outputFile = "output.html";	// UTF-8
 
-// ƒCƒ“ƒvƒbƒgƒtƒ@ƒCƒ‹‚ª‘¶İ‚·‚é‚©ƒ`ƒFƒbƒN
+// ã‚¤ãƒ³ãƒ—ãƒƒãƒˆãƒ•ã‚¡ã‚¤ãƒ«ãŒå­˜åœ¨ã™ã‚‹ã‹ãƒã‚§ãƒƒã‚¯
 if (!fso.FileExists(inputFile)) {
-	WScript.Echo("ƒCƒ“ƒvƒbƒgƒtƒ@ƒCƒ‹‚ªŒ©‚Â‚©‚è‚Ü‚¹‚ñ: " + inputFile);
+	WScript.Echo("ã‚¤ãƒ³ãƒ—ãƒƒãƒˆãƒ•ã‚¡ã‚¤ãƒ«ãŒè¦‹ã¤ã‹ã‚Šã¾ã›ã‚“: " + inputFile);
 	WScript.Quit(1);
 }
 
-// ƒCƒ“ƒvƒbƒgƒtƒ@ƒCƒ‹‚ğShift-JIS‚Å“Ç‚İ‚İ
-ado.Type = 2; // ƒeƒLƒXƒgƒ‚[ƒh
-ado.Mode = 3; // “Ç‚İæ‚è/‘‚«‚İ
+// ã‚¤ãƒ³ãƒ—ãƒƒãƒˆãƒ•ã‚¡ã‚¤ãƒ«ã‚’Shift-JISã§èª­ã¿è¾¼ã¿
+ado.Type = 2; // ãƒ†ã‚­ã‚¹ãƒˆãƒ¢ãƒ¼ãƒ‰
+ado.Mode = 3; // èª­ã¿å–ã‚Š/æ›¸ãè¾¼ã¿
 ado.Charset = "Shift-JIS";
 ado.Open();
 ado.LoadFromFile(inputFile);
 var content = ado.ReadText();
 ado.Close();
 
-// Šes‚ğ”z—ñ‚É•ªŠ„
+// å„è¡Œã‚’é…åˆ—ã«åˆ†å‰²
 var lines = content.split("\r\n");
 
-// ƒAƒEƒgƒvƒbƒgƒtƒ@ƒCƒ‹‚ğUTF-8‚Åì¬
-ado.Type = 2; // ƒeƒLƒXƒgƒ‚[ƒh
-ado.Mode = 3; // “Ç‚İæ‚è/‘‚«‚İ
+// ã‚¢ã‚¦ãƒˆãƒ—ãƒƒãƒˆãƒ•ã‚¡ã‚¤ãƒ«ã‚’UTF-8ã§ä½œæˆ
+ado.Type = 2; // ãƒ†ã‚­ã‚¹ãƒˆãƒ¢ãƒ¼ãƒ‰
+ado.Mode = 3; // èª­ã¿å–ã‚Š/æ›¸ãè¾¼ã¿
 ado.Charset = "UTF-8";
 ado.Open();
-ado.WriteText('<html lang="ja">\n<head>\n<meta charset="utf-8">\n<title>ƒTƒ“ƒvƒ‹</title>\n</head>\n<body>\n<h1>ƒTƒ“ƒvƒ‹</h1>\n');
+ado.WriteText('<html lang="ja">\n<head>\n<meta charset="utf-8">\n<title>ã‚µãƒ³ãƒ—ãƒ«</title>\n</head>\n<body>\n<h1>ã‚µãƒ³ãƒ—ãƒ«</h1>\n');
 
-// ƒŠƒ“ƒN•”•ª‚ğ¶¬‚·‚éŠÖ”
+// ãƒªãƒ³ã‚¯éƒ¨åˆ†ã‚’ç”Ÿæˆã™ã‚‹é–¢æ•°
 function generateLink(title, url) {
 	return '<p><a href="' + url + '" target="_blank">' + title + '</a></p>\n';
 }
 
-// ƒCƒ“ƒvƒbƒgƒtƒ@ƒCƒ‹‚Ì“à—e‚ğ“Ç‚İ‚İAƒŠƒ“ƒN•”•ª‚ğ‘‚«‚İ
+// ã‚¤ãƒ³ãƒ—ãƒƒãƒˆãƒ•ã‚¡ã‚¤ãƒ«ã®å†…å®¹ã‚’èª­ã¿è¾¼ã¿ã€ãƒªãƒ³ã‚¯éƒ¨åˆ†ã‚’æ›¸ãè¾¼ã¿
 var currentTitle = '';
 for (var i = 0; i < lines.length; i++) {
 	var line = lines[i];
-	if (line.indexOf('http') === 0) { // 'http'‚Ån‚Ü‚é‚©ƒ`ƒFƒbƒN
+	if (line.indexOf('http') === 0) { // 'http'ã§å§‹ã¾ã‚‹ã‹ãƒã‚§ãƒƒã‚¯
 		ado.WriteText(generateLink(currentTitle, line));
 		currentTitle = '';
 	} else {
@@ -48,10 +48,10 @@ for (var i = 0; i < lines.length; i++) {
 	}
 }
 
-// HTMLƒeƒ“ƒvƒŒ[ƒg‚ÌI—¹•”•ª‚ğ‘‚«‚İ
+// HTMLãƒ†ãƒ³ãƒ—ãƒ¬ãƒ¼ãƒˆã®çµ‚äº†éƒ¨åˆ†ã‚’æ›¸ãè¾¼ã¿
 ado.WriteText('</body>\n</html>');
-ado.SaveToFile(outputFile, 2); // ƒtƒ@ƒCƒ‹‚ğ•Û‘¶
+ado.SaveToFile(outputFile, 2); // ãƒ•ã‚¡ã‚¤ãƒ«ã‚’ä¿å­˜
 ado.Close();
 
-// Š®—¹ƒƒbƒZ[ƒW‚ğ•\¦
-WScript.Echo("HTMLƒtƒ@ƒCƒ‹‚ª¶¬‚³‚ê‚Ü‚µ‚½: " + outputFile);
+// å®Œäº†ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ã‚’è¡¨ç¤º
+WScript.Echo("HTMLãƒ•ã‚¡ã‚¤ãƒ«ãŒç”Ÿæˆã•ã‚Œã¾ã—ãŸ: " + outputFile);
