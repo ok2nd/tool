@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>画質比較：TwentyTwenty</title>
+<link rel="stylesheet" href="css/twentytwenty.css">
+<style>
+h3, h4, p {
+	margin: 0px;
+	padding: 0px;
+}
+/* Before,After文字の削除 */
+.twentytwenty-before-label{display:none}
+.twentytwenty-after-label{display:none}
+html, body {
+	height: 90%;	/* 効果なし：JavaScriptで対応 */
+}
+.container {
+	height: 90%;	* 効果なし：JavaScriptで対応 */
+}
+img {
+	height: 100%;
+	object-fit: contain;
+}
+</style>
+</head>
+<body>
+<h4>画質比較：TwentyTwenty</h4>
+<div class="container">
+	<img src="../101.jpg">
+	<img src="../102.jpg">
+</div>
+<script src="https://code.jquery.com/jquery-3.2.1.js"></script>
+<script src="js/jquery.event.move.js"></script>
+<script src="js/jquery.twentytwenty.js"></script>
+<script>
+$(document).ready(function () {
+	hsize = $(window).height() - 50;
+	$(".container").css("height", hsize + "px");
+});
+$(window).resize(function () {
+	hsize = $(window).height() - 50;
+	$(".container").css("height", hsize + "px");
+});
+$(function(){
+	$(".container").twentytwenty();
+});
+</script>
+</body>
+</html>
