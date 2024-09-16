@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>画質比較：BeerSlider</title>
+<link rel="stylesheet" href="css/BeerSlider.css">
+<style>
+h3, h4, p {
+	margin: 0px;
+	padding: 0px;
+}
+#slider .beer-reveal {
+	border-right: solid 2px hsla(0, 0%, 100%, .5);
+}
+html, body, div {
+	height: 80%;
+}
+img {
+	height: 100%;
+}
+</style>
+<script src="js/BeerSlider.js"></script>
+</head>
+<body>
+<h4>画質比較：BeerSlider</h4>
+<div id="slider" class="beer-slider">
+	<img src="../002.jpg" alt=""><!-- 右側画像 -->
+	<div class="beer-reveal">
+		<img src="../001.jpg" alt=""><!-- 左側画像 -->
+	</div>
+</div>
+<script src="https://code.jquery.com/jquery-3.2.1.js"></script>
+<script>
+/*
+	$(document).ready(function () {
+		hsize = $(window).height() - 50;
+		$("#slider").css("height", hsize + "px");
+		$(".beer-slider").css("height", hsize + "px");
+		$(".beer-reveal").css("height", hsize + "px");
+	});
+	$(window).resize(function () {
+		hsize = $(window).height() - 50;
+		$("#slider").css("height", hsize + "px");
+	});
+*/
+</script>
+<script>
+	new BeerSlider(document.getElementById('slider'));
+</script>
+</body>
+</html>
