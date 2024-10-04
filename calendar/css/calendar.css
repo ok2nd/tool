@@ -1,0 +1,42 @@
+table.calendar {
+	border-collapse: collapse;
+	color: #333;
+}
+table.calendar caption {
+	font-weight: bold;
+}
+table.calendar th,
+table.calendar td {
+	border: solid 1px #888;
+	text-align: center;
+	padding: 0 5px;
+}
+th.sunday {
+	background: #ffe0e0;
+	color: #f00;
+}
+th.weekday {
+	background: #f8f8f8;
+}
+th.saturday {
+	background: #ddebff;
+	color: #045acc;
+}
+td.sunday {
+	background: #fff0f0;
+	color: #f00;
+}
+td.weekday {
+	background: #fff;
+}
+td.saturday {
+	background: #edf3ff;
+	color: #045acc;
+}
+td.holiday {
+	background: #ffc4c4;
+	color: #f00;
+}
+td.today {
+	background: #ffcb93;
+}
