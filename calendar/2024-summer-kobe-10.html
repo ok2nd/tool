@@ -1,0 +1,813 @@
+<!DOCTYPE html><html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="author" content="ok.2nd">
+<meta name="description" content="カレンダー">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0,user-scalable=0">
+<link rel="shortcut icon" href="ico/calendar1.ico" type="image/ico">
+<link rel="icon" href="ico/calendar1.ico" type="image/ico">
+<title>神戸市：2024年夏の最高気温</title>
+<link rel="stylesheet" href="css/calendar-summer.css">
+<style type="text/css">
+table.calendar {
+	margin: 5px;
+	display: inline-block;	/* 高さの異なるボックスを横に並べるならfloatよりinline-block */
+	vertical-align: top;
+	font-size: 12px;
+}
+.holidays_name {
+	display: none;
+/*
+	position: absolute;
+	margin: -1px 0 0 8px;
+	padding: 5px;
+	color: #f00;
+	background: #fff;
+	border: solid 1px #f00;
+	-webkit-border-radius: 4px;
+	-moz-border-radius: 4px;
+	border-radius: 4px;
+*/
+}
+/*
+td.holiday span:hover + p.holidays_name {
+	display: block;
+}
+*/
+table.calendar .prevnext {
+	display: none;
+}
+#comment {
+	margin: 10px 5px;
+	font-size: 12px;
+}
+@media print {
+	p#comment {
+		display: none;
+	}
+}
+.natsubi {
+	background: #FF8C00;
+	color: #fff;
+}
+.manatsubi {
+	background: #FF3232;
+	color: #fff;
+}
+.moushobi {
+	background: #D702EF;
+	color: #fff;
+}
+#explain {
+	font-size: 12px;
+}
+#explain span {
+	margin: 0px 5px;
+	padding: 3px 5px;
+}
+</style>
+</head>
+<body>
+<div>
+<h3>神戸市：2024年夏の最高気温（2024.11.1 時点）</h3>
+<p id="explain">
+<span class="natsubi">夏日</span>
+<span class="manatsubi">真夏日</span>
+<span class="moushobi">猛暑日</span>
+</p>
+<!--
+<table class="calendar">
+<caption><a class="prevnext" href="?y=2023&m=12">＜＜</a><span class="title">2024年 1月</span><a class="prevnext" href="?y=2024&m=2">＞＞</a></caption>
+	<tr>
+		<th class="sunday">日</th>
+		<th class="weekday">月</th>
+		<th class="weekday">火</th>
+		<th class="weekday">水</th>
+		<th class="weekday">木</th>
+		<th class="weekday">金</th>
+		<th class="saturday">土</th>
+	</tr>
+	<tr>
+		<td class="sunday"><span></span></td>
+		<td class=" holiday"><span>1</span><p class="holidays_name">銀行休業日</p></td>
+		<td class=" holiday"><span>2</span><p class="holidays_name">銀行休業日</p></td>
+		<td class=" holiday"><span>3</span><p class="holidays_name">銀行休業日</p></td>
+		<td class=""><span>4</span></td>
+		<td class=""><span>5</span></td>
+		<td class="saturday"><span>6</span></td>
+	</tr>
+	<tr>
+		<td class="sunday"><span>7</span></td>
+		<td class=" holiday"><span>8</span><p class="holidays_name">成人の日</p></td>
+		<td class=""><span>9</span></td>
+		<td class=""><span>10</span></td>
+		<td class=""><span>11</span></td>
+		<td class=""><span>12</span></td>
+		<td class="saturday"><span>13</span></td>
+	</tr>
+	<tr>
+		<td class="sunday"><span>14</span></td>
+		<td class=""><span>15</span></td>
+		<td class=""><span>16</span></td>
+		<td class=""><span>17</span></td>
+		<td class=""><span>18</span></td>
+		<td class=""><span>19</span></td>
+		<td class="saturday"><span>20</span></td>
+	</tr>
+	<tr>
+		<td class="sunday"><span>21</span></td>
+		<td class=""><span>22</span></td>
+		<td class=""><span>23</span></td>
+		<td class=""><span>24</span></td>
+		<td class=""><span>25</span></td>
+		<td class=""><span>26</span></td>
+		<td class="saturday"><span>27</span></td>
+	</tr>
+	<tr>
+		<td class="sunday"><span>28</span></td>
+		<td class=""><span>29</span></td>
+		<td class=""><span>30</span></td>
+		<td class=""><span>31</span></td>
+		<td class=""><span></span></td>
+		<td class=""><span></span></td>
+		<td class="saturday"><span></span></td>
+	</tr>
+	<tr>
+	</tr>
+</table>
+<table class="calendar">
+<caption><a class="prevnext" href="?y=2024&m=1">＜＜</a><span class="title">2024年 2月</span><a class="prevnext" href="?y=2024&m=3">＞＞</a></caption>
+	<tr>
+		<th class="sunday">日</th>
+		<th class="weekday">月</th>
+		<th class="weekday">火</th>
+		<th class="weekday">水</th>
+		<th class="weekday">木</th>
+		<th class="weekday">金</th>
+		<th class="saturday">土</th>
+	</tr>
+	<tr>
+		<td class="sunday"><span></span></td>
+		<td class=""><span></span></td>
+		<td class=""><span></span></td>
+		<td class=""><span></span></td>
+		<td class=""><span>1</span></td>
+		<td class=""><span>2</span></td>
+		<td class="saturday holiday"><span>3</span><p class="holidays_name">節分</p></td>
+	</tr>
+	<tr>
+		<td class="sunday"><span>4</span></td>
+		<td class=""><span>5</span></td>
+		<td class=""><span>6</span></td>
+		<td class=""><span>7</span></td>
+		<td class=""><span>8</span></td>
+		<td class=""><span>9</span></td>
+		<td class="saturday"><span>10</span></td>
+	</tr>
+	<tr>
+		<td class="sunday holiday"><span>11</span><p class="holidays_name">建国記念の日</p></td>
+		<td class=" holiday"><span>12</span><p class="holidays_name">建国記念の日 振替休日</p></td>
+		<td class=""><span>13</span></td>
+		<td class=""><span>14</span></td>
+		<td class=""><span>15</span></td>
+		<td class=""><span>16</span></td>
+		<td class="saturday"><span>17</span></td>
+	</tr>
+	<tr>
+		<td class="sunday"><span>18</span></td>
+		<td class=""><span>19</span></td>
+		<td class=""><span>20</span></td>
+		<td class=""><span>21</span></td>
+		<td class=""><span>22</span></td>
+		<td class=" holiday"><span>23</span><p class="holidays_name">天皇誕生日</p></td>
+		<td class="saturday"><span>24</span></td>
+	</tr>
+	<tr>
+		<td class="sunday"><span>25</span></td>
+		<td class=""><span>26</span></td>
+		<td class=""><span>27</span></td>
+		<td class=""><span>28</span></td>
+		<td class=""><span>29</span></td>
+		<td class=""><span></span></td>
+		<td class="saturday"><span></span></td>
+	</tr>
+	<tr>
+	</tr>
+</table>
+<table class="calendar">
+<caption><a class="prevnext" href="?y=2024&m=2">＜＜</a><span class="title">2024年 3月</span><a class="prevnext" href="?y=2024&m=4">＞＞</a></caption>
+	<tr>
+		<th class="sunday">日</th>
+		<th class="weekday">月</th>
+		<th class="weekday">火</th>
+		<th class="weekday">水</th>
+		<th class="weekday">木</th>
+		<th class="weekday">金</th>
+		<th class="saturday">土</th>
+	</tr>
+	<tr>
+		<td class="sunday"><span></span></td>
+		<td class=""><span></span></td>
+		<td class=""><span></span></td>
+		<td class=""><span></span></td>
+		<td class=""><span></span></td>
+		<td class=""><span>1</span></td>
+		<td class="saturday"><span>2</span></td>
+	</tr>
+	<tr>
+		<td class="sunday holiday"><span>3</span><p class="holidays_name">雛祭り</p></td>
+		<td class=""><span>4</span></td>
+		<td class=""><span>5</span></td>
+		<td class=""><span>6</span></td>
+		<td class=""><span>7</span></td>
+		<td class=""><span>8</span></td>
+		<td class="saturday"><span>9</span></td>
+	</tr>
+	<tr>
+		<td class="sunday"><span>10</span></td>
+		<td class=""><span>11</span></td>
+		<td class=""><span>12</span></td>
+		<td class=""><span>13</span></td>
+		<td class=""><span>14</span></td>
+		<td class=""><span>15</span></td>
+		<td class="saturday"><span>16</span></td>
+	</tr>
+	<tr>
+		<td class="sunday"><span>17</span></td>
+		<td class=""><span>18</span></td>
+		<td class=""><span>19</span></td>
+		<td class=" holiday"><span>20</span><p class="holidays_name">春分の日</p></td>
+		<td class=""><span>21</span></td>
+		<td class=""><span>22</span></td>
+		<td class="saturday"><span>23</span></td>
+	</tr>
+	<tr>
+		<td class="sunday"><span>24</span></td>
+		<td class=""><span>25</span></td>
+		<td class=""><span>26</span></td>
+		<td class=""><span>27</span></td>
+		<td class=""><span>28</span></td>
+		<td class=""><span>29</span></td>
+		<td class="saturday"><span>30</span></td>
+	</tr>
+	<tr>
+		<td class="sunday"><span>31</span></td>
+		<td class=""><span></span></td>
+		<td class=""><span></span></td>
+		<td class=""><span></span></td>
+		<td class=""><span></span></td>
+		<td class=""><span></span></td>
+		<td class="saturday"><span></span></td>
+	</tr>
+	<tr>
+	</tr>
+</table>
+-->
+<table class="calendar">
+<caption><a class="prevnext" href="?y=2024&m=3">＜＜</a><span class="title">2024年 4月</span><a class="prevnext" href="?y=2024&m=5">＞＞</a></caption>
+	<tr>
+		<th class="sunday">日</th>
+		<th class="weekday">月</th>
+		<th class="weekday">火</th>
+		<th class="weekday">水</th>
+		<th class="weekday">木</th>
+		<th class="weekday">金</th>
+		<th class="saturday">土</th>
+	</tr>
+	<tr>
+		<td class="sunday"><span></span></td>
+		<td class=""><span>1</span></td>
+		<td class=""><span>2</span></td>
+		<td class=""><span>3</span></td>
+		<td class=""><span>4</span></td>
+		<td class=""><span>5</span></td>
+		<td class="saturday"><span>6</span></td>
+	</tr>
+	<tr>
+		<td class="sunday"><span>7</span></td>
+		<td class=""><span>8</span></td>
+		<td class=""><span>9</span></td>
+		<td class=""><span>10</span></td>
+		<td class=""><span>11</span></td>
+		<td class=""><span>12</span></td>
+		<td class="saturday"><span>13</span></td>
+	</tr>
+	<tr>
+		<td class="sunday"><span>14</span></td>
+		<td class=""><span>15</span></td>
+		<td class=""><span>16</span></td>
+		<td class=""><span>17</span></td>
+		<td class=""><span>18</span></td>
+		<td class=""><span>19</span></td>
+		<td class="saturday"><span>20</span></td>
+	</tr>
+	<tr>
+		<td class="sunday"><span>21</span></td>
+		<td class=""><span>22</span></td>
+		<td class=""><span>23</span></td>
+		<td class=""><span>24</span></td>
+		<td class=""><span>25</span></td>
+		<td class=""><span>26</span></td>
+		<td class="saturday"><span>27</span></td>
+	</tr>
+	<tr>
+		<td class="sunday natsubi"><span>28</span></td>
+		<td class=" holiday"><span>29</span><p class="holidays_name">昭和の日</p></td>
+		<td class=""><span>30</span></td>
+		<td class=""><span></span></td>
+		<td class=""><span></span></td>
+		<td class=""><span></span></td>
+		<td class="saturday"><span></span></td>
+	</tr>
+	<tr>
+	</tr>
+</table>
+<table class="calendar">
+<caption><a class="prevnext" href="?y=2024&m=4">＜＜</a><span class="title">2024年 5月</span><a class="prevnext" href="?y=2024&m=6">＞＞</a></caption>
+	<tr>
+		<th class="sunday">日</th>
+		<th class="weekday">月</th>
+		<th class="weekday">火</th>
+		<th class="weekday">水</th>
+		<th class="weekday">木</th>
+		<th class="weekday">金</th>
+		<th class="saturday">土</th>
+	</tr>
+	<tr>
+		<td class="sunday"><span></span></td>
+		<td class=""><span></span></td>
+		<td class=""><span></span></td>
+		<td class=""><span>1</span></td>
+		<td class=""><span>2</span></td>
+		<td class=" holiday"><span>3</span><p class="holidays_name">憲法記念日</p></td>
+		<td class="saturday holiday natsubi"><span>4</span><p class="holidays_name">みどりの日</p></td>
+	</tr>
+	<tr>
+		<td class="sunday holiday"><span>5</span><p class="holidays_name">こどもの日</p></td>
+		<td class=" holiday"><span>6</span><p class="holidays_name">こどもの日 振替休日</p></td>
+		<td class=""><span>7</span></td>
+		<td class=""><span>8</span></td>
+		<td class=""><span>9</span></td>
+		<td class=""><span>10</span></td>
+		<td class="saturday"><span>11</span></td>
+	</tr>
+	<tr>
+		<td class="sunday holiday"><span>12</span><p class="holidays_name">母の日</p></td>
+		<td class=""><span>13</span></td>
+		<td class=""><span>14</span></td>
+		<td class="natsubi"><span>15</span></td>
+		<td class=""><span>16</span></td>
+		<td class=""><span>17</span></td>
+		<td class="saturday"><span>18</span></td>
+	</tr>
+	<tr>
+		<td class="sunday"><span>19</span></td>
+		<td class=""><span>20</span></td>
+		<td class="natsubi"><span>21</span></td>
+		<td class=""><span>22</span></td>
+		<td class=""><span>23</span></td>
+		<td class="natsubi"><span>24</span></td>
+		<td class="saturday natsubi"><span>25</span></td>
+	</tr>
+	<tr>
+		<td class="sunday"><span>26</span></td>
+		<td class="natsubi"><span>27</span></td>
+		<td class=""><span>28</span></td>
+		<td class=""><span>29</span></td>
+		<td class=""><span>30</span></td>
+		<td class=""><span>31</span></td>
+		<td class="saturday"><span></span></td>
+	</tr>
+	<tr>
+	</tr>
+</table>
+<table class="calendar">
+<caption><a class="prevnext" href="?y=2024&m=5">＜＜</a><span class="title">2024年 6月</span><a class="prevnext" href="?y=2024&m=7">＞＞</a></caption>
+	<tr>
+		<th class="sunday">日</th>
+		<th class="weekday">月</th>
+		<th class="weekday">火</th>
+		<th class="weekday">水</th>
+		<th class="weekday">木</th>
+		<th class="weekday">金</th>
+		<th class="saturday">土</th>
+	</tr>
+	<tr>
+		<td class="sunday"><span></span></td>
+		<td class=""><span></span></td>
+		<td class=""><span></span></td>
+		<td class=""><span></span></td>
+		<td class=""><span></span></td>
+		<td class=""><span></span></td>
+		<td class="saturday natsubi"><span>1</span></td>
+	</tr>
+	<tr>
+		<td class="sunday"><span>2</span></td>
+		<td class=""><span>3</span></td>
+		<td class=""><span>4</span></td>
+		<td class="natsubi"><span>5</span></td>
+		<td class=""><span>6</span></td>
+		<td class="natsubi"><span>7</span></td>
+		<td class="saturday natsubi"><span>8</span></td>
+	</tr>
+	<tr>
+		<td class="sunday"><span>9</span></td>
+		<td class="natsubi"><span>10</span></td>
+		<td class="natsubi"><span>11</span></td>
+		<td class="natsubi"><span>12</span></td>
+		<td class="manatsubi"><span>13</span></td>
+		<td class="manatsubi"><span>14</span></td>
+		<td class="saturday natsubi"><span>15</span></td>
+	</tr>
+	<tr>
+		<td class="sunday natsubi"><span>16</span></td>
+		<td class="natsubi"><span>17</span></td>
+		<td class="natsubi"><span>18</span></td>
+		<td class="manatsubi"><span>19</span></td>
+		<td class="natsubi"><span>20</span></td>
+		<td class="natsubi"><span>21</span></td>
+		<td class="saturday natsubi"><span>22</span></td>
+	</tr>
+	<tr>
+		<td class="natsubi sunday"><span>23</span></td>
+		<td class="natsubi"><span>24</span></td>
+		<td class="natsubi"><span>25</span></td>
+		<td class="natsubi"><span>26</span></td>
+		<td class="natsubi"><span>27</span></td>
+		<td class="natsubi"><span>28</span></td>
+		<td class="natsubi saturday"><span>29</span></td>
+	</tr>
+	<tr>
+		<td class="natsubi sunday"><span>30</span></td>
+		<td class=""><span></span></td>
+		<td class=""><span></span></td>
+		<td class=""><span></span></td>
+		<td class=""><span></span></td>
+		<td class=""><span></span></td>
+		<td class="saturday"><span></span></td>
+	</tr>
+	<tr>
+	</tr>
+</table>
+<table class="calendar">
+<caption><a class="prevnext" href="?y=2024&m=6">＜＜</a><span class="title">2024年 7月</span><a class="prevnext" href="?y=2024&m=8">＞＞</a></caption>
+	<tr>
+		<th class="sunday">日</th>
+		<th class="weekday">月</th>
+		<th class="weekday">火</th>
+		<th class="weekday">水</th>
+		<th class="weekday">木</th>
+		<th class="weekday">金</th>
+		<th class="saturday">土</th>
+	</tr>
+	<tr>
+		<td class="sunday"><span></span></td>
+		<td class="natsubi"><span>1</span></td>
+		<td class="natsubi"><span>2</span></td>
+		<td class="manatsubi"><span>3</span></td>
+		<td class="manatsubi"><span>4</span></td>
+		<td class="manatsubi"><span>5</span></td>
+		<td class="manatsubi saturday"><span>6</span></td>
+	</tr>
+	<tr>
+		<td class="manatsubi sunday holiday"><span>7</span><p class="holidays_name">七夕</p></td>
+		<td class="manatsubi"><span>8</span></td>
+		<td class="manatsubi"><span>9</span></td>
+		<td class="manatsubi"><span>10</span></td>
+		<td class="natsubi"><span>11</span></td>
+		<td class="natsubi"><span>12</span></td>
+		<td class="natsubi saturday"><span>13</span></td>
+	</tr>
+	<tr>
+		<td class="natsubi sunday"><span>14</span></td>
+		<td class="natsubi holiday"><span>15</span><p class="holidays_name">海の日</p></td>
+		<td class="manatsubi"><span>16</span></td>
+		<td class="manatsubi"><span>17</span></td>
+		<td class="manatsubi"><span>18</span></td>
+		<td class="manatsubi"><span>19</span></td>
+		<td class="manatsubi saturday"><span>20</span></td>
+	</tr>
+	<tr>
+		<td class="manatsubi sunday"><span>21</span></td>
+		<td class="manatsubi"><span>22</span></td>
+		<td class="manatsubi"><span>23</span></td>
+		<td class="manatsubi"><span>24</span></td>
+		<td class="manatsubi"><span>25</span></td>
+		<td class="manatsubi"><span>26</span></td>
+		<td class="manatsubi saturday"><span>27</span></td>
+	</tr>
+	<tr>
+		<td class="moushobi sunday"><span>28</span></td>
+		<td class="moushobi"><span>29</span></td>
+		<td class="moushobi"><span>30</span></td>
+		<td class="moushobi"><span>31</span></td>
+		<td class=""><span></span></td>
+		<td class=""><span></span></td>
+		<td class="saturday"><span></span></td>
+	</tr>
+	<tr>
+	</tr>
+</table>
+<table class="calendar">
+<caption><a class="prevnext" href="?y=2024&m=7">＜＜</a><span class="title">2024年 8月</span><a class="prevnext" href="?y=2024&m=9">＞＞</a></caption>
+	<tr>
+		<th class="sunday">日</th>
+		<th class="weekday">月</th>
+		<th class="weekday">火</th>
+		<th class="weekday">水</th>
+		<th class="weekday">木</th>
+		<th class="weekday">金</th>
+		<th class="saturday">土</th>
+	</tr>
+	<tr>
+		<td class="sunday"><span></span></td>
+		<td class=""><span></span></td>
+		<td class=""><span></span></td>
+		<td class=""><span></span></td>
+		<td class="moushobi"><span>1</span></td>
+		<td class="moushobi"><span>2</span></td>
+		<td class="moushobi saturday"><span>3</span></td>
+	</tr>
+	<tr>
+		<td class="moushobi sunday"><span>4</span></td>
+		<td class="manatsubi"><span>5</span></td>
+		<td class="manatsubi"><span>6</span></td>
+		<td class="manatsubi"><span>7</span></td>
+		<td class="moushobi"><span>8</span></td>
+		<td class="moushobi"><span>9</span></td>
+		<td class="moushobi saturday"><span>10</span></td>
+	</tr>
+	<tr>
+		<td class="moushobi sunday holiday"><span>11</span><p class="holidays_name">山の日</p></td>
+		<td class="moushobi holiday"><span>12</span><p class="holidays_name">休日 山の日</p></td>
+		<td class="moushobi"><span>13</span></td>
+		<td class="moushobi"><span>14</span></td>
+		<td class="moushobi"><span>15</span></td>
+		<td class="manatsubi"><span>16</span></td>
+		<td class="manatsubi saturday"><span>17</span></td>
+	</tr>
+	<tr>
+		<td class="moushobi sunday"><span>18</span></td>
+		<td class="manatsubi"><span>19</span></td>
+		<td class="manatsubi"><span>20</span></td>
+		<td class="manatsubi"><span>21</span></td>
+		<td class="manatsubi"><span>22</span></td>
+		<td class="manatsubi"><span>23</span></td>
+		<td class="manatsubi saturday"><span>24</span></td>
+	</tr>
+	<tr>
+		<td class="manatsubi sunday"><span>25</span></td>
+		<td class="moushobi"><span>26</span></td>
+		<td class="moushobi"><span>27</span></td>
+		<td class="manatsubi"><span>28</span></td>
+		<td class="manatsubi"><span>29</span></td>
+		<td class="manatsubi"><span>30</span></td>
+		<td class="manatsubi saturday"><span>31</span></td>
+	</tr>
+	<tr>
+	</tr>
+</table>
+<table class="calendar">
+<caption><a class="prevnext" href="?y=2024&m=8">＜＜</a><span class="title">2024年 9月</span><a class="prevnext" href="?y=2024&m=10">＞＞</a></caption>
+	<tr>
+		<th class="sunday">日</th>
+		<th class="weekday">月</th>
+		<th class="weekday">火</th>
+		<th class="weekday">水</th>
+		<th class="weekday">木</th>
+		<th class="weekday">金</th>
+		<th class="saturday">土</th>
+	</tr>
+	<tr>
+		<td class="manatsubi sunday"><span>1</span></td>
+		<td class="manatsubi"><span>2</span></td>
+		<td class="manatsubi"><span>3</span></td>
+		<td class="manatsubi"><span>4</span></td>
+		<td class="manatsubi"><span>5</span></td>
+		<td class="manatsubi"><span>6</span></td>
+		<td class="manatsubi saturday"><span>7</span></td>
+	</tr>
+	<tr>
+		<td class="manatsubi sunday"><span>8</span></td>
+		<td class="moushobi"><span>9</span></td>
+		<td class="manatsubi"><span>10</span></td>
+		<td class="manatsubi"><span>11</span></td>
+		<td class="manatsubi"><span>12</span></td>
+		<td class="manatsubi"><span>13</span></td>
+		<td class="manatsubi saturday"><span>14</span></td>
+	</tr>
+	<tr>
+		<td class="manatsubi sunday"><span>15</span></td>
+		<td class="manatsubi holiday"><span>16</span><p class="holidays_name">敬老の日</p></td>
+		<td class="manatsubi"><span>17</span></td>
+		<td class="manatsubi"><span>18</span></td>
+		<td class="manatsubi"><span>19</span></td>
+		<td class="manatsubi"><span>20</span></td>
+		<td class="manatsubi saturday"><span>21</span></td>
+	</tr>
+	<tr>
+		<td class="natsubi sunday holiday"><span>22</span><p class="holidays_name">秋分の日</p></td>
+		<td class="natsubi holiday"><span>23</span><p class="holidays_name">秋分の日 振替休日</p></td>
+		<td class="manatsubi"><span>24</span></td>
+		<td class="manatsubi"><span>25</span></td>
+		<td class="manatsubi"><span>26</span></td>
+		<td class="manatsubi"><span>27</span></td>
+		<td class="manatsubi saturday"><span>28</span></td>
+	</tr>
+	<tr>
+		<td class="natsubi sunday"><span>29</span></td>
+		<td class="natsubi"><span>30</span></td>
+		<td class=""><span></span></td>
+		<td class=""><span></span></td>
+		<td class=""><span></span></td>
+		<td class=""><span></span></td>
+		<td class="saturday"><span></span></td>
+	</tr>
+	<tr>
+	</tr>
+</table>
+<table class="calendar">
+<caption><a class="prevnext" href="?y=2024&m=9">＜＜</a><span class="title">2024年 10月</span><a class="prevnext" href="?y=2024&m=11">＞＞</a></caption>
+	<tr>
+		<th class="sunday">日</th>
+		<th class="weekday">月</th>
+		<th class="weekday">火</th>
+		<th class="weekday">水</th>
+		<th class="weekday">木</th>
+		<th class="weekday">金</th>
+		<th class="saturday">土</th>
+	</tr>
+	<tr>
+		<td class="sunday"><span></span></td>
+		<td class=""><span></span></td>
+		<td class="manatsubi"><span>1</span></td>
+		<td class="natsubi"><span>2</span></td>
+		<td class="natsubi"><span>3</span></td>
+		<td class="natsubi"><span>4</span></td>
+		<td class="natsubi saturday"><span>5</span></td>
+	</tr>
+	<tr>
+		<td class="natsubi sunday"><span>6</span></td>
+		<td class="natsubi"><span>7</span></td>
+		<td class="natsubi"><span>8</span></td>
+		<td class="natsubi"><span>9</span></td>
+		<td class="natsubi"><span>10</span></td>
+		<td class=""><span>11</span></td>
+		<td class="natsubi saturday"><span>12</span></td>
+	</tr>
+	<tr>
+		<td class="natsubi sunday"><span>13</span></td>
+		<td class="natsubi holiday"><span>14</span><p class="holidays_name">スポーツの日</p></td>
+		<td class="natsubi"><span>15</span></td>
+		<td class="natsubi"><span>16</span></td>
+		<td class="natsubi"><span>17</span></td>
+		<td class="natsubi"><span>18</span></td>
+		<td class="natsubi saturday"><span>19</span></td>
+	</tr>
+	<tr>
+		<td class="sunday"><span>20</span></td>
+		<td class="natsubi"><span>21</span></td>
+		<td class="natsubi"><span>22</span></td>
+		<td class="natsubi"><span>23</span></td>
+		<td class=""><span>24</span></td>
+		<td class="natsubi"><span>25</span></td>
+		<td class="saturday"><span>26</span></td>
+	</tr>
+	<tr>
+		<td class="natsubi sunday"><span>27</span></td>
+		<td class=""><span>28</span></td>
+		<td class=""><span>29</span></td>
+		<td class=""><span>30</span></td>
+		<td class=""><span>31</span></td>
+		<td class=""><span></span></td>
+		<td class="saturday"><span></span></td>
+	</tr>
+	<tr>
+	</tr>
+</table>
+<!--
+<table class="calendar">
+<caption><a class="prevnext" href="?y=2024&m=10">＜＜</a><span class="title">2024年 11月</span><a class="prevnext" href="?y=2024&m=12">＞＞</a></caption>
+	<tr>
+		<th class="sunday">日</th>
+		<th class="weekday">月</th>
+		<th class="weekday">火</th>
+		<th class="weekday">水</th>
+		<th class="weekday">木</th>
+		<th class="weekday">金</th>
+		<th class="saturday">土</th>
+	</tr>
+	<tr>
+		<td class="sunday"><span></span></td>
+		<td class=""><span></span></td>
+		<td class=""><span></span></td>
+		<td class=""><span></span></td>
+		<td class=""><span></span></td>
+		<td class=""><span>1</span></td>
+		<td class="saturday"><span>2</span></td>
+	</tr>
+	<tr>
+		<td class="sunday holiday"><span>3</span><p class="holidays_name">文化の日</p></td>
+		<td class=" holiday"><span>4</span><p class="holidays_name">文化の日 振替休日</p></td>
+		<td class=""><span>5</span></td>
+		<td class=""><span>6</span></td>
+		<td class=""><span>7</span></td>
+		<td class=""><span>8</span></td>
+		<td class="saturday"><span>9</span></td>
+	</tr>
+	<tr>
+		<td class="sunday"><span>10</span></td>
+		<td class=""><span>11</span></td>
+		<td class=""><span>12</span></td>
+		<td class=""><span>13</span></td>
+		<td class=""><span>14</span></td>
+		<td class=" holiday"><span>15</span><p class="holidays_name">七五三</p></td>
+		<td class="saturday"><span>16</span></td>
+	</tr>
+	<tr>
+		<td class="sunday"><span>17</span></td>
+		<td class=""><span>18</span></td>
+		<td class=""><span>19</span></td>
+		<td class=""><span>20</span></td>
+		<td class=""><span>21</span></td>
+		<td class=""><span>22</span></td>
+		<td class="saturday holiday"><span>23</span><p class="holidays_name">勤労感謝の日</p></td>
+	</tr>
+	<tr>
+		<td class="sunday"><span>24</span></td>
+		<td class=""><span>25</span></td>
+		<td class=""><span>26</span></td>
+		<td class=""><span>27</span></td>
+		<td class=""><span>28</span></td>
+		<td class=""><span>29</span></td>
+		<td class="saturday"><span>30</span></td>
+	</tr>
+	<tr>
+	</tr>
+</table>
+<table class="calendar">
+<caption><a class="prevnext" href="?y=2024&m=11">＜＜</a><span class="title">2024年 12月</span><a class="prevnext" href="?y=2025&m=1">＞＞</a></caption>
+	<tr>
+		<th class="sunday">日</th>
+		<th class="weekday">月</th>
+		<th class="weekday">火</th>
+		<th class="weekday">水</th>
+		<th class="weekday">木</th>
+		<th class="weekday">金</th>
+		<th class="saturday">土</th>
+	</tr>
+	<tr>
+		<td class="sunday"><span>1</span></td>
+		<td class=""><span>2</span></td>
+		<td class=""><span>3</span></td>
+		<td class=""><span>4</span></td>
+		<td class=""><span>5</span></td>
+		<td class=""><span>6</span></td>
+		<td class="saturday"><span>7</span></td>
+	</tr>
+	<tr>
+		<td class="sunday"><span>8</span></td>
+		<td class=""><span>9</span></td>
+		<td class=""><span>10</span></td>
+		<td class=""><span>11</span></td>
+		<td class=""><span>12</span></td>
+		<td class=""><span>13</span></td>
+		<td class="saturday"><span>14</span></td>
+	</tr>
+	<tr>
+		<td class="sunday"><span>15</span></td>
+		<td class=""><span>16</span></td>
+		<td class=""><span>17</span></td>
+		<td class=""><span>18</span></td>
+		<td class=""><span>19</span></td>
+		<td class=""><span>20</span></td>
+		<td class="saturday"><span>21</span></td>
+	</tr>
+	<tr>
+		<td class="sunday"><span>22</span></td>
+		<td class=""><span>23</span></td>
+		<td class=""><span>24</span></td>
+		<td class=" holiday"><span>25</span><p class="holidays_name">クリスマス</p></td>
+		<td class=""><span>26</span></td>
+		<td class=""><span>27</span></td>
+		<td class="saturday"><span>28</span></td>
+	</tr>
+	<tr>
+		<td class="sunday"><span>29</span></td>
+		<td class=""><span>30</span></td>
+		<td class=" holiday"><span>31</span><p class="holidays_name">大晦日</p></td>
+		<td class=""><span></span></td>
+		<td class=""><span></span></td>
+		<td class=""><span></span></td>
+		<td class="saturday"><span></span></td>
+	</tr>
+	<tr>
+	</tr>
+</table>
+-->
+</div>
+<p>
+<a href="https://tenki.jp/past/2024/10/weather/6/31/47770/" target="_blank">tenki.jp：神戸市の過去の天気</a>
+</p>
+</body>
+</html>
