@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>モノクロ画像変換</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>カラー画像をモノクロに変換</h1>
+        <input type="file" id="imageInput" accept="image/*">
+        <div id="imageContainer">
+            <img id="originalImage" alt="オリジナル画像">
+            <canvas id="monochromeCanvas"></canvas>
+        </div>
+        <button id="convertButton" disabled>モノクロに変換</button>
+        <a id="downloadLink" download="monochrome.png">
+            <button id="downloadButton" disabled>ダウンロード</button>
+        </a>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

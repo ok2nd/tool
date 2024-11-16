@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>カラー画像をモノクロに変換</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+            background-color: #f4f4f9;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        input[type="file"] {
+            margin: 20px 0;
+            padding: 10px;
+        }
+
+        canvas {
+            max-width: 100%;
+            margin-top: 20px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-top: 10px;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>画像をモノクロに変換</h1>
+
+    <div class="container">
+        <input type="file" id="imageInput" accept="image/*">
+        <canvas id="canvas"></canvas>
+        <br>
+        <button id="downloadBtn" style="display:none;">モノクロ画像をダウンロード</button>
+    </div>
+
+    <script>
+        const imageInput = document.getElementById("imageInput");
+        const canvas = document.getElementById("canvas");
+        const downloadBtn = document.getElementById("downloadBtn");
+        const ctx = canvas.getContext("2d");
+
+        // 画像をモノクロ化する関数
+        function convertToGrayscale(img) {
+            // Canvasのサイズを画像に合わせる
+            canvas.width = img.width;
+            canvas.height = img.height;
+
+            // 画像をキャンバスに描画
+            ctx.drawImage(img, 0, 0);
+
+            // 画像のピクセルデータを取得
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imageData.data;
+
+            // 各ピクセルをモノクロに変換
+            for (let i = 0; i < data.length; i += 4) {
+                const r = data[i];
+                const g = data[i + 1];
+                const b = data[i + 2];
+
+                // モノクロ化（輝度 = 0.2989*R + 0.5870*G + 0.1140*B）
+                const gray = 0.2989 * r + 0.5870 * g + 0.1140 * b;
+
+                // モノクロの値をRGBに設定
+                data[i] = data[i + 1] = data[i + 2] = gray;
+            }
+
+            // 変換したデータをキャンバスに再描画
+            ctx.putImageData(imageData, 0, 0);
+        }
+
+        // 画像が選択されたときの処理
+        imageInput.addEventListener("change", function(event) {
+            const file = event.target.files[0];
+
+            if (file) {
+                const reader = new FileReader();
+
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.onload = function() {
+                        convertToGrayscale(img);
+                        downloadBtn.style.display = 'inline-block';
+                    };
+                    img.src = e.target.result;
+                };
+
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // モノクロ画像をダウンロードする処理
+        downloadBtn.addEventListener("click", function() {
+            const link = document.createElement("a");
+            link.href = canvas.toDataURL("image/png");
+            link.download = "monochrome_image.png";
+            link.click();
+        });
+    </script>
+
+</body>
+</html>
