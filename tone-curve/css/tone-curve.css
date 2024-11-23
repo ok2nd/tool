@@ -1,0 +1,189 @@
+@charset "UTF-8";
+body {
+	margin: 0;
+	padding: 0;
+	font-size: 16px;
+	font-family: BIZ UDPGothic, Meiryo, sans-serif;
+	line-height: 1.5;
+}
+main {
+	display: block;
+	margin: auto;
+}
+ul ul {
+	padding-left: 1.5em;
+}
+.iocurve {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+.iocurve .curve {
+	width: calc(100% - 140px - 120px);
+	max-width: 300px;
+	margin: 0 60px;
+	position: relative;
+}
+.iocurve .curve:before,
+.iocurve .curve:after {
+	content: '';
+	position: absolute;
+	width: 0;
+	height: 0;
+	border-left: 20px solid #ccc;
+	border-top: 20px solid transparent;
+	border-bottom: 20px solid transparent;
+	top: 0;
+	bottom: 0;
+	margin: auto;
+}
+.iocurve .curve:before {
+	left: -30px;
+}
+.iocurve .curve:after {
+	right: -30px;
+}
+.iocurve .curve input {
+	position: absolute;
+	left: 0;
+	top: 100%;
+	width: 100%;
+}
+.iocurve .input,
+.iocurve .output {
+	width: 70px;
+	height: 260px;
+	overflow: auto;
+	white-space: pre;
+	border: 1px solid #ccc;
+	background: #fff;
+	padding: 0 0 0 0.5em;
+	font-size: 90%;
+	line-height: 1.2;
+	box-sizing: border-box;
+}
+.example .wrap {
+	background: #f8f8f8;
+	padding: 1em;
+	margin: 1.5em 0;
+}
+.example .iocurve {
+	margin-bottom: 30px;
+}
+.example .picture-edit {
+	display: flex;
+	justify-content: center;
+}
+.example .picture-edit ul {
+	margin-right: 3em;
+}
+.example .picture-edit .curve {
+	width: 100%;
+	max-width: 300px;
+	margin: auto;
+}
+.example .picture-edit > div {
+	max-width: 100%;
+}
+.example .picture-edit > canvas {
+	width: calc(100% - 320px);
+	height: calc(100% - 320px);
+	max-width: 640px;
+	max-height: 640px;
+}
+.example .picture-edit .hide {
+	height: 0;
+	overflow: hidden;
+}
+.example .picture-edit .channel {
+	text-align: center;
+}
+.example .picture-edit .channel label {
+	border: 1px solid transparent;
+	padding: 0.5em;
+}
+.example .picture-edit .channel label.checked {
+	border-color: #aaa;
+	background: #fff;
+}
+.example .picture-edit .channel input {
+	width: 1.2em;
+	height: 1.2em;
+	vertical-align: -0.15em;
+	margin-right: 0.5em;
+}
+a.github {
+	background-image: url(../img/mark-github.svg), url(../img/logo-github.svg);
+	background-position: 6px center, 44px center;
+	background-repeat: no-repeat;
+	background-size: 30px, 70px;
+	display: inline-block;
+	height: 40px;
+	width: 120px;
+}
+.iocurve .rangeslider {
+	margin-top: 30px;
+}
+.rangeslider--horizontal {
+	height: 12px;
+}
+.rangeslider__fill {
+	background: #b3cfe0;
+}
+.rangeslider__handle {
+	width: 20px;
+	height: 20px;
+}
+.rangeslider--horizontal .rangeslider__handle {
+	top: -5px;
+}
+.rangeslider__handle:after {
+	display: none;
+}
+@media (max-width: 780px) {
+	.example .picture-edit {
+		align-items: center;
+	}
+}
+@media (max-width: 640px) {
+	.example .picture-edit {
+		flex-wrap: wrap;
+	}
+	.example .picture-edit > canvas {
+		width: 100%;
+		height: 100%;
+		min-width: 200px;
+		min-height: 200px;
+	}
+}
+@media (max-width: 600px) {
+	.iocurve .curve {
+		width: calc(100% - 100px - 60px);
+		min-width: 160px;
+		margin: 0 30px;
+	}
+	.iocurve .curve:before {
+		left: -15px;
+	}
+	.iocurve .curve:after {
+		right: -15px;
+	}
+	.iocurve .input,
+	.iocurve .output {
+		width: 50px;
+		text-align: center;
+		padding: 0;
+	}
+}
+@media (max-width: 460px) {
+	body {
+		font-size: 12px;
+	}
+}
+#header {
+	margin: 0 40px;
+}
+#footer {
+	margin: 0 40px;
+	font-size: 12px;
+}
