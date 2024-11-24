@@ -37,7 +37,8 @@
 </div>
 </section>
 <section id="footer">
-jquery.iocurveは、<a href="https://cmiz.github.io/jquery.iocurve/" target="_blank">https://cmiz.github.io/jquery.iocurve/</a> より拝借
+<p><a href="https://2ndart.hatenablog.com/archive" target="_blank">晴歩雨描</a></p>
+<p>jquery.iocurveは、<a href="https://cmiz.github.io/jquery.iocurve/" target="_blank">https://cmiz.github.io/jquery.iocurve/</a> より拝借</p>
 </section>
 </main>
 <script src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
@@ -56,9 +57,31 @@ document.getElementById('fileInput').addEventListener('change', function(e) {
 			img.onload = function() {
 				const canvas = document.getElementById('mycanvas');
 				const ctx = canvas.getContext('2d');
-				canvas.width = img.width;
-				canvas.height = img.height;
-				ctx.drawImage(img, 0, 0);
+				// 画像の縦横比を保ちながらキャンバスを調整
+				let canvasWidth, canvasHeight;
+				if (img.width > img.height) {
+					const maxSize = 800; // 表示の最大サイズ
+					if (img.width < maxSize) {
+						canvasWidth = img.width;
+						canvasHeight = img.height;
+					} else {
+						canvasWidth = maxSize;
+						canvasHeight = (img.height / img.width) * maxSize;
+					}
+				} else {
+					const maxSize = 600; // 表示の最大サイズ
+					if (img.height < maxSize) {
+						canvasWidth = img.width;
+						canvasHeight = img.height;
+					} else {
+						canvasHeight = maxSize;
+						canvasWidth = (img.width / img.height) * maxSize;
+					}
+				}
+				canvas.width = canvasWidth;
+				canvas.height = canvasHeight;
+				// 画像をキャンバスに描画
+				ctx.drawImage(img, 0, 0, canvasWidth, canvasHeight);
 				toneCurve();
 			};
 			img.src = event.target.result;
