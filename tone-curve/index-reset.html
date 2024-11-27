@@ -110,8 +110,10 @@ $(document).ready(function() {
 		link.click();
 	});
 	$('#resetBtn').click(function() {
-		//	$curve.remove();
-		//	$curve.trigger('destroy');
+
+//	$curve.trigger('destroy');
+//	$curve.remove();
+
 		const selectedChannel = $('[name="kind"]:checked').val();
 		const $curve = $('.curve.' + selectedChannel);
 		if ($curve.iocurve) {
