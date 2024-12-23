@@ -68,7 +68,7 @@ async function createCalendar(year, month) {
 	header.innerHTML = `
 		<nav>
 			<a href="?y=${prevYear}&m=${prevMonth + 1}">＜＜</a>
-			${year} <span class="current-month">${month + 1}</span> 月
+			&nbsp;${year} <span class="current-month">${month + 1}</span> 月&nbsp;
 			<a href="?y=${nextYear}&m=${nextMonth + 1}">＞＞</a>
 		</nav>
 	`;
