@@ -56,6 +56,7 @@ async function fetchHolidays() {
 	return await response.json();
 }
 async function createCalendar(year, month) {
+	document.title = 'カレンダー：' + year + '年' + (month+1) + '月'
 	const holidays = await fetchHolidays();
 	const calendarDiv = document.getElementById('calendar');
 	calendarDiv.innerHTML = ''; // Clear previous calendar
