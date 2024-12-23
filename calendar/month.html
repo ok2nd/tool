@@ -69,9 +69,11 @@ function createCalendar(year, month) {
 			cell.classList.add('saturday');
 		}
 		row.appendChild(cell);
-		if (dayOfWeek === 6) {
+		if (dayOfWeek === 6 || date === lastDay.getDate()) {
 			table.appendChild(row);
-			row = document.createElement('tr');
+			if (date !== lastDay.getDate()) {
+				row = document.createElement('tr');
+			}
 		}
 	}
 	let nextDate = 1;
@@ -82,7 +84,7 @@ function createCalendar(year, month) {
 		row.appendChild(cell);
 		nextDate++;
 	}
-	if (row.childNodes.length > 0) {
+	if (row.childNodes.length > 0 && row.childNodes.length < 7) {
 		table.appendChild(row);
 	}
 	calendarDiv.appendChild(table);

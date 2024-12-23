@@ -48,17 +48,19 @@ td {
 	font-size: 24px;
 	line-height: 1em;
 }
-.sunday {
+td.sunday {
 	color: #f33;
+	background-color: #fff4f4;
 }
-.saturday {
+td.saturday {
 	color: #207edb;
+	background-color: #f9fbff;
 }
 .prev-month, .next-month {
 	color: #aaa;
 }
-.holiday {
-	background-color: #fee;
+td.holiday {
+	background-color: #fff4f4;
 	color: #f33;
 }
 .holiday-name {
@@ -149,9 +151,11 @@ function createCalendar(year, month) {
 				cell.innerHTML += `<p class="holiday-name">${holidays[formattedDate]}</p>`;
 			}
 			row.appendChild(cell);
-			if (dayOfWeek === 6) {
+			if (dayOfWeek === 6 || date === lastDay.getDate()) {
 				table.appendChild(row);
-				row = document.createElement('tr');
+				if (date !== lastDay.getDate()) {
+					row = document.createElement('tr');
+				}
 				rowcnt ++;
 			}
 		}
@@ -163,14 +167,19 @@ function createCalendar(year, month) {
 			row.appendChild(cell);
 			nextDate++;
 		}
-		if (row.childNodes.length > 0) {
+		if (row.childNodes.length > 0 && row.childNodes.length < 7) {
 			table.appendChild(row);
 		}
 		calendarDiv.appendChild(table);
 		const cells = document.querySelectorAll('td');
-		if (rowcnt > 5) {
+//alert(rowcnt);
+		if (rowcnt == 7) {
 			cells.forEach(cell => {
 				cell.style.height = '85px';
+			});
+		} else if (rowcnt == 5) {
+			cells.forEach(cell => {
+				cell.style.height = '134px';
 			});
 		} else {
 			cells.forEach(cell => {
