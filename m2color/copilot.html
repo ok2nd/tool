@@ -16,78 +16,78 @@
 <br>
 <canvas id="canvas"></canvas>
 <script>
-	const upload = document.getElementById('upload');
-	const canvas = document.getElementById('canvas');
-	const ctx = canvas.getContext('2d');
-	const colorPicker = document.getElementById('colorPicker');
-	const applyButton = document.getElementById('applyButton');
-	const resetButton = document.getElementById('resetButton');
-	const downloadButton = document.getElementById('downloadButton');
-	let originalImageData;
-	let originalFileName;
-	let originalWidth, originalHeight;
-	upload.addEventListener('change', handleImageUpload);
-	applyButton.addEventListener('click', applyColorChange);
-	resetButton.addEventListener('click', resetImage);
-	downloadButton.addEventListener('click', downloadImage);
-	function handleImageUpload(event) {
-		const file = event.target.files[0];
-		originalFileName = file.name.split('.').slice(0, -1).join('.');
-		const reader = new FileReader();
-		reader.onload = function(e) {
-			const img = new Image();
-			img.onload = function() {
-				originalWidth = img.width;
-				originalHeight = img.height;
-				// 縮小率の計算
-				const scale = Math.min(window.innerWidth / img.width, window.innerHeight / img.height, 1);
-				canvas.width = img.width * scale;
-				canvas.height = img.height * scale;
-				ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-				originalImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-			};
-			img.src = e.target.result;
+const upload = document.getElementById('upload');
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const colorPicker = document.getElementById('colorPicker');
+const applyButton = document.getElementById('applyButton');
+const resetButton = document.getElementById('resetButton');
+const downloadButton = document.getElementById('downloadButton');
+let originalImageData;
+let originalFileName;
+let originalWidth, originalHeight;
+upload.addEventListener('change', handleImageUpload);
+applyButton.addEventListener('click', applyColorChange);
+resetButton.addEventListener('click', resetImage);
+downloadButton.addEventListener('click', downloadImage);
+function handleImageUpload(event) {
+	const file = event.target.files[0];
+	originalFileName = file.name.split('.').slice(0, -1).join('.');
+	const reader = new FileReader();
+	reader.onload = function(e) {
+		const img = new Image();
+		img.onload = function() {
+			originalWidth = img.width;
+			originalHeight = img.height;
+			// 縮小率の計算
+			const scale = Math.min(window.innerWidth / img.width, window.innerHeight / img.height, 1);
+			canvas.width = img.width * scale;
+			canvas.height = img.height * scale;
+			ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+			originalImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
 		};
-		reader.readAsDataURL(file);
-	}
-	function applyColorChange() {
-		const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-		const data = imageData.data;
-		const [r, g, b] = hexToRgb(colorPicker.value);
-		for (let i = 0; i < data.length; i += 4) {
-			const gray = 0.3 * data[i] + 0.59 * data[i + 1] + 0.11 * data[i + 2];
-			const alpha = (255 - gray) / 255; // Adjust transparency based on grayscale value
-			if (gray < 240) { // Threshold to ignore background white color
-				data[i] = r * alpha + gray;
-				data[i + 1] = g * alpha + gray;
-				data[i + 2] = b * alpha + gray;
-			}
+		img.src = e.target.result;
+	};
+	reader.readAsDataURL(file);
+}
+function applyColorChange() {
+	const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+	const data = imageData.data;
+	const [r, g, b] = hexToRgb(colorPicker.value);
+	for (let i = 0; i < data.length; i += 4) {
+		const gray = 0.3 * data[i] + 0.59 * data[i + 1] + 0.11 * data[i + 2];
+		const alpha = (255 - gray) / 255; // Adjust transparency based on grayscale value
+		if (gray < 240) { // Threshold to ignore background white color
+			data[i] = r * alpha + gray;
+			data[i + 1] = g * alpha + gray;
+			data[i + 2] = b * alpha + gray;
 		}
-		ctx.putImageData(imageData, 0, 0);
 	}
-	function resetImage() {
-		ctx.putImageData(originalImageData, 0, 0);
-		// カラーピッカーの値はそのままにする
-	}
-	function downloadImage() {
-		const tempCanvas = document.createElement('canvas');
-		tempCanvas.width = originalWidth;
-		tempCanvas.height = originalHeight;
-		const tempCtx = tempCanvas.getContext('2d');
-		tempCtx.putImageData(originalImageData, 0, 0);
-		tempCtx.drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, 0, originalWidth, originalHeight);
-		const link = document.createElement('a');
-		link.href = tempCanvas.toDataURL();
-		link.download = `${originalFileName}_color.png`;
-		link.click();
-	}
-	function hexToRgb(hex) {
-		const bigint = parseInt(hex.slice(1), 16);
-		const r = (bigint >> 16) & 255;
-		const g = (bigint >> 8) & 255;
-		const b = (bigint & 255);
-		return [r, g, b];
-	}
+	ctx.putImageData(imageData, 0, 0);
+}
+function resetImage() {
+	ctx.putImageData(originalImageData, 0, 0);
+	// カラーピッカーの値はそのままにする
+}
+function downloadImage() {
+	const tempCanvas = document.createElement('canvas');
+	tempCanvas.width = originalWidth;
+	tempCanvas.height = originalHeight;
+	const tempCtx = tempCanvas.getContext('2d');
+	tempCtx.putImageData(originalImageData, 0, 0);
+	tempCtx.drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, 0, originalWidth, originalHeight);
+	const link = document.createElement('a');
+	link.href = tempCanvas.toDataURL();
+	link.download = `${originalFileName}_color.png`;
+	link.click();
+}
+function hexToRgb(hex) {
+	const bigint = parseInt(hex.slice(1), 16);
+	const r = (bigint >> 16) & 255;
+	const g = (bigint >> 8) & 255;
+	const b = (bigint & 255);
+	return [r, g, b];
+}
 </script>
 </body>
 </html>
