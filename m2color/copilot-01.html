@@ -40,7 +40,7 @@ function handleImageUpload(event) {
 			originalWidth = img.width;
 			originalHeight = img.height;
 			// 縮小率の計算
-			const scale = Math.min(window.innerWidth / img.width, window.innerHeight / img.height, 0.8);
+			const scale = Math.min(window.innerWidth / img.width, window.innerHeight / img.height, 1);
 			canvas.width = img.width * scale;
 			canvas.height = img.height * scale;
 			ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
