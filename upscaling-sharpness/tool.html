@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>画像）2倍アップスケール＆シャープネス・ツール</title>
+<title>画像）2倍アップスケーリング＆シャープネス・ツール</title>
 <style>
 body {
 	font-family: Arial, sans-serif;
@@ -20,6 +20,10 @@ body {
 	overflow: hidden;
 	position: relative;
 	border: 1px solid #ccc;
+}
+p {
+	margin: 0;
+	padding: 0;
 }
 canvas {
 	position: absolute;
@@ -39,7 +43,7 @@ canvas {
 </style>
 </head>
 <body>
-<h1>画像）2倍アップスケール＆シャープネス・ツール</h1>
+<h2>画像）2倍アップスケーリング＆シャープネス・ツール</h2>
 <input type="file" id="upload" accept="image/*">
 <span class="controls">
 <label for="sharpness">シャープネス強度：</label>
@@ -55,14 +59,14 @@ canvas {
 	</div>
 </div>
 <div>
-	<p>2倍アップスケール（縮小表示）＆シャープネス画像</p>
+	<p>2倍アップスケーリング（縮小表示）＆シャープネス画像</p>
 	<div class="canvas-wrapper">
 		<canvas id="processed-canvas" style="transform: scale(0.5); transform-origin: top left;"></canvas>
 	</div>
 </div>
 </div>
 <div id="footer">
-<p>※ アップスケール：バイキュービック補間</p>
+<p>※ アップスケーリング：バイキュービック補間</p>
 <p><a href="https://2ndart.hatenablog.com/archive" target="_blank">晴歩雨描</a></p>
 </div>
 <script>
