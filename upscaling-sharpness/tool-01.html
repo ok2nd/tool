@@ -169,12 +169,9 @@ function resetCanvasPosition() {
 makeCanvasDraggable(originalCanvas);
 makeCanvasDraggable(processedCanvas);
 downloadButton.addEventListener('click', () => {
-	const sharpness = parseFloat(sharpnessInput.value).toFixed(2);
-	const fileExtension = uploadInput.files[0].name.split('.').pop().toLowerCase();
-	const fileName = fileExtension === 'jpg' ? `${originalFileName}_${sharpness}.jpg` : `${originalFileName}_${sharpness}.png`;
 	const link = document.createElement('a');
-	link.download = fileName;
-	link.href = processedCanvas.toDataURL(fileExtension === 'jpg' ? 'image/jpeg' : 'image/png');
+	link.download = `${originalFileName}_result.png`;
+	link.href = processedCanvas.toDataURL();
 	link.click();
 });
 </script>
