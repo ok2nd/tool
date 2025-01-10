@@ -52,7 +52,7 @@ canvas {
 	<span id="saturation-value">0</span>
 	<button id="reset-saturation">リセット</button>
 	<label for="brightness">明るさ：</label>
-	<input type="range" id="brightness" min="-5" max="5" step="1" value="0">
+	<input type="range" id="brightness" min="-5" max="5" step="0.1" value="0">
 	<span id="brightness-value">0</span>
 	<button id="reset-brightness">リセット</button>
 	<label for="temperature">色温度：</label>
@@ -66,7 +66,7 @@ canvas {
 	<span id="noise-reduction-value">0</span>
 	<button id="reset-reduction">リセット</button>
 	<label for="sharpness">シャープネス強度：</label>
-	<input type="range" id="sharpness" min="-0.3" max="0.3" step="0.1" value="0">
+	<input type="range" id="sharpness" min="-0.3" max="0.3" step="0.01" value="0">
 	<span id="sharpness-value">0</span>
 	<button id="reset-sharpness">リセット</button>
 </div>
@@ -312,13 +312,13 @@ downloadButton.addEventListener('click', () => {
 	const params = [];
 	const saturation = parseFloat(saturationInput.value).toFixed(0);
 	if (saturation !== "0") params.push(`彩度${saturation}`);
-	const brightness = parseFloat(brightnessInput.value).toFixed(0);
+	const brightness = parseFloat(brightnessInput.value).toFixed(1);
 	if (brightness !== "0") params.push(`明るさ${brightness}`);
 	const temperature = parseFloat(temperatureInput.value).toFixed(0);
 	if (temperature !== "6500") params.push(`色温度${temperature}`);
-	const noiseReductionLevel = parseFloat(noiseReductionInput.value).toFixed(1);
+	const noiseReductionLevel = parseFloat(noiseReductionInput.value).toFixed(2);
 	if (noiseReductionLevel !== "0.0") params.push(`NR${noiseReductionLevel}`);
-	const sharpness = parseFloat(sharpnessInput.value).toFixed(1);
+	const sharpness = parseFloat(sharpnessInput.value).toFixed(2);
 	if (sharpness !== "0.0") params.push(`SH${sharpness}`);
 	const saveName = `${originalFileName}(${params.join(",")}).${originalFileExtension}`;
 	const a = document.createElement('a');
