@@ -24,25 +24,20 @@
 img {
 	border: 1px solid #888;
 }
-td {
-	vertical-align: top;
-}
-.file-name {
-	font-size: 14px;
-	color: #555;
-	margin-bottom: 5px;
-}
 </style>
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
 <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min.js"></script>
 <script src="js/jquery.ImageExpansion-multi.js"></script>
+<!--
+	JavaScript オリジナル：	https://studio-key.com/719.html
+	JavaScript 改修版：	https://jsfiddle.net/Lhankor_Mhy/jw91yx3p/
+-->
 </head>
 <body>
 <table>
 <tr>
 <td>
 	<div id="image_expansion1">
-		<div class="file-name" id="file-name1">&nbsp;</div>
 		<div class="pan_mouse"></div>
 	<img id="img1" src="img/mes.jpg">
 		<div class="pan_image"></div>
@@ -50,7 +45,6 @@ td {
 </td>
 <td>
 	<div id="image_expansion2">
-		<div class="file-name" id="file-name2">&nbsp;</div>
 		<div class="pan_mouse"></div>
 	<img id="img2" src="img/mes.jpg">
 		<div class="pan_image"></div>
@@ -76,11 +70,7 @@ function drag_drop(no) {
 			document.getElementById('img'+no).src = e.target.result;
 			window.setTimeout( function() { image_expand('#image_expansion'+no, 'img'+no) }, 3 );
 		}
-		const file = e.dataTransfer.files[0];
-		if (file) {
-				document.getElementById('file-name' + no).textContent = file.name; // ファイル名を表示
-				reader.readAsDataURL(file);
-		}
+		reader.readAsDataURL(e.dataTransfer.files[0]);
 	});
 }
 function image_expand(div, img) {
