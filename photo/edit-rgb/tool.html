@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>画像処理ツール（RGB）</title>
+<meta name = "viewport" content = "width=device-width, initial-scale = 1.0">
+<style>
+h1 {
+	font-size: 1.2em;
+}
+#canvas {
+	display: block;
+	margin-top: 20px;
+	width: 800px;
+	border: 2px solid black; /* 枠を追加 */
+}
+#red, #green, #blue, #opacity {
+	width: 250px;
+	vertical-align: middle;
+	margin-right: 20px;
+}
+#color {
+	border: 1px solid black;
+	width: 100px;
+	height: 20px;
+	display: inline-block;
+	vertical-align: middle;
+	margin-right: 10px;
+}
+.r, .g, .b, .a {
+	font-weight: bold;
+	margin-right: 10px;
+}
+.r {
+	color: red;
+}
+.g {
+	color: green;
+}
+.b {
+	color: blue;
+}
+.range {
+	margin-bottom: 10px;
+}
+#file {
+	display: none;
+}
+button {
+	margin-right: 10px;
+}
+</style>
+</head>
+<body>
+<h1>画像処理ツール（RGB）</h1>
+<button id="resetAll">全てリセット</button>
+<button onclick="download()">ダウンロード</button>
+<div class="range">
+	<span class="r">R</span>
+	<input type="range" min="0" max="255" step="1" id="red"><span class="r" id="r-value"></span><button onclick="resetRed()">リセット</button>
+</div>
+<div class="range">
+	<span class="g">G</span>
+	<input type="range" min="0" max="255" step="1" id="green"><span class="g" id="g-value"></span><button onclick="resetGreen()">リセット</button>
+</div>
+<div class="range">
+	<span class="b">B</span>
+	<input type="range" min="0" max="255" step="1" id="blue"><span class="b" id="b-value"></span><button onclick="resetBlue()">リセット</button>
+</div>
+<div class="range">
+	<span class="a">A</span>
+	<input type="range" min="0" max="1" step="0.01" id="opacity" value="0.0"><span class="a" id="a-value"></span><button onclick="resetOpacity()">リセット</button>
+</div>
+<span id="color"></span>
+<span id="color-code">下の枠に写真画像をドラッグ＆ドロップしてください。</span>
+<canvas id="canvas"></canvas>
+
+<p>オリジナルコードは、「<a href="https://lets-csharp.com/simple-photo-processing/" target="_blank">https://lets-csharp.com/simple-photo-processing/</a>」から拝借。</p>
+<script>
+const $canvas = document.getElementById('canvas');
+const ctx = $canvas.getContext('2d');
+const $red = document.getElementById('red');
+const $green = document.getElementById('green');
+const $blue = document.getElementById('blue');
+const $opacity = document.getElementById('opacity');
+const $color = document.getElementById('color');
+const $colorCode = document.getElementById('color-code');
+const $rValue = document.getElementById('r-value');
+const $gValue = document.getElementById('g-value');
+const $bValue = document.getElementById('b-value');
+const $aValue = document.getElementById('a-value');
+let canvasWidth = 800;
+let canvasHeight = 0;
+let magnificationRate = 1;
+const image = new Image();
+image.onload = () => {
+	magnificationRate = canvasWidth / image.width;
+	canvasHeight = image.height * magnificationRate;
+	draw();
+}
+$canvas.addEventListener('dragover', (e) => {
+	e.preventDefault();
+});
+$canvas.addEventListener('drop', (e) => {
+	e.preventDefault();
+	const file = e.dataTransfer.files[0];
+	const reader = new FileReader();
+	reader.onload = (event) => {
+		image.src = event.target.result;
+		image.name = file.name;
+	};
+	reader.readAsDataURL(file);
+});
+const arr = [$red, $green, $blue, $opacity];
+for(let i = 0; i < arr.length; i++){
+	arr[i].addEventListener('input', () => rangeChanged());
+}
+function rangeChanged(){
+	draw();
+}
+function draw(){
+	$canvas.width = canvasWidth;
+	$canvas.height = canvasHeight;
+	ctx.drawImage(image, 0, 0, canvasWidth, canvasHeight);
+	ctx.fillStyle = `rgba(${$red.value}, ${$green.value}, ${$blue.value}, ${$opacity.value})`;
+	ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+	$color.style.backgroundColor = `rgb(${$red.value}, ${$green.value}, ${$blue.value})`;
+	$colorCode.innerHTML = `rgb(${$red.value}, ${$green.value}, ${$blue.value}) opacity(${$opacity.value})`;
+	$rValue.innerHTML = $red.value;
+	$gValue.innerHTML = $green.value;
+	$bValue.innerHTML = $blue.value;
+	$aValue.innerHTML = $opacity.value;
+}
+function resetRed(){
+	$red.value = 128;
+	rangeChanged();
+}
+function resetGreen(){
+	$green.value = 128;
+	rangeChanged();
+}
+function resetBlue(){
+	$blue.value = 128;
+	rangeChanged();
+}
+function resetOpacity(){
+	$opacity.value = 0.0;
+	rangeChanged();
+}
+function resetAll(){
+	$red.value = 128;
+	$green.value = 128;
+	$blue.value = 128;
+	$opacity.value = 0.0;
+	rangeChanged();
+}
+document.getElementById('resetAll').addEventListener('click', resetAll);
+function download(){
+	const $canvas2 = document.createElement('canvas');
+	const ctx2 = $canvas2.getContext('2d');
+	$canvas2.width = image.width;
+	$canvas2.height = image.height;
+	ctx2.drawImage(image, 0, 0);
+	ctx2.fillStyle = `rgba(${$red.value}, ${$green.value}, ${$blue.value}, ${$opacity.value})`;
+	ctx2.fillRect(0, 0, image.width, image.height);
+	const a = document.createElement("a");
+	const extension = image.name.split('.').pop(); // 拡張子を取得
+	const fileName = `${image.name.split('.')[0]}-rgb(${$red.value}, ${$green.value}, ${$blue.value})-opacity(${$opacity.value}).${extension}`;  // オリジナルファイル名にrgbとopacityを追加し、拡張子を保持
+	a.href = $canvas2.toDataURL(`image/${extension}`);
+	a.download = fileName;
+	a.click();
+	a.remove();
+	$canvas2.remove();
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>画像処理ツール（RGB）</title>
+<meta name = "viewport" content = "width=device-width, initial-scale = 1.0">
+<style>
+h1 {
+	font-size: 1.2em;
+}
+#canvas {
+	display: block;
+	margin-top: 20px;
+}
+#red, #green, #blue, #opacity{
+	width: 250px;
+	vertical-align:middle;
+	margin-right: 20px;
+} 
+#color {
+	border: 1px solid black;
+	width: 100px;
+	height: 20px;
+	display: inline-block;
+	vertical-align:middle;
+	margin-right: 10px;
+}
+.r, .g, .b, .a{
+	font-weight: bold;
+	margin-right: 10px;
+}
+.r{
+	color: red;
+}
+.g{
+	color:green;
+}
+.b{
+	color:blue;
+}
+.range {
+	margin-bottom: 10px;
+}
+#file {
+	margin-top: 10px;
+	margin-bottom: 10px;
+}
+</style>
+</head>
+<body>
+<h1>画像処理ツール（RGB）</h1>
+<input id="file" type="file">
+<button onclick="download()">ダウンロード</button>
+<div class="range">
+	<span class = "r">R</span>
+	<input type="range" min="0" max="255" step="1" id = "red"><span class = "r" id = "r-value"></span>
+</div>
+<div class="range">
+	<span class = "g">G</span>
+	<input type="range" min="0" max="255" step="1" id = "green"><span class = "g" id = "g-value"></span>
+</div>
+<div class="range">
+	<span class = "b">B</span>
+	<input type="range" min="0" max="255" step="1" id = "blue"><span class = "b" id = "b-value"></span>
+</div>
+<div class="range">
+	<span class = "a">A</span>
+	<input type="range" min="0" max="1" step="0.01" id = "opacity"><span class = "a" id = "a-value"></span>
+</div>
+<span id = "color"></span>
+<span id = "color-code"></span>
+<canvas id = "canvas"></canvas>
+<script>
+const $canvas = document.getElementById('canvas');
+const ctx = $canvas.getContext('2d');
+const $red = document.getElementById('red');
+const $green = document.getElementById('green');
+const $blue = document.getElementById('blue');
+const $opacity = document.getElementById('opacity');
+const $color = document.getElementById('color');
+const $colorCode = document.getElementById('color-code');
+const $rValue = document.getElementById('r-value');
+const $gValue = document.getElementById('g-value');
+const $bValue = document.getElementById('b-value');
+const $aValue = document.getElementById('a-value');
+let canvasWidth = 0;
+let canvasHeight = 0;
+let magnificationRate = 1;
+const image = new Image();
+draw();
+//image.src = './image.jpg';
+image.onload = () => {
+	magnificationRate = 1;
+	canvasWidth = image.width;
+	if(canvasWidth > 360){
+		canvasWidth = 360;
+		magnificationRate = 360 / image.width;
+	}
+	canvasHeight = image.height;
+	if(magnificationRate != 1)
+		canvasHeight = canvasHeight * magnificationRate;
+	draw();
+}
+const arr = [$red, $green, $blue, $opacity];
+for(let i=0; i<arr.length; i++){
+	arr[i].addEventListener('input', () => rangeChanged());
+}
+function rangeChanged(){
+	draw();
+}
+function draw(){
+	$canvas.width = canvasWidth;
+	$canvas.height = canvasHeight;
+	ctx.drawImage(image, 0, 0, canvasWidth, canvasHeight);
+	ctx.fillStyle = `rgba(${$red.value}, ${$green.value}, ${$blue.value}, ${$opacity.value})`;
+	ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+	$color.style.backgroundColor = `rgb(${$red.value}, ${$green.value}, ${$blue.value})`;
+	$colorCode.innerHTML = `rgb(${$red.value}, ${$green.value}, ${$blue.value})`;
+	$rValue.innerHTML = $red.value;
+	$gValue.innerHTML = $green.value;
+	$bValue.innerHTML = $blue.value;
+	$aValue.innerHTML = $opacity.value;
+}
+document.getElementById('file').addEventListener('change', () => {
+	let input = document.getElementById('file').files[0];
+	//FileReaderオブジェクトを生成
+	let reader = new FileReader();
+	//定義
+	reader.addEventListener('load', () => {
+		//console.log(reader.result);
+		image.src = reader.result;
+	});
+	reader.readAsDataURL(input);
+});
+function download(){
+	const $canvas2 = document.createElement('canvas');
+	const ctx2 = $canvas2.getContext('2d');
+	$canvas2.width = image.width;
+	$canvas2.height = image.height;
+	ctx2.drawImage(image, 0, 0);
+	ctx2.fillStyle = `rgba(${$red.value}, ${$green.value}, ${$blue.value}, ${$opacity.value})`;
+	ctx2.fillRect(0, 0, image.width, image.height);
+	const a = document.createElement("a");
+	a.href = $canvas2.toDataURL("image/png"); // PNGなら"image/png"
+	a.download = "image.png";
+	a.click();
+	a.remove();
+	$canvas2.remove();
+}
+</script>
+</body>
+</html>
