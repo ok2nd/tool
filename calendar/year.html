@@ -75,6 +75,9 @@ th.saturday {
 td.holiday:hover .holidays_name {
 	display: block;
 }
+.today {
+	background-color: #ffdfaf;
+}
 </style>
 </head>
 <body>
@@ -136,6 +139,9 @@ function generateCalendar(year, month, holidays) {
 						holidayName.classList.add('holidays_name');
 						holidayName.textContent = holidays[currentDate];
 						td.appendChild(holidayName);
+					}
+					if (currentDate === `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`) {
+						td.classList.add('today');
 					}
 					date++;
 				}
