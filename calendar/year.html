@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="shortcut icon" href="calendar1.ico" type="image/ico">
+<link rel="icon" href="calendar1.ico" type="image/ico">
+<title>12か月カレンダー</title>
+<style>
+body {
+	font-family: Arial, sans-serif;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+}
+.month {
+	margin: 10px;
+	overflow: hidden;
+	width: 220px;
+}
+table {
+	width: 100%;
+	border-collapse: collapse;
+}
+caption {
+	text-align: center;
+	font-weight: bold;
+	padding: 5px;
+}
+th, td {
+	width: 14.2%;
+	text-align: center;
+	padding: 2px;
+	border: 1px solid #ddd;
+}
+th {
+	background-color: gray;
+	color: white;
+	font-size: 0.8em;
+}
+th.sunday {
+	background-color: pink;
+	color: red;
+}
+th.saturday {
+	background-color: lightblue;
+	color: blue;
+}
+.sunday {
+	color: red;
+	background-color: #ffe6e6;
+}
+.saturday {
+	color: blue;
+	background-color: #e6f7ff;
+}
+.holiday {
+	background-color: #ffdede;
+}
+.holidays_name {
+	display: none;
+	position: absolute;
+	margin: -1px 0 0 8px;
+	padding: 5px;
+	color: #f00;
+	background: #fff;
+	border: solid 1px #f00;
+	-webkit-border-radius: 4px;
+	-moz-border-radius: 4px;
+	border-radius: 4px;
+	font-size: 0.8em;
+}
+td.holiday:hover .holidays_name {
+	display: block;
+}
+</style>
+</head>
+<body>
+<script>
+const urlParams = new URLSearchParams(window.location.search);
+const yearParam = urlParams.get('y');
+const monthParam = urlParams.get('m');
+const today = new Date();
+const startYear = yearParam ? parseInt(yearParam) : today.getFullYear();
+const startMonth = monthParam ? parseInt(monthParam) - 1 : today.getMonth();
+const holidaysApi = "https://holidays-jp.github.io/api/v1/date.json";
+async function fetchHolidays() {
+	const response = await fetch(holidaysApi);
+	return await response.json();
+}
+function generateCalendar(year, month, holidays) {
+	const monthNames = ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"];
+	const daysOfWeek = ["日", "月", "火", "水", "木", "金", "土"];
+	for (let i = 0; i < 12; i++) {
+		const currentMonth = (month + i) % 12;
+		const currentYear = year + Math.floor((month + i) / 12);
+		const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+		const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+		const monthDiv = document.createElement('div');
+		monthDiv.classList.add('month');
+		const table = document.createElement('table');
+		const caption = document.createElement('caption');
+		caption.textContent = `${currentYear}年 ${monthNames[currentMonth]}`;
+		table.appendChild(caption);
+		const thead = document.createElement('thead');
+		const tr = document.createElement('tr');
+		daysOfWeek.forEach((day, index) => {
+			const th = document.createElement('th');
+			th.textContent = day;
+			if (index === 0) th.classList.add('sunday');
+			if (index === 6) th.classList.add('saturday');
+			tr.appendChild(th);
+		});
+		thead.appendChild(tr);
+		table.appendChild(thead);
+		const tbody = document.createElement('tbody');
+		let date = 1;
+		for (let row = 0; row < 6; row++) {
+			const tr = document.createElement('tr');
+			let hasDate = false;
+			for (let col = 0; col < 7; col++) {
+				const td = document.createElement('td');
+				if (row === 0 && col < firstDay || date > daysInMonth) {
+					td.textContent = "";
+				} else {
+					hasDate = true;
+					const currentDate = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
+					td.textContent = date;
+					if (col === 0) td.classList.add('sunday');
+					if (col === 6) td.classList.add('saturday');
+					if (holidays[currentDate]) {
+						td.classList.add('holiday');
+						const holidayName = document.createElement('p');
+						holidayName.classList.add('holidays_name');
+						holidayName.textContent = holidays[currentDate];
+						td.appendChild(holidayName);
+					}
+					date++;
+				}
+				tr.appendChild(td);
+			}
+			if (hasDate) tbody.appendChild(tr);
+		}
+		table.appendChild(tbody);
+		monthDiv.appendChild(table);
+		document.body.appendChild(monthDiv);
+	}
+}
+fetchHolidays().then(holidays => {
+	generateCalendar(startYear, startMonth, holidays);
+});
+</script>
+</body>
+</html>
