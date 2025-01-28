@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RSSリーダー</title>
+</head>
+<body>
+<h1>RSSリーダー</h1>
+<p>はてな RSS ＞ https://b.hatena.ne.jp/hotentry.rss</p>
+<p>はてな RSS ＞ http://feeds.feedburner.com/hatena/b/hotentry</p>
+<input type="text" id="rss-url" placeholder="RSSフィードのURLを入力" style="width: 600px;">
+<button id="fetch-rss">フィードを取得</button>
+<div id="rss-feed"></div>
+<script>
+document.getElementById('fetch-rss').addEventListener('click', function() {
+const rssUrl = document.getElementById('rss-url').value;
+fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`)
+	.then(response => response.json())
+	.then(data => {
+		const feedContainer = document.getElementById('rss-feed');
+		feedContainer.innerHTML = ''; // 既存のフィードをクリア
+		data.items.forEach(item => {
+			const article = document.createElement('div');
+			article.innerHTML = `
+				<h2><a href="${item.link}" target="_blank">${item.title}</a></h2>
+				<p>${item.description}</p>
+			`;
+			feedContainer.appendChild(article);
+		});
+	})
+	.catch(error => {
+		console.error('RSSフィードの取得に失敗しました:', error);
+	});
+});
+</script>
+</body>
+</html>

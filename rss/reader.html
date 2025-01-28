@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>はてなブックマーク人気</title>
+<style>
+body {
+	font-family: Arial, sans-serif;
+	margin: 20px;
+}
+h1 {
+	text-align: center;
+	font-size: 18px;
+}
+.feed {
+	border: 1px solid #ddd;
+	padding: 10px;
+	margin-bottom: 20px;
+}
+.feed h2 {
+	margin: 0;
+	font-size: 14px;
+}
+.feed p {
+	margin: 5px 0;
+	font-size: 14px;
+}
+a:link { color: #0070C6; }
+a:visited { color: #0070C6; }
+a:hover { color: #f43316; background-color: #fff1b7; }
+a:active { color: #f43316; background-color: #fff1b7; }
+</style>
+</head>
+<body>
+<h1>はてなブックマーク人気</h1>
+<div id="feeds"></div>
+<script>
+// const rssUrl = 'https://b.hatena.ne.jp/hotentry.rss'; // ここにRSSフィードのURLを入力してください
+const rssUrl = 'https://feeds.feedburner.com/hatena/b/hotentry'; // ここにRSSフィードのURLを入力してください
+async function fetchRSS() {
+	const response = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${rssUrl}`);
+	const data = await response.json();
+	return data.items;
+}
+function displayFeeds(feeds) {
+	const feedsContainer = document.getElementById('feeds');
+	feeds.forEach(feed => {
+		const feedElement = document.createElement('div');
+		feedElement.className = 'feed';
+		feedElement.innerHTML = `
+			<h2><a href="${feed.link}" target="_blank">${feed.title}</a></h2>
+			<p>${feed.pubDate}</p>
+		`;
+/*
+		feedElement.innerHTML = `
+			<h2>${feed.title}</h2>
+			<p>${feed.pubDate}</p>
+			<p>${feed.description}</p>
+			<a href="${feed.link}" target="_blank">Read more</a>
+		`;
+*/
+		feedsContainer.appendChild(feedElement);
+	});
+}
+document.addEventListener('DOMContentLoaded', async () => {
+	const feeds = await fetchRSS();
+	displayFeeds(feeds);
+});
+</script>
+</body>
+</html>
