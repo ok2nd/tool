@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Excel to HTML &lt;table&gt; 変換</title>
+<style>
+body {
+	font-family: Arial, sans-serif;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	padding: 0;
+	background-color: #ffffef;
+}
+textarea {
+	width: 50%;
+	height: 200px;
+	margin: 10px;
+}
+.input-container {
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	width: 100%;
+	max-width: 1000px;
+}
+.options-box {
+	margin: 10px 0;
+}
+.clear-box {
+	margin-left: 10px;
+}
+.text-box {
+	display: flex;
+}
+table {
+	border-collapse: collapse;
+}
+th, td {
+	text-align: center;
+	padding: 2px;
+	border: 1px solid #444;
+	background-color: #fff;
+}
+th {
+	background-color: #ddd;
+}
+#tablePreview {
+	font-size: 0.8em;
+}
+</style>
+</head>
+<body>
+<h1>Excel to HTML &lt;table&gt; 変換</h1>
+<div class="input-container">
+	<div class="clear-box">
+		<button onclick="clearInput()">クリア</button>
+	</div>
+	<div class="text-box">
+		<textarea id="excelInput" placeholder="Excelデータをここに貼り付けて！"></textarea>
+		<textarea id="htmlOutput" placeholder="HTMLデータがここに表示されます。" readonly></textarea>
+	</div>
+</div>
+<div class="options-box">
+	<label>
+		<input type="checkbox" id="firstRowHeader" />1行目を &lt;th&gt; にする
+	</label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+	<label>
+		<input type="checkbox" id="firstColumnHeader" />1列目を &lt;th&gt; にする
+	</label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+	<button onclick="convertToTable()">変換</button>
+</div>
+<h3>プレビュー</h3>
+<div id="tablePreview"></div>
+<script>
+function clearInput() {
+	document.getElementById('excelInput').value = '';
+}
+function convertToTable() {
+	const excelData = document.getElementById('excelInput').value;
+	const firstRowHeader = document.getElementById('firstRowHeader').checked;
+	const firstColumnHeader = document.getElementById('firstColumnHeader').checked;
+	if (!excelData.trim()) {
+		alert('Excelデータを貼り付けて！');
+		return;
+	}
+	const rows = [];
+	let currentRow = [];
+	let currentCell = '';
+	let inQuotes = false;
+	for (let i = 0; i < excelData.length; i++) {
+		const char = excelData[i];
+		const nextChar = excelData[i + 1];
+		if (char === '"') {
+			if (inQuotes && nextChar === '"') {
+				currentCell += '"';
+				i++;
+			} else {
+				inQuotes = !inQuotes;
+			}
+		} else if (char === '\t' && !inQuotes) {
+			currentRow.push(currentCell.replace(/\r?\n/g, '<br>'));
+			currentCell = '';
+		} else if (char === '\n' && !inQuotes) {
+			currentRow.push(currentCell.replace(/\r?\n/g, '<br>'));
+			rows.push(currentRow);
+			currentRow = [];
+			currentCell = '';
+		} else {
+			currentCell += char;
+		}
+	}
+	if (currentCell !== '' || currentRow.length > 0) {
+		currentRow.push(currentCell.replace(/\r?\n/g, '<br>'));
+		rows.push(currentRow);
+	}
+	let tableHTML = '<table border="1">\n';
+	if (firstRowHeader) {
+		tableHTML += '<thead>\n	<tr>\n';
+		rows[0].forEach((col, colIndex) => {
+			const tag = firstColumnHeader && colIndex === 0 ? 'th' : 'th';
+			tableHTML += `		<${tag}>${col}</${tag}>\n`;
+		});
+		tableHTML += '	</tr>\n</thead>\n';
+		rows.shift();
+	}
+	
+	tableHTML += '<tbody>\n';
+	rows.forEach((cols, rowIndex) => {
+		tableHTML += '	<tr>\n';
+		cols.forEach((col, colIndex) => {
+			const isHeader = firstColumnHeader && colIndex === 0;
+			const tag = isHeader ? 'th' : 'td';
+			tableHTML += `		<${tag}>${col}</${tag}>\n`;
+		});
+		tableHTML += '	</tr>\n';
+	});
+	tableHTML += '</tbody>\n</table>';
+	document.getElementById('htmlOutput').value = tableHTML;
+	document.getElementById('tablePreview').innerHTML = tableHTML;
+}
+</script>
+</body>
+</html>
