@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>計算式エディタ</title>
+<style>
+body {
+	font-family: Arial, sans-serif;
+	margin: 20px;
+}
+.container {
+	display: flex;
+	flex-direction: column;
+}
+textarea {
+	width: 600px;
+	height: 200px;
+	border: 1px solid #ccc;
+	font-family: monospace;
+	font-size: 16px;
+}
+button {
+	width: fit-content; /* 内容にフィットする幅 */
+	align-self: flex-start; /* 左寄せにする（中央揃えなら center） */
+}
+</style>
+</head>
+<body>
+<div class="container">
+	<button onclick="clearTextarea()">クリア</button>
+	<textarea id="textarea" onkeydown="checkEnter(event)"></textarea>
+</div>
+<script>
+function clearTextarea() {
+	document.getElementById('textarea').value = '';
+}
+function checkEnter(event) {
+	if (event.key === 'Enter') {
+		event.preventDefault();
+		const textarea = document.getElementById('textarea');
+		const cursorPosition = textarea.selectionStart;
+		const textBeforeCursor = textarea.value.substring(0, cursorPosition);
+		const textAfterCursor = textarea.value.substring(cursorPosition);
+		const lines = textBeforeCursor.split('\n');
+		const currentLine = lines[lines.length - 1].replace(/=/g, '');
+		if (/^\d+(\.\d+)?$/.test(currentLine.trim())) {
+			textarea.value = textBeforeCursor + '\n\n' + textAfterCursor;
+			setCursorPosition(textarea, textBeforeCursor.length + 1);
+		} else {
+			try {
+				const result = eval(currentLine);
+				if (!isNaN(result)) {
+					const newValue = textBeforeCursor + '\n' + result + textAfterCursor;
+					textarea.value = newValue;
+					setCursorPosition(textarea, textBeforeCursor.length + 1 + result.toString().length);
+				}
+			} catch (e) {
+				const newValue = textBeforeCursor + '\nエラー' + textAfterCursor;
+				textarea.value = newValue;
+				setCursorPosition(textarea, textBeforeCursor.length + 1 + 'エラー'.length);
+			}
+		}
+	}
+}
+function setCursorPosition(elem, pos) {
+	elem.focus();
+	elem.setSelectionRange(pos, pos);
+}
+</script>
+</body>
+</html>
