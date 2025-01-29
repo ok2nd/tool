@@ -115,7 +115,7 @@ function convertToTable() {
 		currentRow.push(currentCell.replace(/\r?\n/g, '<br>'));
 		rows.push(currentRow);
 	}
-	let tableHTML = '<table border="1">\n';
+	let tableHTML = '<table>\n';
 	if (firstRowHeader) {
 		tableHTML += '<thead>\n	<tr>\n';
 		rows[0].forEach((col, colIndex) => {
