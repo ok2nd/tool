@@ -13,22 +13,34 @@ body {
 	display: flex;
 	flex-direction: column;
 }
-textarea {
-	width: 600px;
-	height: 200px;
-	border: 1px solid #ccc;
-	font-family: monospace;
-	font-size: 16px;
+.button-container {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px; /* ボタンと文字の間隔 */
 }
-button {
+.clear-button {
 	width: fit-content; /* 内容にフィットする幅 */
 	align-self: flex-start; /* 左寄せにする（中央揃えなら center） */
+	white-space: nowrap; /* ボタン内のテキストを改行させない */
+	min-width: fit-content; /* ボタンの最小幅を確保 */
+	flex-shrink: 0; /* ボタンが縮小しないようにする */
+}
+textarea {
+	max-width: 98%;
+	width: 660px;
+	height: 300px;
+	border: 1px solid #888;
+	font-family: monospace;
+	font-size: 16px;
 }
 </style>
 </head>
 <body>
 <div class="container">
-	<button onclick="clearTextarea()">クリア</button>
+	<div class="button-container">
+		<button class="clear-button" onclick="clearTextarea()">クリア</button>
+		<span>四則演算ができます。()も使えます。式を入れて[Enter]キーをおして下さい。</span>
+	</div>
 	<textarea id="textarea" onkeydown="checkEnter(event)"></textarea>
 </div>
 <script>
@@ -43,23 +55,24 @@ function checkEnter(event) {
 		const textBeforeCursor = textarea.value.substring(0, cursorPosition);
 		const textAfterCursor = textarea.value.substring(cursorPosition);
 		const lines = textBeforeCursor.split('\n');
-		const currentLine = lines[lines.length - 1].replace(/=/g, '');
-		if (/^\d+(\.\d+)?$/.test(currentLine.trim())) {
-			textarea.value = textBeforeCursor + '\n\n' + textAfterCursor;
+		const currentLine = lines[lines.length - 1].replace(/=/g, '').trim();
+		// 演算子を含まない場合はそのまま次の行へ移動
+		if (!/[+\-*/]/.test(currentLine)) {
+			textarea.value = textBeforeCursor + '\n' + textAfterCursor;
 			setCursorPosition(textarea, textBeforeCursor.length + 1);
-		} else {
-			try {
-				const result = eval(currentLine);
-				if (!isNaN(result)) {
-					const newValue = textBeforeCursor + '\n' + result + textAfterCursor;
-					textarea.value = newValue;
-					setCursorPosition(textarea, textBeforeCursor.length + 1 + result.toString().length);
-				}
-			} catch (e) {
-				const newValue = textBeforeCursor + '\nエラー' + textAfterCursor;
+			return;
+		}
+		try {
+			const result = eval(currentLine);
+			if (!isNaN(result)) {
+				const newValue = textBeforeCursor + '\n' + result + textAfterCursor;
 				textarea.value = newValue;
-				setCursorPosition(textarea, textBeforeCursor.length + 1 + 'エラー'.length);
+				setCursorPosition(textarea, textBeforeCursor.length + 1 + result.toString().length);
 			}
+		} catch (e) {
+			const newValue = textBeforeCursor + '\nエラー' + textAfterCursor;
+			textarea.value = newValue;
+			setCursorPosition(textarea, textBeforeCursor.length + 1 + 'エラー'.length);
 		}
 	}
 }
