@@ -9,9 +9,15 @@ body {
 	font-family: Arial, sans-serif;
 	margin: 20px;
 }
-h1 {
+#header {
 	font-size: 1.4em;
+	padding: 0 10px;
+	background-color: #0080E0;
 }
+#header a:link { color: #fff; }
+#header a:visited { color: #fff; }
+#header a:hover { color: #f43316; background-color: #fff1b7; }
+#header a:active { color: #f43316; background-color: #fff1b7; }
 a:link { color: #0080E0; }
 a:visited { color: #0080E0; }
 a:hover { color: #f43316; background-color: #fff1b7; }
@@ -29,7 +35,7 @@ li {
 </style>
 </head>
 <body>
-<h1><a href="https://b.hatena.ne.jp/" target="_blank">はてなブックマーク人気</a></h1>
+<h1 id="header"><a href="https://b.hatena.ne.jp/" target="_blank">はてなブックマーク人気</a></h1>
 <div id="feeds"></div>
 <script>
 // const rssUrl = 'https://b.hatena.ne.jp/hotentry.rss'; // ここにRSSフィードのURLを入力してください
