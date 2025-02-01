@@ -50,9 +50,8 @@ async function fetchRSS() {
 	items.forEach(item => {
 		const title = item.querySelector("title")?.textContent || "No Title";
 		const link = item.querySelector("link")?.textContent || "#";
-		
-		// pubDate の取得（dc:date も考慮）
-		let pubDate = item.querySelector("pubDate")?.textContent || item.querySelector("dc\\:date")?.textContent || "No Date";
+		// pubDate の取得（dc:date も考慮）⇒ 結局、どちらの日付も取得できず。
+		let pubDate = item.querySelector("pubDate")?.textContent || item.querySelector("dc\\:date")?.textContent || "";
 		feeds.push({ title, link, pubDate });
 	});
 	return feeds;
@@ -62,9 +61,14 @@ function displayFeeds(feeds) {
 	feeds.forEach(feed => {
 		const feedElement = document.createElement('ul');
 		feedElement.className = 'feed';
+/*
 		feedElement.innerHTML = `
 			<li><a href="${feed.link}" target="_blank">${feed.title}</a>
 			(${feed.pubDate})</li>
+		`;
+*/
+		feedElement.innerHTML = `
+			<li><a href="${feed.link}" target="_blank">${feed.title}</a></li>
 		`;
 		feedsContainer.appendChild(feedElement);
 	});
