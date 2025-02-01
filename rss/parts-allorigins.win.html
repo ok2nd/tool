@@ -42,7 +42,7 @@ li {
 </head>
 <body>
 <h1 id="header"><a href="https://b.hatena.ne.jp/" target="_blank">はてなブックマーク人気（allorigins版）</a></h1>
-<div id="feeds"></div>
+<div id="rss-feeds"></div>
 <script>
 const rssUrl = 'https://feeds.feedburner.com/hatena/b/hotentry';
 async function fetchRSS() {
@@ -63,7 +63,7 @@ async function fetchRSS() {
 	return feeds;
 }
 function displayFeeds(feeds) {
-	const feedsContainer = document.getElementById('feeds');
+	const feedsContainer = document.getElementById('rss-feeds');
 	feeds.forEach(feed => {
 		const feedElement = document.createElement('ul');
 		feedElement.className = 'feed';

@@ -34,7 +34,7 @@ a:active { color: #f43316; background-color: #fff1b7; }
 </head>
 <body>
 <h1><a href="https://b.hatena.ne.jp/" target="_blank">はてなブックマーク人気</a></h1>
-<div id="feeds"></div>
+<div id="rss-feeds"></div>
 <script>
 // const rssUrl = 'https://b.hatena.ne.jp/hotentry.rss'; // ここにRSSフィードのURLを入力してください
 const rssUrl = 'https://feeds.feedburner.com/hatena/b/hotentry'; // ここにRSSフィードのURLを入力してください
@@ -44,7 +44,7 @@ async function fetchRSS() {
 	return data.items;
 }
 function displayFeeds(feeds) {
-	const feedsContainer = document.getElementById('feeds');
+	const feedsContainer = document.getElementById('rss-feeds');
 	feeds.forEach(feed => {
 		const feedElement = document.createElement('div');
 		feedElement.className = 'feed';
