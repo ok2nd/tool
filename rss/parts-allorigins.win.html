@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>はてなブックマーク人気（allorigins版）</title>
+<style>
+body {
+	font-family: Arial, sans-serif;
+	margin: 20px;
+}
+#header {
+	font-size: 1.4em;
+	padding: 0 10px;
+	background-color: #0080E0;
+}
+#header a:link { color: #fff; }
+#header a:visited { color: #fff; }
+#header a:hover { color: #f43316; background-color: #fff1b7; }
+#header a:active { color: #f43316; background-color: #fff1b7; }
+a:link { color: #0080E0; }
+a:visited { color: #0080E0; }
+a:hover { color: #f43316; background-color: #fff1b7; }
+a:active { color: #f43316; background-color: #fff1b7; }
+ul {
+	margin: 0 0 0 17px;
+	padding: 0;
+	list-style: none;
+	list-style-image:url('044.gif');
+}
+li {
+	margin: 2px 0 2px 0;
+	font-size: 0.8em;
+}
+</style>
+</head>
+<body>
+<h1 id="header"><a href="https://b.hatena.ne.jp/" target="_blank">はてなブックマーク人気（allorigins版）</a></h1>
+<div id="feeds"></div>
+<script>
+const rssUrl = 'https://feeds.feedburner.com/hatena/b/hotentry';
+async function fetchRSS() {
+	const response = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(rssUrl)}`);
+	const data = await response.json();
+	const parser = new DOMParser();
+	const xmlDoc = parser.parseFromString(data.contents, "text/xml");
+	// RSSフィードをパース
+	const items = xmlDoc.querySelectorAll("item");
+	let feeds = [];
+	items.forEach(item => {
+		const title = item.querySelector("title")?.textContent || "No Title";
+		const link = item.querySelector("link")?.textContent || "#";
+		
+		// pubDate の取得（dc:date も考慮）
+		let pubDate = item.querySelector("pubDate")?.textContent || item.querySelector("dc\\:date")?.textContent || "No Date";
+		feeds.push({ title, link, pubDate });
+	});
+	return feeds;
+}
+function displayFeeds(feeds) {
+	const feedsContainer = document.getElementById('feeds');
+	feeds.forEach(feed => {
+		const feedElement = document.createElement('ul');
+		feedElement.className = 'feed';
+		feedElement.innerHTML = `
+			<li><a href="${feed.link}" target="_blank">${feed.title}</a>
+			(${feed.pubDate})</li>
+		`;
+		feedsContainer.appendChild(feedElement);
+	});
+}
+document.addEventListener('DOMContentLoaded', async () => {
+	const feeds = await fetchRSS();
+	displayFeeds(feeds);
+});
+</script>
+</body>
+</html>
