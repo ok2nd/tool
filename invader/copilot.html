@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>インベーダーゲーム</title>
+<style>
+canvas {
+	background: #000;
+	display: block;
+	margin: 0 auto;
+}
+</style>
+</head>
+<body>
+<canvas id="gameCanvas" width="800" height="600"></canvas>
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const ship = {
+	x: canvas.width / 2 - 15,
+	y: canvas.height - 30,
+	width: 30,
+	height: 30,
+	dx: 5,
+	bullets: []
+};
+const invaders = [];
+const rows = 5;
+const cols = 10;
+const invaderWidth = 30;
+const invaderHeight = 30;
+const invaderPadding = 20;
+const invaderOffsetTop = 30;
+const invaderOffsetLeft = 30;
+let invaderDx = 2; // インベーダーの移動速度
+let invaderDirection = 1; // 1 = 右移動, -1 = 左移動
+for (let i = 0; i < rows; i++) {
+	invaders[i] = [];
+	for (let j = 0; j < cols; j++) {
+		invaders[i][j] = {
+			x: j * (invaderWidth + invaderPadding) + invaderOffsetLeft,
+			y: i * (invaderHeight + invaderPadding) + invaderOffsetTop,
+			width: invaderWidth,
+			height: invaderHeight,
+			status: 1
+		};
+	}
+}
+function drawShip() {
+	ctx.fillStyle = '#0f0';
+	ctx.fillRect(ship.x, ship.y, ship.width, ship.height);
+}
+function drawInvaders() {
+	for (let i = 0; i < rows; i++) {
+		for (let j = 0; j < cols; j++) {
+			const invader = invaders[i][j];
+			if (invader.status === 1) {
+				ctx.fillStyle = '#f00';
+				ctx.fillRect(invader.x, invader.y, invader.width, invader.height);
+			}
+		}
+	}
+}
+function moveInvaders() {
+	let hitEdge = false;
+	for (let i = 0; i < rows; i++) {
+		for (let j = 0; j < cols; j++) {
+			const invader = invaders[i][j];
+			invader.x += invaderDx * invaderDirection;
+			if (invader.x + invader.width >= canvas.width || invader.x <= 0) {
+				hitEdge = true;
+			}
+		}
+	}
+	if (hitEdge) {
+		invaderDirection *= -1;
+		for (let i = 0; i < rows; i++) {
+			for (let j = 0; j < cols; j++) {
+				invaders[i][j].y += invaderHeight;
+			}
+		}
+	}
+}
+function drawBullets() {
+	ship.bullets.forEach((bullet, index) => {
+		ctx.fillStyle = '#fff';
+		ctx.fillRect(bullet.x, bullet.y, 5, 10);
+		bullet.y -= 7;
+		// 衝突検出
+		for (let i = 0; i < rows; i++) {
+			for (let j = 0; j < cols; j++) {
+				const invader = invaders[i][j];
+				if (invader.status === 1 && bullet.x > invader.x && bullet.x < invader.x + invader.width && bullet.y > invader.y && bullet.y < invader.y + invader.height) {
+					invader.status = 0;
+					ship.bullets.splice(index, 1);
+					break;
+				}
+			}
+		}
+		// 弾丸が画面上端を越えたら削除
+		if (bullet.y < 0) {
+			ship.bullets.splice(index, 1);
+		}
+	});
+}
+function moveShip(e) {
+	if (e.key === 'ArrowLeft' && ship.x > 0) {
+		ship.x -= ship.dx;
+	} else if (e.key === 'ArrowRight' && ship.x + ship.width < canvas.width) {
+		ship.x += ship.dx;
+	} else if (e.key === ' ' && ship.bullets.length < 5) {
+		ship.bullets.push({ x: ship.x + ship.width / 2 - 2.5, y: ship.y });
+	}
+}
+function update() {
+	ctx.clearRect(0, 0, canvas.width, canvas.height);
+	drawShip();
+	drawInvaders();
+	moveInvaders();
+	drawBullets();
+	// ゲームオーバーの判定
+	if (invaders.some(row => row.some(invader => invader.y + invader.height > ship.y && invader.status === 1))) {
+		ctx.font = '30px Arial';
+		ctx.fillStyle = 'white';
+		ctx.textAlign = 'center';
+		ctx.fillText('ゲームオーバー', canvas.width / 2, canvas.height / 2);
+		return;
+	}
+	requestAnimationFrame(update);
+}
+document.addEventListener('keydown', moveShip);
+update();
+</script>
+</body>
+</html>

@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>JavaScript インベーダーゲーム</title>
+<style>
+canvas { border: 1px solid black; }
+</style>
+</head>
+<body>
+<canvas id="gameCanvas" width="800" height="600"></canvas>
+<script>
+// Canvas要素の取得
+const canvas = document.getElementById('gameCanvas') || document.createElement('canvas');
+canvas.width = 800;
+canvas.height = 600;
+document.body.appendChild(canvas);
+const ctx = canvas.getContext('2d');
+// ゲーム状態
+let gameState = 'playing';
+let score = 0;
+// プレイヤー
+const player = {
+	x: canvas.width / 2,
+	y: canvas.height - 30,
+	width: 50,
+	height: 30,
+	speed: 5
+};
+// 敵
+const enemies = [];
+const enemyRows = 5;
+const enemyCols = 10;
+const enemyWidth = 40;
+const enemyHeight = 30;
+const enemyPadding = 10;
+let enemyDirection = 1;
+let enemySpeed = 2; // 敵の速度を上げました
+// 弾
+const bullets = [];
+const bulletSpeed = 7; // 弾の速度も少し上げました
+// 敵の初期配置
+for (let row = 0; row < enemyRows; row++) {
+	for (let col = 0; col < enemyCols; col++) {
+		enemies.push({
+			x: col * (enemyWidth + enemyPadding),
+			y: row * (enemyHeight + enemyPadding) + 30,
+			width: enemyWidth,
+			height: enemyHeight
+		});
+	}
+}
+// キー入力の処理
+const keys = {};
+document.addEventListener('keydown', (e) => {
+	keys[e.code] = true;
+});
+document.addEventListener('keyup', (e) => {
+	keys[e.code] = false;
+});
+// プレイヤーの移動
+function movePlayer() {
+	if (keys['ArrowLeft'] && player.x > 0) {
+		player.x -= player.speed;
+	}
+	if (keys['ArrowRight'] && player.x < canvas.width - player.width) {
+		player.x += player.speed;
+	}
+}
+// 弾の発射
+function shoot() {
+	if (keys['Space']) {
+		bullets.push({
+			x: player.x + player.width / 2,
+			y: player.y,
+			width: 5,
+			height: 10
+		});
+		keys['Space'] = false;
+	}
+}
+// 敵の移動
+function moveEnemies() {
+	let shouldChangeDirection = false;
+	enemies.forEach(enemy => {
+		enemy.x += enemySpeed * enemyDirection;
+		
+		if (enemy.x <= 0 || enemy.x + enemy.width >= canvas.width) {
+			shouldChangeDirection = true;
+		}
+	});
+	if (shouldChangeDirection) {
+		enemyDirection *= -1;
+		enemies.forEach(enemy => {
+			enemy.y += enemyHeight / 2; // 下降速度を調整
+		});
+	}
+}
+// 描画
+function draw() {
+	ctx.clearRect(0, 0, canvas.width, canvas.height);
+	// プレイヤーの描画
+	ctx.fillStyle = 'blue';
+	ctx.fillRect(player.x, player.y, player.width, player.height);
+	// 敵の描画
+	ctx.fillStyle = 'red';
+	enemies.forEach(enemy => {
+		ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
+	});
+	// 弾の描画
+	ctx.fillStyle = 'green';
+	bullets.forEach(bullet => {
+		ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
+	});
+	// スコアの描画
+	ctx.fillStyle = 'white';
+	ctx.font = '20px Arial';
+	ctx.fillText(`Score: ${score}`, 10, 30);
+	// ゲームオーバー画面
+	if (gameState === 'gameover') {
+		ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+		ctx.fillRect(0, 0, canvas.width, canvas.height);
+		ctx.fillStyle = 'white';
+		ctx.font = '40px Arial';
+		ctx.fillText('Game Over', canvas.width / 2 - 100, canvas.height / 2);
+		ctx.font = '20px Arial';
+		ctx.fillText(`Final Score: ${score}`, canvas.width / 2 - 60, canvas.height / 2 + 40);
+	}
+	// 勝利画面
+	if (gameState === 'victory') {
+		ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+		ctx.fillRect(0, 0, canvas.width, canvas.height);
+		ctx.fillStyle = 'white';
+		ctx.font = '40px Arial';
+		ctx.fillText('あなたの勝ち！', canvas.width / 2 - 120, canvas.height / 2);
+		ctx.font = '20px Arial';
+		ctx.fillText(`Final Score: ${score}`, canvas.width / 2 - 60, canvas.height / 2 + 40);
+	}
+}
+// 更新
+function update() {
+	if (gameState === 'playing') {
+		movePlayer();
+		shoot();
+		moveEnemies();
+		// 弾の移動
+		bullets.forEach((bullet, index) => {
+			bullet.y -= bulletSpeed;
+			if (bullet.y < 0) {
+				bullets.splice(index, 1);
+			}
+		});
+		// 衝突判定
+		bullets.forEach((bullet, bulletIndex) => {
+			enemies.forEach((enemy, enemyIndex) => {
+				if (
+					bullet.x < enemy.x + enemy.width &&
+					bullet.x + bullet.width > enemy.x &&
+					bullet.y < enemy.y + enemy.height &&
+					bullet.y + bullet.height > enemy.y
+				) {
+					bullets.splice(bulletIndex, 1);
+					enemies.splice(enemyIndex, 1);
+					score += 10;
+				}
+			});
+		});
+		// ゲームオーバー判定
+		if (enemies.some(enemy => enemy.y + enemy.height > player.y)) {
+			gameState = 'gameover';
+		}
+		// 勝利判定
+		if (enemies.length === 0) {
+			gameState = 'victory';
+		}
+	}
+}
+// ゲームループ
+function gameLoop() {
+	update();
+	draw();
+	requestAnimationFrame(gameLoop);
+}
+gameLoop();
+</script>
+</body>
+</html>

@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>インベーダーゲーム</title>
+<style>
+body {
+	text-align: center;
+	background-color: black;
+	color: white;
+}
+canvas {
+	background-color: black;
+}
+</style>
+</head>
+<body>
+<h1>インベーダーゲーム</h1>
+<canvas id="gameCanvas" width="600" height="400"></canvas>
+<script>
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+// プレイヤーの設定
+const player = {
+	x: canvas.width / 2 - 15,
+	y: canvas.height - 30,
+	width: 30,
+	height: 10,
+	speed: 5,
+	bullets: []
+};
+// インベーダーの設定
+const invaders = [];
+const rows = 3, cols = 7;
+for (let r = 0; r < rows; r++) {
+	for (let c = 0; c < cols; c++) {
+		invaders.push({
+			x: 50 + c * 60,
+			y: 30 + r * 40,
+			width: 30,
+			height: 20,
+			alive: true
+		});
+	}
+}
+let moveDirection = 1; // 1:右, -1:左
+let gameOver = false;
+let gameWin = false;
+// キーボード入力
+let keys = {};
+document.addEventListener("keydown", (e) => keys[e.key] = true);
+document.addEventListener("keyup", (e) => keys[e.key] = false);
+// 弾の発射
+function shoot() {
+	player.bullets.push({ x: player.x + 12, y: player.y, speed: 5 });
+}
+function update() {
+	if (gameOver || gameWin) return;
+	// プレイヤーの移動
+	if (keys["ArrowLeft"] && player.x > 0) player.x -= player.speed;
+	if (keys["ArrowRight"] && player.x < canvas.width - player.width) player.x += player.speed;
+	if (keys[" "] && player.bullets.length < 3) shoot();
+	// 弾の移動
+	player.bullets.forEach((bullet, index) => {
+		bullet.y -= bullet.speed;
+		if (bullet.y < 0) player.bullets.splice(index, 1);
+	});
+	// インベーダーの移動
+	let shiftDown = false;
+	invaders.forEach(invader => {
+		if (!invader.alive) return;
+		invader.x += moveDirection * 2;
+		if (invader.x < 10 || invader.x > canvas.width - invader.width - 10) shiftDown = true;
+	});
+	if (shiftDown) {
+		moveDirection *= -1;
+		invaders.forEach(invader => invader.y += 20);
+	}
+	// 衝突判定
+	player.bullets.forEach((bullet, bIndex) => {
+		invaders.forEach((invader, iIndex) => {
+			if (invader.alive && bullet.x < invader.x + invader.width &&
+				bullet.x + 5 > invader.x &&
+				bullet.y < invader.y + invader.height &&
+				bullet.y + 10 > invader.y) {
+				invader.alive = false;
+				player.bullets.splice(bIndex, 1);
+			}
+		});
+	});
+	// ゲームオーバー判定
+	invaders.forEach(invader => {
+		if (invader.alive && invader.y + invader.height >= player.y) {
+			gameOver = true;
+		}
+	});
+	// 勝利判定
+	if (invaders.every(invader => !invader.alive)) {
+		gameWin = true;
+	}
+}
+function draw() {
+	ctx.clearRect(0, 0, canvas.width, canvas.height);
+	// プレイヤー描画
+	ctx.fillStyle = "white";
+	ctx.fillRect(player.x, player.y, player.width, player.height);
+	// 弾の描画
+	player.bullets.forEach(bullet => {
+		ctx.fillRect(bullet.x, bullet.y, 5, 10);
+	});
+	// インベーダーの描画
+	invaders.forEach(invader => {
+		if (invader.alive) {
+			ctx.fillStyle = "lime";
+			ctx.fillRect(invader.x, invader.y, invader.width, invader.height);
+		}
+	});
+	// ゲームオーバー
+	if (gameOver) {
+		ctx.fillStyle = "red";
+		ctx.font = "30px Arial";
+		ctx.fillText("GAME OVER", canvas.width / 2 - 80, canvas.height / 2);
+	}
+	// 勝利メッセージ
+	if (gameWin) {
+		ctx.fillStyle = "yellow";
+		ctx.font = "30px Arial";
+		ctx.fillText("あなたの勝ち！", canvas.width / 2 - 80, canvas.height / 2);
+	}
+}
+function gameLoop() {
+	update();
+	draw();
+	requestAnimationFrame(gameLoop);
+}
+gameLoop();
+</script>
+</body>
+</html>
