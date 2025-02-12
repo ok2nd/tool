@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>JPEG to Transparent PNG</title>
+<style>
+body {
+	margin: 20px 50px;
+}
+#dropArea {
+	border: 2px dashed #ccc;
+	padding: 20px;
+	text-align: center;
+	cursor: pointer;
+}
+#dropArea.highlight {
+	border-color: #09f;
+}
+#imageCanvas {
+	max-width: 400px;
+	height: auto;
+}
+</style>
+</head>
+<body>
+<div id="dropArea">
+<h3>JPEG to Transparent PNG</h3>
+<p>ここに画像をドラッグ＆ドロップしてください。</p>
+<input type="file" id="imageInput" accept="image/jpeg" style="display: none;">
+</div>
+<canvas id="imageCanvas"></canvas>
+<a id="downloadLink" download="output.png" style="display: none;">ダウンロード PNG</a>
+<script>
+const dropArea = document.getElementById('dropArea');
+const imageInput = document.getElementById('imageInput');
+const imageCanvas = document.getElementById('imageCanvas');
+const downloadLink = document.getElementById('downloadLink');
+const ctx = imageCanvas.getContext('2d');
+// ドラッグ＆ドロップ処理
+dropArea.addEventListener('dragover', (event) => {
+	event.preventDefault(); // デフォルトのドラッグオーバー処理をキャンセル
+	dropArea.classList.add('highlight'); // ドラッグ中のスタイル変更
+});
+dropArea.addEventListener('dragleave', () => {
+	dropArea.classList.remove('highlight'); // ドラッグ終了時のスタイル変更
+});
+dropArea.addEventListener('drop', (event) => {
+	event.preventDefault(); // デフォルトのドロップ処理をキャンセル
+	dropArea.classList.remove('highlight'); // ドロップ終了時のスタイル変更
+	const file = event.dataTransfer.files[0]; // ドロップされたファイルを取得
+	handleFile(file); // ファイル処理関数を呼び出し
+});
+// ファイル選択処理
+imageInput.addEventListener('change', (event) => {
+	const file = event.target.files[0]; // 選択されたファイルを取得
+	handleFile(file); // ファイル処理関数を呼び出し
+});
+function handleFile(file) {
+	if (file.type.startsWith('image/jpeg')) { // JPEGファイルかどうかをチェック
+		const reader = new FileReader(); // FileReaderオブジェクトを生成
+		reader.onload = (e) => { // ファイル読み込み完了時のイベントリスナー
+			const img = new Image(); // Imageオブジェクトを生成
+			img.onload = () => { // 画像読み込み完了時のイベントリスナー
+				// Canvasをオリジナルサイズで作成
+				imageCanvas.width = img.width;
+				imageCanvas.height = img.height;
+				// 画像をオリジナルサイズで描画
+				ctx.drawImage(img, 0, 0);
+				// 画像処理
+				const imageData = ctx.getImageData(0, 0, img.width, img.height); // ピクセルデータを取得
+				const data = imageData.data; // ピクセルデータ配列
+				for (let i = 0; i < data.length; i += 4) { // 4byteずつ（RGBA）処理
+					const r = data[i]; // 赤
+					const g = data[i + 1]; // 緑
+					const b = data[i + 2]; // 青
+					// 白色に近い色を透明にする (fuzz値を調整)
+					if (r > 200 && g > 200 && b > 200) {
+						data[i + 3] = 0; // 透明度を0にする
+					}
+				}
+				ctx.putImageData(imageData, 0, 0); // 変更したピクセルデータをCanvasに反映
+				// PNG画像生成とダウンロード
+				const pngData = imageCanvas.toDataURL('image/png'); // PNG形式の画像データを取得
+				const fileName = file.name.replace(/\.jpeg|\.jpg/i, '') + '-tp.png'; // ダウンロードファイル名を生成
+				downloadLink.download = fileName; // ダウンロードファイル名を設定
+				downloadLink.href = pngData; // ダウンロードリンクのURLを設定
+				downloadLink.style.display = 'block'; // ダウンロードリンクを表示
+				// Canvasを表示サイズに調整 (400px)
+				const maxWidth = 400;
+				let width = img.width;
+				let height = img.height;
+				if (width > maxWidth) {
+					height *= maxWidth / width;
+					width = maxWidth;
+				}
+				imageCanvas.style.width = width + 'px';
+				imageCanvas.style.height = height + 'px';
+			};
+			img.src = e.target.result; // 画像データをImageオブジェクトに設定
+		};
+		reader.readAsDataURL(file); // ファイルをData URLとして読み込む
+	} else {
+		alert('JPEG画像を選択してください。'); // JPEG画像以外が選択された場合に警告を表示
+	}
+}
+</script>
+</body>
+</html>
