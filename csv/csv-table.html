@@ -87,6 +87,7 @@ async function loadCsvAndDisplay(csvFileName) {
 			},
 			paging: false,		// ページングしない。
 			ordering: true,
+			order: [],		// 初期表示時のソートを無効にする
 			mark: true		// 検索文字列ハイライト (by mark.js)
 		});
 	} catch (error) {

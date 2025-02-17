@@ -93,9 +93,10 @@ async function loadCsvAndDisplay(csvFileName) {
 			language: {
 				url: "//cdn.datatables.net/plug-ins/9dcbecd42ad/i18n/Japanese.json"
 			},
-			paging: false,
+			paging: false,		// ページングしない。
 			ordering: true,
-			mark: true
+			order: [],		// 初期表示時のソートを無効にする
+			mark: true		// 検索文字列ハイライト (by mark.js)
 		});
 	} catch (error) {
 		console.error('エラー:', error);
