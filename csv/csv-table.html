@@ -7,20 +7,27 @@
 <!-- DataTables CSS -->
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
 <style>
-body { margin: 10px; }
+body { margin: 20px; }
 h1 { font-size: 16px; }
-.category { width: 100px; }
 table {
-	font-size: 14px;
-	border-collapse: collapse;
+	font-size: 12px;
+	border-collapse: collapse !important;
+}
+table td {
+	background: #eee;
+}
+table tr:nth-child(odd) td {	/* 奇数行、偶数行ごとに背景色を設定する */
+	background: #fff;
 }
 th, td {
-	border: 1px solid #ddd;
-	padding: 2px;
+	border-collapse: collapse;
+	border: 1px solid #888;
+	margin: 0 !important;
+	padding: 2px !important;
 	text-align: left;
 }
 th {
-	background-color: #f4f4f4;
+	background-color: #ddd;
 }
 mark { background: gold; color: black; }
 </style>
