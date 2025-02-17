@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CSV to HTML Table with DataTables</title>
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+<style>
+body { margin: 10px; }
+h1 { font-size: 16px; }
+.category { width: 100px; }
+table {
+	font-size: 14px;
+	border-collapse: collapse;
+}
+th, td {
+	border: 1px solid #ddd;
+	padding: 2px;
+	text-align: left;
+}
+th {
+	background-color: #f4f4f4;
+}
+mark { background: gold; color: black; }
+</style>
+</head>
+<body>
+<h1>CSVデータをHTMLテーブルに変換（検索機能付き）</h1>
+<div id="csv-table-container"></div>
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.jsdelivr.net/g/mark.js(jquery.mark.min.js),datatables.mark.js"></script>
+<script>
+// URL引数からパラメータを取得する関数
+function getQueryParam(param) {
+	const urlParams = new URLSearchParams(window.location.search);
+	return urlParams.get(param);
+}
+// CSVを読み込んでテーブルに表示する関数
+async function loadCsvAndDisplay(csvFileName) {
+	try {
+		if (!csvFileName) {
+			throw new Error("CSVファイル名が指定されていません。");
+		}
+		// CSVファイルを取得
+		const response = await fetch(csvFileName);
+		if (!response.ok) {
+			throw new Error(`HTTPエラー: ${response.status}`);
+		}
+		// CSVテキストデータを取得
+		let csvText = await response.text();
+		// 改行コードの正規化: CRのみをCR+LFに変換
+		csvText = csvText.replace(/\r(?!\n)/g, '\r\n');
+		// 1. 改行コードを一時的な文字列 "@@@" に置換
+		csvText = csvText.replace(/"([^"]*)"/g, (match, p1) => {
+			return p1.replace(/\r\n|\r|\n/g, "@@@");
+		});
+		// CSVを配列に変換
+		const rows = csvText.split('\n').filter(row => row.trim() !== '');
+		const tableData = rows.map(row => row.split(','));
+		// HTMLテーブルを生成
+		const table = document.createElement('table');
+		table.id = 'dataTable';
+		// <thead>を生成
+		const thead = document.createElement('thead');
+		const headerRow = document.createElement('tr');
+		tableData[0].forEach(header => {
+			const th = document.createElement('th');
+			th.textContent = header.trim();
+			headerRow.appendChild(th);
+		});
+		thead.appendChild(headerRow);
+		table.appendChild(thead);
+		// <tbody>を生成
+		const tbody = document.createElement('tbody');
+		for (let i = 1; i < tableData.length; i++) {
+			const row = document.createElement('tr');
+			tableData[i].forEach(cell => {
+				const td = document.createElement('td');
+				td.innerHTML = cell.trim(); // innerHTMLを使うことで<br>が反映される
+				row.appendChild(td);
+			});
+			tbody.appendChild(row);
+		}
+		table.appendChild(tbody);
+		// コンテナにテーブルを追加
+		document.getElementById('csv-table-container').appendChild(table);
+		// 2. HTML変換後、"@@@" を <br> タグに置換
+		const html = document.getElementById('csv-table-container').innerHTML;
+		document.getElementById('csv-table-container').innerHTML = html.replace(/@@@/g, "<br>");
+		// DataTablesを初期化
+		$('#dataTable').DataTable({
+			language: {
+				url: "//cdn.datatables.net/plug-ins/9dcbecd42ad/i18n/Japanese.json"
+			},
+			paging: false,
+			ordering: false,
+			mark: true
+		});
+	} catch (error) {
+		console.error('エラー:', error);
+		document.getElementById('csv-table-container').textContent = `エラー: ${error.message}`;
+	}
+}
+// URL引数 "csv" からファイル名を取得してロード
+const csvFileName = getQueryParam('csv');
+loadCsvAndDisplay(csvFileName);
+</script>
+</body>
+</html>
