@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>HTML Table to CSV Converter</title>
+<style>
+body {
+	font-family: Arial, sans-serif;
+	margin: 40px;
+}
+.container {
+	width: 90%;
+	padding: 0;
+}
+input[type="text"] {
+	width: 100%;
+	padding: 8px;
+}
+button {
+	margin: 20px 0;
+	padding: 8px 16px;
+	background-color: #4CAF50;
+	color: white;
+	border: none;
+	cursor: pointer;
+}
+button:hover {
+	background-color: #45a049;
+}
+</style>
+</head>
+<body>
+<div class="container">
+<h2>HTML Table to CSV Converter（ Shif-JIS 版 ）</h2>
+<input type="text" id="url" placeholder="WebページのURLを入力">
+<button onclick="convertToCSV()">変換＆ダウンロード</button>
+</div>
+<script>
+function convertToCSV() {
+	const url = document.getElementById('url').value;
+	fetch(url)
+		.then(response => response.text())
+		.then(html => {
+			const parser = new DOMParser();
+			const doc = parser.parseFromString(html, 'text/html');
+			const table = doc.querySelector('table');
+			if (!table) {
+				alert('指定されたURLにテーブルが見つかりませんでした。');
+				return;
+			}
+			let csv = [];
+			const rows = table.querySelectorAll('tr');
+			for (let row of rows) {
+				let cols = row.querySelectorAll('td, th');
+				let csvRow = [];
+				for (let col of cols) {
+					let data = col.innerText.trim().replace(/"/g, '""');
+					csvRow.push(`"${data}"`);
+				}
+				csv.push(csvRow.join(','));
+			}
+			const sjisArrayBuffer = convertToShiftJIS(csv.join('\n'));
+			downloadCSV(sjisArrayBuffer);
+		})
+		.catch(error => {
+			console.error('Error:', error);
+			alert('エラーが発生しました。');
+		});
+}
+function convertToShiftJIS(str) {
+	const encoder = new TextEncoder("utf-8");
+	const utf8Array = encoder.encode(str);
+	return Encoding.convert(utf8Array, { to: 'SJIS', type: 'array' });
+}
+function downloadCSV(data) {
+	const blob = new Blob([new Uint8Array(data)], { type: 'text/csv' });
+	const url = URL.createObjectURL(blob);
+	const a = document.createElement('a');
+	a.href = url;
+	a.download = 'table-sjis.csv';
+	document.body.appendChild(a);
+	a.click();
+	document.body.removeChild(a);
+}
+// Encoding.js のスクリプトを読み込む（CDNなどを利用）
+const script = document.createElement('script');
+script.src = "https://cdnjs.cloudflare.com/ajax/libs/encoding-japanese/2.0.0/encoding.min.js";
+document.head.appendChild(script);
+</script>
+</body>
+</html>
