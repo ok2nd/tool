@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CSVアップロードしてHTMLテーブル表示</title>
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+<style>
+body { margin: 20px; }
+h1 { font-size: 16px; }
+table {
+	font-size: 12px;
+	border-collapse: collapse !important;
+}
+table td {
+	background: #eee;
+}
+table tr:nth-child(odd) td {
+	background: #fff;
+}
+th, td {
+	border-collapse: collapse;
+	border: 1px solid #888;
+	margin: 0 !important;
+	padding: 2px !important;
+	text-align: left;
+}
+th {
+	background-color: #ddd;
+}
+mark { background: gold; color: black; }
+</style>
+</head>
+<body>
+<h1>CSVアップロードしてHTMLテーブル表示（検索機能付き）</h1>
+<input type="file" id="csvFileInput" accept=".csv">
+<div id="csv-table-container"></div>
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.jsdelivr.net/g/mark.js(jquery.mark.min.js),datatables.mark.js"></script>
+<script>
+document.getElementById('csvFileInput').addEventListener('change', function(event) {
+	const file = event.target.files[0];
+	if (!file) return;
+	const reader = new FileReader();
+	reader.onload = function(e) {
+		const csvText = e.target.result;
+		displayCsv(csvText);
+	};
+	reader.readAsText(file);
+});
+function displayCsv(csvText) {
+	csvText = csvText.replace(/\r(?!\n)/g, '\r\n');
+	csvText = csvText.replace(/"([^"]*)"/g, (match, p1) => {
+		return p1.replace(/\r\n|\r|\n/g, "@@@");
+	});
+	const rows = csvText.split('\n').filter(row => row.trim() !== '');
+	const tableData = rows.map(row => row.split(','));
+	const table = document.createElement('table');
+	table.id = 'dataTable';
+	const thead = document.createElement('thead');
+	const headerRow = document.createElement('tr');
+	tableData[0].forEach(header => {
+		const th = document.createElement('th');
+		th.textContent = header.trim();
+		headerRow.appendChild(th);
+	});
+	thead.appendChild(headerRow);
+	table.appendChild(thead);
+	const tbody = document.createElement('tbody');
+	for (let i = 1; i < tableData.length; i++) {
+		const row = document.createElement('tr');
+		tableData[i].forEach(cell => {
+			const td = document.createElement('td');
+			td.innerHTML = cell.trim();
+			row.appendChild(td);
+		});
+		tbody.appendChild(row);
+	}
+	table.appendChild(tbody);
+	const container = document.getElementById('csv-table-container');
+	container.innerHTML = '';
+	container.appendChild(table);
+	const html = container.innerHTML;
+	container.innerHTML = html.replace(/@@@/g, "<br>");
+	$('#dataTable').DataTable({
+		language: {
+			url: "//cdn.datatables.net/plug-ins/9dcbecd42ad/i18n/Japanese.json"
+		},
+		paging: false,
+		ordering: true,
+		order: [],
+		mark: true
+	});
+}
+</script>
+</body>
+</html>
