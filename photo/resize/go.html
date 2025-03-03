@@ -43,6 +43,8 @@ let resizedBlob = null;
 upload.addEventListener("change", function(event) {
 	const file = event.target.files[0];
 	if (!file) return;
+	// 画像アップロード時にダウンロードボタンを非表示にする
+	downloadButton.style.display = "none";
 	originalFileName = file.name.replace(/\.[^/.]+$/, ""); // 拡張子を除いたファイル名取得
 	const reader = new FileReader();
 	reader.onload = function(e) {
@@ -84,6 +86,7 @@ function resizeImage(image, maxSize) {
 			resizedBlob = blob;
 			downloadButton.style.display = "block";
 			downloadButton.setAttribute("data-size", maxSize);
+			downloadButton.textContent = `ダウンロード（${maxSize}px）`;
 		}, "image/jpeg", 0.9);
 	};
 }
