@@ -19,8 +19,11 @@ h1 { font-size: 18px; }
 	margin-bottom: 10px;
 	vertical-align: top;
 }
+.box {
+	margin-right: 10px;
+}
 .box-row img {
-	width: 48vw; /* ブラウザの横幅の48% */
+	width: 47vw; /* ブラウザの横幅の48% */
 	border: 1px solid #888;
 }
 p {
@@ -56,7 +59,7 @@ footer {
 	<button id="nextButton">→</button>
 </div>
 <div class="box-row">
-	<div id="target1" style="margin-right:10px;">
+	<div class="box">
 		<input type="file" id="fileInput1" webkitdirectory directory multiple style="display: none;">
 		<div class="button-folder">
 			<button id="selectFolderButton1">フォルダを選択</button>
@@ -64,7 +67,7 @@ footer {
 		</div>
 		<p id="filename1"></p><img id="preview1" src="img/gray.jpg">
 	</div>
-	<div id="target2">
+	<div class="box">
 		<input type="file" id="fileInput2" webkitdirectory directory multiple style="display: none;">
 		<div class="button-folder">
 			<button id="selectFolderButton2">フォルダを選択</button>
