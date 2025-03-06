@@ -11,19 +11,18 @@ div, img {
 }
 h1 { font-size: 18px; }
 .box-row {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	max-width: 100%;
-	margin-top: 10px;
+	justify-content: space-between;
 	margin-bottom: 10px;
-	vertical-align: top;
 }
 .box {
-	margin-right: 10px;
+	flex: 1;
+	display: flex;
+	margin: 0 2px;
+	flex-direction: column; /* 要素を縦に並べる */
 }
 .box-row img {
-	width: 47vw; /* ブラウザの横幅の48% */
+	width: 100%;
 	border: 1px solid #888;
 }
 p {
@@ -35,12 +34,7 @@ footer {
 	margin: 20px 0 0 0;
 	font-size: 14px;
 }
-.button-row {
-	display: flex;
-	justify-content: center;
-	margin-bottom: 10px;
-}
-.button-row button {
+.button-container button {
 	margin: 0 10px;
 }
 .button-folder {
@@ -50,36 +44,59 @@ footer {
 .folderName {
 	margin-left: 10px;
 }
+.side-button-container {
+	display: flex;
+	width: 100%;
+	justify-content: space-between;
+}
+.side-button-container:first-child {
+	justify-content: flex-start;
+}
+.side-button-container:last-child {
+	justify-content: flex-end;
+}
 </style>
 </head>
 <body>
 <h1>フォルダ内の画像を順番に並べて表示・比較</h1>
-<div class="button-row">
-	<button id="prevButton">←</button>
-	<button id="nextButton">→</button>
-</div>
 <div class="box-row">
-	<div class="box">
-		<input type="file" id="fileInput1" webkitdirectory directory multiple style="display: none;">
-		<div class="button-folder">
-			<button id="selectFolderButton1">フォルダを選択</button>
-			<span id="folderName1" class="folderName"><span>
+<div class="box">
+	<div class="side-button-container">
+		<button id="prevButton1">←</button>
+		<button id="nextButton1">→</button>
+		<div style="flex-grow: 1; text-align: right;">
+		<button id="resetButton">≪≪先頭</button>
+			<button id="prevButton">←左右同時</button>
 		</div>
-		<p id="filename1"></p><img id="preview1" src="img/gray.jpg">
 	</div>
-	<div class="box">
-		<input type="file" id="fileInput2" webkitdirectory directory multiple style="display: none;">
-		<div class="button-folder">
-			<button id="selectFolderButton2">フォルダを選択</button>
-			<span id="folderName2" class="folderName"></span>
+	<input type="file" id="fileInput1" webkitdirectory directory multiple style="display: none;">
+	<div class="button-folder">
+		<button id="selectFolderButton1">フォルダを選択</button>
+		<span id="folderName1" class="folderName"></span>
+	</div>
+	<p id="filename1"></p><img id="preview1" src="img/gray.jpg">
+</div>
+<div class="box">
+	<div class="side-button-container">
+		<div style="flex-grow: 1; text-align: left;">
+			<button id="nextButton">左右同時→</button>
 		</div>
-		<p id="filename2"></p><img id="preview2" src="img/gray.jpg">
+		<button id="prevButton2">←</button>
+		<button id="nextButton2">→</button>
 	</div>
+	<input type="file" id="fileInput2" webkitdirectory directory multiple style="display: none;">
+	<div class="button-folder">
+		<button id="selectFolderButton2">フォルダを選択</button>
+		<span id="folderName2" class="folderName"></span>
+	</div>
+	<p id="filename2"></p><img id="preview2" src="img/gray.jpg">
+</div>
 </div>
 <script>
 let files1 = [];
 let files2 = [];
-let currentImageIndex = 0;
+let currentImageIndex1 = 0;
+let currentImageIndex2 = 0;
 const preview1 = document.getElementById('preview1');
 const filename1 = document.getElementById('filename1');
 const folderName1 = document.getElementById('folderName1');
@@ -88,71 +105,108 @@ const filename2 = document.getElementById('filename2');
 const folderName2 = document.getElementById('folderName2');
 const prevButton = document.getElementById('prevButton');
 const nextButton = document.getElementById('nextButton');
+const prevButton1 = document.getElementById('prevButton1');
+const nextButton1 = document.getElementById('nextButton1');
+const prevButton2 = document.getElementById('prevButton2');
+const nextButton2 = document.getElementById('nextButton2');
+const resetButton = document.getElementById('resetButton');
 const fileInput1 = document.getElementById('fileInput1');
 const selectFolderButton1 = document.getElementById('selectFolderButton1');
 const fileInput2 = document.getElementById('fileInput2');
 const selectFolderButton2 = document.getElementById('selectFolderButton2');
-
 selectFolderButton1.addEventListener('click', () => {
 	fileInput1.click();
 });
-
 selectFolderButton2.addEventListener('click', () => {
 	fileInput2.click();
 });
-
 fileInput1.addEventListener('change', (e) => {
 	files1 = Array.from(e.target.files).filter(file => file.type.startsWith('image/'));
 	if (files1.length > 0) {
-		currentImageIndex = 0;
+		currentImageIndex1 = 0;
 		updatePreview();
 	}
 });
-
 fileInput2.addEventListener('change', (e) => {
 	files2 = Array.from(e.target.files).filter(file => file.type.startsWith('image/'));
 	if (files2.length > 0) {
-		currentImageIndex = 0;
+		currentImageIndex2 = 0;
 		updatePreview();
 	}
 });
-
 prevButton.addEventListener('click', () => {
 	if (files1.length > 0 || files2.length > 0) {
-		currentImageIndex = (currentImageIndex - 1 + Math.max(files1.length, files2.length)) % Math.max(files1.length, files2.length);
+		const maxLength = Math.max(files1.length, files2.length);
+		currentImageIndex1 = (currentImageIndex1 - 1 + maxLength) % maxLength;
+		currentImageIndex2 = (currentImageIndex2 - 1 + maxLength) % maxLength;
 		updatePreview();
 	}
 });
-
 nextButton.addEventListener('click', () => {
 	if (files1.length > 0 || files2.length > 0) {
-		currentImageIndex = (currentImageIndex + 1) % Math.max(files1.length, files2.length);
+		const maxLength = Math.max(files1.length, files2.length);
+		currentImageIndex1 = (currentImageIndex1 + 1) % maxLength;
+		currentImageIndex2 = (currentImageIndex2 + 1) % maxLength;
 		updatePreview();
 	}
 });
-
-function updatePreview() {
+prevButton1.addEventListener('click', () => {
 	if (files1.length > 0) {
-		const file = files1[currentImageIndex % files1.length];
+		currentImageIndex1 = (currentImageIndex1 - 1 + files1.length) % files1.length;
+		updatePreview1();
+	}
+});
+nextButton1.addEventListener('click', () => {
+	if (files1.length > 0) {
+		currentImageIndex1 = (currentImageIndex1 + 1) % files1.length;
+		updatePreview1();
+	}
+});
+prevButton2.addEventListener('click', () => {
+	if (files2.length > 0) {
+		currentImageIndex2 = (currentImageIndex2 - 1 + files2.length) % files2.length;
+		updatePreview2();
+	}
+});
+nextButton2.addEventListener('click', () => {
+	if (files2.length > 0) {
+		currentImageIndex2 = (currentImageIndex2 + 1) % files2.length;
+		updatePreview2();
+	}
+});
+resetButton.addEventListener('click', () => {
+	currentImageIndex1 = 0;
+	currentImageIndex2 = 0;
+	updatePreview();
+});
+function updatePreview() {
+	updatePreview1();
+	updatePreview2();
+}
+function updatePreview1() {
+	if (files1.length > 0) {
+		const file = files1[currentImageIndex1 % files1.length];
 		const reader = new FileReader();
 		reader.onload = (e) => {
 			preview1.src = e.target.result;
-			filename1.textContent = file.name;
+			filename1.textContent = `(${currentImageIndex1 + 1}) ${file.name}`;
 			const fullPath = file.webkitRelativePath;
 			const folderName = fullPath.substring(0, fullPath.lastIndexOf('/'));
-			folderName1.textContent = folderName;
+			folderName1.textContent = `${folderName} (${files1.length})`; // 修正箇所
 		};
 		reader.readAsDataURL(file);
 	}
+}
+function updatePreview2() {
 	if (files2.length > 0) {
-		const file = files2[currentImageIndex % files2.length];
+		const file = files2[currentImageIndex2 % files2.length];
 		const reader = new FileReader();
 		reader.onload = (e) => {
 			preview2.src = e.target.result;
-			filename2.textContent = file.name;
+			filename2.textContent = `(${currentImageIndex2 + 1}) ${file.name}`;
 			const fullPath = file.webkitRelativePath;
 			const folderName = fullPath.substring(0, fullPath.lastIndexOf('/'));
-			folderName2.textContent = folderName;
+			folderName2.textContent = `${folderName} (${files2.length})`;
 		};
 		reader.readAsDataURL(file);
 	}

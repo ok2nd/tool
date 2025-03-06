@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no">
+<title>フォルダ内の画像を順番に並べて表示・比較</title>
+<style>
+div, img {
+	margin: 0;
+	padding: 0;
+}
+h1 { font-size: 18px; }
+.box-row {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	max-width: 100%;
+	margin-top: 10px;
+	margin-bottom: 10px;
+	vertical-align: top;
+}
+.box {
+	margin-right: 10px;
+}
+.box-row img {
+	width: 47vw; /* ブラウザの横幅の48% */
+	border: 1px solid #888;
+}
+p {
+	margin: 0;
+	padding: 0;
+	font-size: 16px;
+}
+footer {
+	margin: 20px 0 0 0;
+	font-size: 14px;
+}
+.button-row {
+	display: flex;
+	justify-content: center;
+	margin-bottom: 10px;
+}
+.button-row button {
+	margin: 0 10px;
+}
+.button-folder {
+	display: flex;
+	align-items: center;
+}
+.folderName {
+	margin-left: 10px;
+}
+</style>
+</head>
+<body>
+<h1>フォルダ内の画像を順番に並べて表示・比較</h1>
+<div class="button-row">
+	<button id="prevButton">←</button>
+	<button id="nextButton">→</button>
+</div>
+<div class="box-row">
+	<div class="box">
+		<input type="file" id="fileInput1" webkitdirectory directory multiple style="display: none;">
+		<div class="button-folder">
+			<button id="selectFolderButton1">フォルダを選択</button>
+			<span id="folderName1" class="folderName"><span>
+		</div>
+		<p id="filename1"></p><img id="preview1" src="img/gray.jpg">
+	</div>
+	<div class="box">
+		<input type="file" id="fileInput2" webkitdirectory directory multiple style="display: none;">
+		<div class="button-folder">
+			<button id="selectFolderButton2">フォルダを選択</button>
+			<span id="folderName2" class="folderName"></span>
+		</div>
+		<p id="filename2"></p><img id="preview2" src="img/gray.jpg">
+	</div>
+</div>
+<script>
+let files1 = [];
+let files2 = [];
+let currentImageIndex = 0;
+const preview1 = document.getElementById('preview1');
+const filename1 = document.getElementById('filename1');
+const folderName1 = document.getElementById('folderName1');
+const preview2 = document.getElementById('preview2');
+const filename2 = document.getElementById('filename2');
+const folderName2 = document.getElementById('folderName2');
+const prevButton = document.getElementById('prevButton');
+const nextButton = document.getElementById('nextButton');
+const fileInput1 = document.getElementById('fileInput1');
+const selectFolderButton1 = document.getElementById('selectFolderButton1');
+const fileInput2 = document.getElementById('fileInput2');
+const selectFolderButton2 = document.getElementById('selectFolderButton2');
+
+selectFolderButton1.addEventListener('click', () => {
+	fileInput1.click();
+});
+
+selectFolderButton2.addEventListener('click', () => {
+	fileInput2.click();
+});
+
+fileInput1.addEventListener('change', (e) => {
+	files1 = Array.from(e.target.files).filter(file => file.type.startsWith('image/'));
+	if (files1.length > 0) {
+		currentImageIndex = 0;
+		updatePreview();
+	}
+});
+
+fileInput2.addEventListener('change', (e) => {
+	files2 = Array.from(e.target.files).filter(file => file.type.startsWith('image/'));
+	if (files2.length > 0) {
+		currentImageIndex = 0;
+		updatePreview();
+	}
+});
+
+prevButton.addEventListener('click', () => {
+	if (files1.length > 0 || files2.length > 0) {
+		currentImageIndex = (currentImageIndex - 1 + Math.max(files1.length, files2.length)) % Math.max(files1.length, files2.length);
+		updatePreview();
+	}
+});
+
+nextButton.addEventListener('click', () => {
+	if (files1.length > 0 || files2.length > 0) {
+		currentImageIndex = (currentImageIndex + 1) % Math.max(files1.length, files2.length);
+		updatePreview();
+	}
+});
+
+function updatePreview() {
+	if (files1.length > 0) {
+		const file = files1[currentImageIndex % files1.length];
+		const reader = new FileReader();
+		reader.onload = (e) => {
+			preview1.src = e.target.result;
+			filename1.textContent = file.name;
+			const fullPath = file.webkitRelativePath;
+			const folderName = fullPath.substring(0, fullPath.lastIndexOf('/'));
+			folderName1.textContent = folderName;
+		};
+		reader.readAsDataURL(file);
+	}
+	if (files2.length > 0) {
+		const file = files2[currentImageIndex % files2.length];
+		const reader = new FileReader();
+		reader.onload = (e) => {
+			preview2.src = e.target.result;
+			filename2.textContent = file.name;
+			const fullPath = file.webkitRelativePath;
+			const folderName = fullPath.substring(0, fullPath.lastIndexOf('/'));
+			folderName2.textContent = folderName;
+		};
+		reader.readAsDataURL(file);
+	}
+}
+</script>
+<footer>
+<a href="https://2ndart.hatenablog.com/entry/2025/03/06/161517" target="_blank">ブログ：晴歩雨描</a>
+</footer>
+</body>
+</html>
