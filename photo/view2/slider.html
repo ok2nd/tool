@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>スライダーで画像比較</title>
+<link rel="stylesheet" href="css/twentytwenty-my-customize.css">
+<style>
+h3, h4, p {
+	margin: 0px;
+	padding: 0px;
+}
+.twentytwenty-before-label { display: none }
+.twentytwenty-after-label { display: none }
+.drop-area {
+	border: 2px dashed #ccc;
+	padding: 10px;
+	text-align: center;
+	margin: 10px;
+	box-sizing: border-box;
+}
+.drop-container {
+	display: flex;
+	justify-content: center;
+}
+.file-name {
+	text-align: center;
+	margin-bottom: 5px;
+}
+.container {
+	width: 100%;
+	height: 100vh;
+	position: relative;
+	overflow: hidden;
+}
+.container img {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+}
+</style>
+</head>
+<body>
+<div class="drop-container">
+	<div>
+		<div class="drop-area" id="before-drop-area">
+			画像１をここにドラッグ＆ドロップしてください
+		</div>
+		<div class="file-name" id="before-file-name"></div>
+	</div>
+	<div>
+		<div class="drop-area" id="after-drop-area">
+			画像２をここにドラッグ＆ドロップしてください
+		</div>
+		<div class="file-name" id="after-file-name"></div>
+	</div>
+</div>
+<div class="container" id="comparison-container">
+	<img id="before-image" src="#" style="display: none;">
+	<img id="after-image" src="#" style="display: none;">
+</div>
+<script src="https://code.jquery.com/jquery-3.2.1.js"></script>
+<script src="js/jquery.event.move.js"></script>
+<script src="js/jquery.twentytwenty.js"></script>
+<script>
+$(function() {
+	let beforeImage = null;
+	let afterImage = null;
+	$("#before-drop-area").on("dragenter dragover", function(e) {
+		e.preventDefault();
+		$(this).css("border", "2px solid #000");
+	});
+	$("#before-drop-area").on("dragleave drop", function(e) {
+		e.preventDefault();
+		$(this).css("border", "2px dashed #ccc");
+	});
+	$("#before-drop-area").on("drop", function(e) {
+		e.preventDefault();
+		const files = e.originalEvent.dataTransfer.files;
+		if (files.length === 1) {
+			loadImage(files[0], "before");
+			$("#before-file-name").text(files[0].name);
+		} else {
+			alert("1つのファイルをドロップしてください。");
+		}
+	});
+	$("#after-drop-area").on("dragenter dragover", function(e) {
+		e.preventDefault();
+		$(this).css("border", "2px solid #000");
+	});
+	$("#after-drop-area").on("dragleave drop", function(e) {
+		e.preventDefault();
+		$(this).css("border", "2px dashed #ccc");
+	});
+	$("#after-drop-area").on("drop", function(e) {
+		e.preventDefault();
+		const files = e.originalEvent.dataTransfer.files;
+		if (files.length === 1) {
+			loadImage(files[0], "after");
+			$("#after-file-name").text(files[0].name);
+		} else {
+			alert("1つのファイルをドロップしてください。");
+		}
+	});
+	function loadImage(file, position) {
+		const reader = new FileReader();
+		reader.onload = function(e) {
+			if (position === "before") {
+				$("#before-image").attr("src", e.target.result).show();
+				beforeImage = e.target.result;
+			} else {
+				$("#after-image").attr("src", e.target.result).show();
+				afterImage = e.target.result;
+			}
+			if (beforeImage && afterImage) {
+				$("#comparison-container").twentytwenty();
+			}
+		};
+		reader.readAsDataURL(file);
+	}
+});
+</script>
+</body>
+</html>
