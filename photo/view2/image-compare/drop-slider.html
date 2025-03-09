@@ -122,11 +122,7 @@ function drag_drop(no) {
 			img.onload = function() {
 				if (no === '1') {
 					const width = img.naturalWidth;
-					if (width <= 1200) { // 画像の横幅が1200px未満の場合、最大値をそのピクセル値に
-						document.getElementById('image-compare').style.maxWidth = width + 'px';
-					} else {
-						document.getElementById('image-compare').style.maxWidth = '100%';
-					}
+					document.getElementById('image-compare').style.maxWidth = width + 'px';
 					document.getElementById('compare-before').src = e.target.result;
 				} else if (no === '2') {
 					document.getElementById('compare-after').src = e.target.result;
