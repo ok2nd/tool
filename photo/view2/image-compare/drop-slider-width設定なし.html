@@ -48,9 +48,6 @@ footer {
 	max-width: 100%;
 	height: auto;
 }
-#image-compare {
-	width: 100%;
-}
 </style>
 <!-- Image Compare Viewer ライブラリ -->
 <script src="js/image-compare-viewer.min.js"></script>
@@ -117,31 +114,21 @@ function drag_drop(no) {
 		e.preventDefault();
 		const reader = new FileReader();
 		reader.onload = function (e) {
-			const img = document.getElementById('preview' + no);
-			img.src = e.target.result;
-			img.onload = function() {
-				if (no === '1') {
-					const width = img.naturalWidth;
-					if (width <= 1200) { // 画像の横幅が1200px未満の場合、最大値をそのピクセル値に
-						document.getElementById('image-compare').style.width = width + 'px';
-					} else {
-						document.getElementById('image-compare').style.width = '100%';
-					}
-					document.getElementById('compare-before').src = e.target.result;
-				} else if (no === '2') {
-					document.getElementById('compare-after').src = e.target.result;
-				}
-				if (viewer) { // Viewerがすでに初期化されている場合は再初期化
-					viewer.unmount();
-					initViewer();
-				}
+			document.getElementById('preview' + no).src = e.target.result;
+			if (no === '1') {
+				document.getElementById('compare-before').src = e.target.result;
+			} else if (no === '2') {
+				document.getElementById('compare-after').src = e.target.result;
+			}
+			if (viewer) { // Viewerがすでに初期化されている場合は再初期化
+				viewer.unmount();
+				initViewer();
 			}
 		};
 		reader.readAsDataURL(e.dataTransfer.files[0]);
 		document.getElementById('filename' + no).innerHTML = e.dataTransfer.files[0].name;
 	});
 }
-
 drag_drop('1');
 drag_drop('2');
 </script>
