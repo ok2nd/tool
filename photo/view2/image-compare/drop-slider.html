@@ -49,7 +49,7 @@ footer {
 	height: auto;
 }
 #image-compare {
-	width: 100%;
+	max-width: 100%;
 }
 </style>
 <!-- Image Compare Viewer ライブラリ -->
@@ -123,9 +123,9 @@ function drag_drop(no) {
 				if (no === '1') {
 					const width = img.naturalWidth;
 					if (width <= 1200) { // 画像の横幅が1200px未満の場合、最大値をそのピクセル値に
-						document.getElementById('image-compare').style.width = width + 'px';
+						document.getElementById('image-compare').style.maxWidth = width + 'px';
 					} else {
-						document.getElementById('image-compare').style.width = '100%';
+						document.getElementById('image-compare').style.maxWidth = '100%';
 					}
 					document.getElementById('compare-before').src = e.target.result;
 				} else if (no === '2') {
