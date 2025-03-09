@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>2つの画像を比較</title>
+<style>
+div, img {
+	margin: 0;
+	padding: 0;
+}
+h1 { font-size: 18px; }
+.box-row {
+	display: flex;
+	max-width: 100%;
+	margin-top: 10px;
+	margin-bottom: 10px;
+	vertical-align: top;
+}
+.box-row img {
+	width: 48vw;
+	border: 1px solid #888;
+}
+p {
+	margin: 0;
+	padding: 0;
+	font-size: 16px;
+}
+footer {
+	margin: 20px 0 0 0;
+	font-size: 14px;
+}
+.controls {
+	margin: 20px 0;
+}
+.controls button {
+	padding: 5px 20px;
+	margin-right: 10px;
+	cursor: pointer;
+}
+#compare-container {
+	width: auto;
+	height: auto;
+	margin: 10px auto;
+	display: none;
+}
+.image-compare-container img {
+	max-width: 600px;
+	height: auto;
+}
+</style>
+<!-- Image Compare Viewer ライブラリ -->
+<script src="js/image-compare-viewer.min.js"></script>
+<link rel="stylesheet" href="css/image-compare-viewer.min.css">
+</head>
+<body>
+<h1>2つの写真/画像をドラッグ＆ドロップして比較</h1>
+<div class="controls">
+	<button id="overlay-mode">重ねて比較</button>
+	<button id="side-mode">横に並べて比較</button>
+</div>
+<!-- 横並び表示用 -->
+<div class="box-row">
+	<div id="target1" style="margin-right:10px;">
+		<p id="filename1"></p>
+		<img id="preview1" src="../img/mes.jpg">
+	</div>
+	<div id="target2">
+		<p id="filename2"></p>
+		<img id="preview2" src="../img/mes.jpg">
+	</div>
+</div>
+<!-- 重ねて比較用 -->
+<div id="compare-container">
+	<div id="image-compare">
+		<img id="compare-before" src="img/mes.jpg">
+		<img id="compare-after" src="img/mes.jpg">
+	</div>
+</div>
+<script>
+// Image Compare Viewer インスタンス
+let viewer = null;
+// Image Compare Viewer の初期化
+function initViewer() {
+	const container = document.getElementById('image-compare');
+	viewer = new ImageCompare(container, {
+		controlColor: '#FFFFFF',
+		controlShadow: true,
+		showLabels: false, // ラベルを非表示
+	}).mount();
+}
+document.getElementById('overlay-mode').addEventListener('click', () => {
+	document.querySelector('.box-row').style.display = 'none';
+	document.getElementById('compare-container').style.display = 'block';
+	if (!viewer) initViewer();
+});
+document.getElementById('side-mode').addEventListener('click', () => {
+	document.querySelector('.box-row').style.display = 'flex';
+	document.getElementById('compare-container').style.display = 'none';
+	if (viewer) {
+		viewer.unmount();
+		viewer = null;
+	}
+});
+function drag_drop(no) {
+	const target = document.getElementById('target' + no);
+	target.addEventListener('dragover', function (e) {
+		e.preventDefault();
+		e.stopPropagation();
+		e.dataTransfer.dropEffect = 'copy';
+	});
+	target.addEventListener('drop', function (e) {
+		e.stopPropagation();
+		e.preventDefault();
+		const reader = new FileReader();
+		reader.onload = function (e) {
+			document.getElementById('preview' + no).src = e.target.result;
+			if (no === '1') {
+				document.getElementById('compare-before').src = e.target.result; // 重ねて比較用の画像更新
+			} else if (no === '2') {
+				document.getElementById('compare-after').src = e.target.result; // 重ねて比較用の画像更新
+			}
+			if (viewer) { // Viewerがすでに初期化されている場合は再初期化
+				viewer.unmount();
+				initViewer();
+			}
+		};
+		reader.readAsDataURL(e.dataTransfer.files[0]);
+		document.getElementById('filename' + no).innerHTML = e.dataTransfer.files[0].name;
+	});
+}
+drag_drop('1');
+drag_drop('2');
+</script>
+<footer>
+<a href="https://2ndart.hatenablog.com/archive" target="_blank">晴歩雨描：ブログ</a>
+</footer>
+</body>
+</html>
