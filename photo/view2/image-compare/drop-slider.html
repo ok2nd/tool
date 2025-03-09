@@ -116,9 +116,9 @@ function drag_drop(no) {
 		reader.onload = function (e) {
 			document.getElementById('preview' + no).src = e.target.result;
 			if (no === '1') {
-				document.getElementById('compare-before').src = e.target.result; // 重ねて比較用の画像更新
+				document.getElementById('compare-before').src = e.target.result;
 			} else if (no === '2') {
-				document.getElementById('compare-after').src = e.target.result; // 重ねて比較用の画像更新
+				document.getElementById('compare-after').src = e.target.result;
 			}
 			if (viewer) { // Viewerがすでに初期化されている場合は再初期化
 				viewer.unmount();
