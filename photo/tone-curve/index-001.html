@@ -50,7 +50,6 @@
 <script src="https://cdn.jsdelivr.net/npm/rangeslider.js@2.3.3/dist/rangeslider.min.js"></script>
 <script>
 let originalFileName = '';
-let originalWidth = 0, originalHeight = 0; // 元の画像サイズを保存
 document.getElementById('fileInput').addEventListener('change', function(e) {
 	const file = e.target.files[0];
 	if (file && (file.type === 'image/jpeg' || file.type === 'image/png')) {
@@ -59,30 +58,34 @@ document.getElementById('fileInput').addEventListener('change', function(e) {
 		reader.onload = function(event) {
 			const img = new Image();
 			img.onload = function() {
-				originalWidth = img.width;  // 元の画像の幅を保存
-				originalHeight = img.height; // 元の画像の高さを保存
-				
 				const canvas = document.getElementById('mycanvas');
 				const ctx = canvas.getContext('2d');
-				// 表示サイズのための縮小
-				let displayWidth, displayHeight;
-				const maxSize = 800; // 表示の最大サイズ
+				// 画像の縦横比を保ちながらキャンバスを調整
+				let canvasWidth, canvasHeight;
 				if (img.width > img.height) {
-					displayWidth = Math.min(img.width, maxSize);
-					displayHeight = (img.height / img.width) * displayWidth;
+					const maxSize = 800; // 表示の最大サイズ
+					if (img.width < maxSize) {
+						canvasWidth = img.width;
+						canvasHeight = img.height;
+					} else {
+						canvasWidth = maxSize;
+						canvasHeight = (img.height / img.width) * maxSize;
+					}
 				} else {
-					displayHeight = Math.min(img.height, maxSize);
-					displayWidth = (img.width / img.height) * displayHeight;
+					const maxSize = 600; // 表示の最大サイズ
+					if (img.height < maxSize) {
+						canvasWidth = img.width;
+						canvasHeight = img.height;
+					} else {
+						canvasHeight = maxSize;
+						canvasWidth = (img.width / img.height) * maxSize;
+					}
 				}
-				// キャンバスのサイズを元の画像サイズに設定
-				canvas.width = originalWidth;
-				canvas.height = originalHeight;
-				// 画像を元のサイズで描画
-				ctx.drawImage(img, 0, 0, originalWidth, originalHeight);
-				// CSSで表示用に縮小
-				canvas.style.width = displayWidth + "px";
-				canvas.style.height = displayHeight + "px";
-				toneCurve(); // 画像を加工
+				canvas.width = canvasWidth;
+				canvas.height = canvasHeight;
+				// 画像をキャンバスに描画
+				ctx.drawImage(img, 0, 0, canvasWidth, canvasHeight);
+				toneCurve();
 			};
 			img.src = event.target.result;
 		};
@@ -94,6 +97,7 @@ document.getElementById('fileInput').addEventListener('change', function(e) {
 	}
 });
 $(document).ready(function() {
+	const canvas = document.getElementById('mycanvas');
 	$('#downloadBtn').click(function() {
 		if (!originalFileName) {
 			alert('先に画像をアップロードしてください。');
@@ -102,21 +106,13 @@ $(document).ready(function() {
 		const extension = originalFileName.substring(originalFileName.lastIndexOf('.'));
 		const baseName = originalFileName.substring(0, originalFileName.lastIndexOf('.'));
 		const newFileName = baseName + '-result' + extension;
-		// オリジナルサイズのキャンバスを作成してダウンロード用に描画
-		const originalCanvas = document.createElement('canvas');
-		originalCanvas.width = originalWidth;
-		originalCanvas.height = originalHeight;
-		const ctx = originalCanvas.getContext('2d');
-		// 既存のキャンバス（縮小表示）から元のサイズでコピー
-		const displayCanvas = document.getElementById('mycanvas');
-		ctx.drawImage(displayCanvas, 0, 0, originalWidth, originalHeight);
 		const link = document.createElement('a');
 		link.download = newFileName;
-		link.href = originalCanvas.toDataURL(`image/${extension === '.png' ? 'png' : 'jpeg'}`);
+		link.href = canvas.toDataURL(`image/${extension === '.png' ? 'png' : 'jpeg'}`);
 		link.click();
 	});
 	$('#cancelBtn').click(function() {
-		location.reload();
+		 location.reload();
 	});
 });
 window.hljs && hljs.initHighlightingOnLoad();
