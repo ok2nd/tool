@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>画像レベル調整</title>
+<style>
+body {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+}
+.image-container {
+	display: flex;
+	margin-bottom: 20px;
+	position: relative;
+}
+.image-container img, #dropArea {
+	max-width: 49.6%;
+	margin: 0 4px 0 0;
+	box-sizing: border-box;
+}
+.image-container #dropArea {
+	border: 2px dashed #ccc;
+	padding: 20px;
+	text-align: center;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+.slider-container {
+	margin-bottom: 5px;
+	background-color: rgba(255, 255, 255, 0.8);
+	box-sizing: border-box;
+	display: flex;
+	align-items: center;
+}
+.slider-container label {
+	margin-right: 10px;
+}
+.slider-container input[type="range"] {
+}
+.slider-container label span {
+	white-space: nowrap;
+}
+#dropArea, #originalImage {
+	position: relative;
+}
+#dropArea::before {
+	content: "";
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+}
+.reset-button {
+	white-space: nowrap;
+	margin: 0 30px 0 10px;
+}
+#downloadButton {
+	margin: 0 0 20px 0;
+}
+</style>
+</head>
+<body>
+<h3>画像レベル調整</h3>
+<div class="slider-container">
+	<label for="blackPointSlider">黒閾値 (0-20%): <span id="blackPointValue">0</span>%</label>
+	<input type="range" id="blackPointSlider" min="0" max="20" value="0">
+	<button id="resetBlackPointButton" class="reset-button">リセット</button>
+	<label for="whitePointSlider">白閾値 (80-100%): <span id="whitePointValue">100</span>%</label>
+	<input type="range" id="whitePointSlider" min="80" max="100" value="100">
+	<button id="resetWhitePointButton" class="reset-button">リセット</button>
+</div>
+<div class="slider-container">
+	<label for="levelSlider">レベル調整 (0.1 - 2.0): <span id="levelValue">1.0</span></label>
+	<input type="range" id="levelSlider" min="10" max="200" value="100">
+	<button id="resetLevelButton" class="reset-button">リセット</button>
+</div>
+<div class="image-container">
+	<div id="dropArea" style="width: 600px; height: 200px;">ここに画像をドラッグ＆ドロップしてください。</div>
+	<img id="originalImage" style="display: none;">
+	<img id="processedImage" style="display: none;">
+</div>
+<button id="downloadButton">ダウンロード</button>
+<script>
+const originalImage = document.getElementById('originalImage');
+const processedImage = document.getElementById('processedImage');
+const levelSlider = document.getElementById('levelSlider');
+const blackPointSlider = document.getElementById('blackPointSlider');
+const whitePointSlider = document.getElementById('whitePointSlider');
+const levelValueDisplay = document.getElementById('levelValue');
+const blackPointValueDisplay = document.getElementById('blackPointValue');
+const whitePointValueDisplay = document.getElementById('whitePointValue');
+const resetLevelButton = document.getElementById('resetLevelButton');
+const resetBlackPointButton = document.getElementById('resetBlackPointButton');
+const resetWhitePointButton = document.getElementById('resetWhitePointButton');
+const dropArea = document.getElementById('dropArea');
+const downloadButton = document.getElementById('downloadButton');
+let originalImageData;
+let canvas;
+let ctx;
+let originalFileName = 'processed_image.jpg';
+let currentLevel = 100;
+let currentBlackPoint = 0;
+let currentWhitePoint = 100;
+dropArea.addEventListener('dragover', (e) => {
+	e.preventDefault();
+});
+dropArea.addEventListener('drop', (e) => {
+	e.preventDefault();
+	const file = e.dataTransfer.files[0];
+	if (file && file.type.startsWith('image/')) {
+		originalFileName = file.name;
+		loadImage(file);
+	}
+});
+originalImage.addEventListener('dragover', (e) => {
+	e.preventDefault();
+});
+originalImage.addEventListener('drop', (e) => {
+	e.preventDefault();
+	const file = e.dataTransfer.files[0];
+	if (file && file.type.startsWith('image/')) {
+		originalFileName = file.name;
+		loadImage(file);
+	}
+});
+function loadImage(file) {
+	const reader = new FileReader();
+	reader.onload = (e) => {
+		originalImage.src = e.target.result;
+		originalImage.style.display = 'inline';
+		dropArea.style.display = 'none';
+		const img = new Image();
+		img.onload = () => {
+			canvas = document.createElement('canvas');
+			ctx = canvas.getContext('2d');
+			canvas.width = img.width;
+			canvas.height = img.height;
+			ctx.drawImage(img, 0, 0);
+			originalImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+			updateSliders();
+			processImage();
+		};
+		img.src = e.target.result;
+	};
+	reader.readAsDataURL(file);
+}
+levelSlider.addEventListener('input', () => {
+	currentLevel = levelSlider.value;
+	levelValueDisplay.textContent = (currentLevel / 100).toFixed(2);
+	processImage();
+});
+blackPointSlider.addEventListener('input', () => {
+	currentBlackPoint = parseInt(blackPointSlider.value);
+	blackPointValueDisplay.textContent = currentBlackPoint;
+	processImage();
+});
+whitePointSlider.addEventListener('input', () => {
+	currentWhitePoint = parseInt(whitePointSlider.value);
+	whitePointValueDisplay.textContent = currentWhitePoint;
+	processImage();
+});
+resetLevelButton.addEventListener('click', () => {
+	currentLevel = 100;
+	levelSlider.value = currentLevel;
+	levelValueDisplay.textContent = '1.00';
+	processImage();
+});
+resetBlackPointButton.addEventListener('click', () => {
+	currentBlackPoint = 0;
+	blackPointSlider.value = currentBlackPoint;
+	blackPointValueDisplay.textContent = '0';
+	processImage();
+});
+resetWhitePointButton.addEventListener('click', () => {
+	currentWhitePoint = 100;
+	whitePointSlider.value = currentWhitePoint;
+	whitePointValueDisplay.textContent = '100'
+	processImage();
+});
+downloadButton.addEventListener('click', () => {
+	const link = document.createElement('a');
+	link.href = processedImage.src;
+	link.download = `${originalFileName.split('.')[0]}-${currentBlackPoint}-${currentWhitePoint}-${currentLevel / 100}.jpg`;
+	link.click();
+});
+function updateSliders() {
+		levelSlider.value = currentLevel;
+		blackPointSlider.value = currentBlackPoint;
+		whitePointSlider.value = currentWhitePoint;
+		levelValueDisplay.textContent = (currentLevel / 100).toFixed(2);
+		blackPointValueDisplay.textContent = currentBlackPoint;
+		whitePointValueDisplay.textContent = currentWhitePoint;
+	}
+function processImage() {
+	if (!originalImageData) return;
+	const processedImageData = new ImageData(
+		new Uint8ClampedArray(originalImageData.data),
+		originalImageData.width,
+		originalImageData.height
+	);
+	const level = currentLevel / 100;
+	const blackPoint = currentBlackPoint;
+	const whitePoint = currentWhitePoint;
+	levelAndGamma(processedImageData, blackPoint, whitePoint, level);
+	ctx.putImageData(processedImageData, 0, 0);
+	processedImage.src = canvas.toDataURL('image/jpeg');
+	processedImage.style.display = 'inline';
+	downloadLink.download = `${originalFileName.split('.')[0]}-${blackPoint}-${whitePoint}-${level.toFixed(2)}.jpg`;
+	downloadButton.style.display = 'inline';
+}
+function levelAndGamma(imageData, blackPoint, whitePoint, level) {
+	const data = imageData.data;
+	const min = blackPoint / 100;
+	const max = whitePoint / 100;
+	const range = max - min;
+	for (let i = 0; i < data.length; i += 4) {
+		let r = data[i] / 255;
+		let g = data[i + 1] / 255;
+		let b = data[i + 2] / 255;
+		r = (r - min) / range;
+		g = (g - min) / range;
+		b = (b - min) / range;
+		r = Math.max(0, Math.min(1, r));
+		g = Math.max(0, Math.min(1, g));
+		b = Math.max(0, Math.min(1, b));
+		r = Math.pow(r, level);
+		g = Math.pow(g, level);
+		b = Math.pow(b, level);
+		data[i] = r * 255;
+		data[i + 1] = g * 255;
+		data[i + 2] = b * 255;
+	}
+	return imageData;
+}
+</script>
+<footer>
+<a href="https://2ndart.hatenablog.com/archive" target="_blank">ブログ：晴歩雨描</a>
+</footer>
+</body>
+</html>
