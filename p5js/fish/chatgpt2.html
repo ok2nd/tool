@@ -36,7 +36,7 @@
                 this.acceleration = createVector(0, 0);
                 this.maxSpeed = 2;
                 this.maxForce = 0.05;
-                this.size = 5;
+                this.size = 10;
             }
 
             update() {
@@ -59,9 +59,17 @@
             }
 
             display() {
+                push();
+                translate(this.position.x, this.position.y);
+                rotate(this.velocity.heading());
                 fill(255, 100, 100);
                 noStroke();
-                ellipse(this.position.x, this.position.y, this.size, this.size);
+                beginShape();
+                vertex(-this.size, -this.size / 2);
+                vertex(this.size, 0);
+                vertex(-this.size, this.size / 2);
+                endShape(CLOSE);
+                pop();
             }
         }
     </script>
