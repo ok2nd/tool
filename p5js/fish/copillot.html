@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>魚の群れシミュレーション</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.js"></script>
+<style>
+  body {
+    margin: 0;
+    overflow: hidden;
+  }
+</style>
+</head>
+<body>
+<script>
+  const fishCount = 300;
+  let fishes = [];
+
+  class Fish {
+    constructor() {
+      this.position = createVector(random(width), random(height));
+      this.velocity = createVector(random(-2, 2), random(-2, 2));
+      this.size = random(3, 5);
+    }
+
+    move() {
+      this.position.add(this.velocity);
+
+      // 壁で反射させる
+      if (this.position.x < 0 || this.position.x > width) {
+        this.velocity.x *= -1;
+      }
+      if (this.position.y < 0 || this.position.y > height) {
+        this.velocity.y *= -1;
+      }
+    }
+
+    display() {
+      noStroke();
+      fill(100, 150, 255, 200);
+      ellipse(this.position.x, this.position.y, this.size);
+    }
+  }
+
+  function setup() {
+    createCanvas(windowWidth, windowHeight);
+    for (let i = 0; i < fishCount; i++) {
+      fishes.push(new Fish());
+    }
+  }
+
+  function draw() {
+    background(0, 50, 100);
+    for (let fish of fishes) {
+      fish.move();
+      fish.display();
+    }
+  }
+
+  function windowResized() {
+    resizeCanvas(windowWidth, windowHeight);
+  }
+</script>
+</body>
+</html>

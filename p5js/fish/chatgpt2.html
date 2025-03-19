@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>魚の群れシミュレーション</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #87CEEB; }
+    </style>
+</head>
+<body>
+    <script>
+        let fish = [];
+        const numFish = 300;
+
+        function setup() {
+            createCanvas(windowWidth, windowHeight);
+            for (let i = 0; i < numFish; i++) {
+                fish.push(new Fish(random(width), random(height)));
+            }
+        }
+
+        function draw() {
+            background(135, 206, 235);
+            for (let f of fish) {
+                f.update();
+                f.display();
+            }
+        }
+
+        class Fish {
+            constructor(x, y) {
+                this.position = createVector(x, y);
+                this.velocity = p5.Vector.random2D().mult(2);
+                this.acceleration = createVector(0, 0);
+                this.maxSpeed = 2;
+                this.maxForce = 0.05;
+                this.size = 5;
+            }
+
+            update() {
+                this.edges();
+                this.position.add(this.velocity);
+                this.velocity.add(this.acceleration);
+                this.velocity.limit(this.maxSpeed);
+                this.acceleration.mult(0);
+            }
+
+            applyForce(force) {
+                this.acceleration.add(force);
+            }
+
+            edges() {
+                if (this.position.x < 0) this.position.x = width;
+                if (this.position.x > width) this.position.x = 0;
+                if (this.position.y < 0) this.position.y = height;
+                if (this.position.y > height) this.position.y = 0;
+            }
+
+            display() {
+                fill(255, 100, 100);
+                noStroke();
+                ellipse(this.position.x, this.position.y, this.size, this.size);
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="utf-8">
+    <title>魚の群れのシミュレーション</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+    <script>
+        let fishes = [];
+        const numFishes = 300;
+
+        function setup() {
+            createCanvas(windowWidth, windowHeight);
+            for (let i = 0; i < numFishes; i++) {
+                fishes.push(new Fish());
+            }
+        }
+
+        function draw() {
+            background(173, 216, 230); // 水色
+            for (let fish of fishes) {
+                fish.update();
+                fish.display();
+            }
+        }
+
+        class Fish {
+            constructor() {
+                this.position = createVector(random(width), random(height));
+                this.velocity = createVector(random(-1, 1), random(-1, 1));
+                this.acceleration = createVector(0, 0);
+                this.maxSpeed = 2;
+                this.maxForce = 0.2;
+                this.size = random(5, 10);
+            }
+
+            update() {
+                this.velocity.add(this.acceleration);
+                this.velocity.limit(this.maxSpeed);
+                this.position.add(this.velocity);
+                this.acceleration.mult(0);
+
+                this.checkEdges();
+                this.flock(fishes);
+            }
+
+            display() {
+                fill(255, 100, 0); // オレンジ
+                noStroke();
+                ellipse(this.position.x, this.position.y, this.size, this.size);
+            }
+
+            checkEdges() {
+                if (this.position.x < 0) this.position.x = width;
+                if (this.position.x > width) this.position.x = 0;
+                if (this.position.y < 0) this.position.y = height;
+                if (this.position.y > height) this.position.y = 0;
+            }
+
+            flock(fishes) {
+                let alignment = this.align(fishes);
+                let cohesion = this.cohesion(fishes);
+                let separation = this.separation(fishes);
+
+                alignment.mult(1.5);
+                cohesion.mult(1);
+                separation.mult(2);
+
+                this.acceleration.add(alignment);
+                this.acceleration.add(cohesion);
+                this.acceleration.add(separation);
+            }
+
+            align(fishes) {
+                let perceptionRadius = 50;
+                let steering = createVector();
+                let total = 0;
+                for (let other of fishes) {
+                    let d = dist(this.position.x, this.position.y, other.position.x, other.position.y);
+                    if (other != this && d < perceptionRadius) {
+                        steering.add(other.velocity);
+                        total++;
+                    }
+                }
+                if (total > 0) {
+                    steering.div(total);
+                    steering.setMag(this.maxSpeed);
+                    steering.sub(this.velocity);
+                    steering.limit(this.maxForce);
+                }
+                return steering;
+            }
+
+            cohesion(fishes) {
+                let perceptionRadius = 50;
+                let steering = createVector();
+                let total = 0;
+                for (let other of fishes) {
+                    let d = dist(this.position.x, this.position.y, other.position.x, other.position.y);
+                    if (other != this && d < perceptionRadius) {
+                        steering.add(other.position);
+                        total++;
+                    }
+                }
+                if (total > 0) {
+                    steering.div(total);
+                    steering.sub(this.position);
+                    steering.setMag(this.maxSpeed);
+                    steering.sub(this.velocity);
+                    steering.limit(this.maxForce);
+                }
+                return steering;
+            }
+
+            separation(fishes) {
+                let perceptionRadius = 30;
+                let steering = createVector();
+                let total = 0;
+                for (let other of fishes) {
+                    let d = dist(this.position.x, this.position.y, other.position.x, other.position.y);
+                    if (other != this && d < perceptionRadius) {
+                        let diff = p5.Vector.sub(this.position, other.position);
+                        diff.div(d * d);
+                        steering.add(diff);
+                        total++;
+                    }
+                }
+                if (total > 0) {
+                    steering.div(total);
+                    steering.setMag(this.maxSpeed);
+                    steering.sub(this.velocity);
+                    steering.limit(this.maxForce);
+                }
+                return steering;
+            }
+        }
+    </script>
+</body>
+</html>

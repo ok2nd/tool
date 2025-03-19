@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="utf-8">
+    <title>魚の群れシミュレーション</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+<script>
+    let fish = [];
+    const numFish = 300;
+
+    function setup() {
+        createCanvas(windowWidth, windowHeight);
+        for (let i = 0; i < numFish; i++) {
+            fish.push(new Fish(random(width), random(height)));
+        }
+    }
+
+    function draw() {
+        background(0, 100, 200);
+        for (let f of fish) {
+            f.update();
+            f.show();
+        }
+    }
+
+    class Fish {
+        constructor(x, y) {
+            this.position = createVector(x, y);
+            this.velocity = p5.Vector.random2D();
+            this.size = random(5, 15);
+        }
+
+        update() {
+            this.position.add(this.velocity);
+            this.checkEdges();
+        }
+
+        checkEdges() {
+            if (this.position.x > width) {
+                this.position.x = 0;
+            } else if (this.position.x < 0) {
+                this.position.x = width;
+            }
+
+            if (this.position.y > height) {
+                this.position.y = 0;
+            } else if (this.position.y < 0) {
+                this.position.y = height;
+            }
+        }
+
+        show() {
+            fill(255, 200, 0);
+            noStroke();
+            ellipse(this.position.x, this.position.y, this.size);
+        }
+    }
+</script>
+</body>
+</html>
