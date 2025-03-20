@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>バネ力学シミュレーション</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
+<style>
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: sans-serif;
+    background-color: #f0f0f0;
+  }
+  
+  .container {
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  h1 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 20px;
+  }
+  
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 20px;
+    justify-content: center;
+  }
+  
+  button {
+    padding: 8px 16px;
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+  }
+  
+  button:hover {
+    background-color: #2980b9;
+  }
+  
+  canvas {
+    display: block;
+    margin: 0 auto;
+    border: 1px solid #ddd;
+  }
+  
+  .sliders {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  
+  .slider-container {
+    display: flex;
+    align-items: center;
+  }
+  
+  .slider-container label {
+    width: 150px;
+  }
+  
+  input[type="range"] {
+    flex-grow: 1;
+  }
+  
+  .value-display {
+    width: 50px;
+    text-align: right;
+    margin-left: 10px;
+  }
+  
+  .simulation-info {
+    margin-top: 15px;
+    padding: 10px;
+    background-color: #f9f9f9;
+    border-radius: 4px;
+    font-size: 14px;
+  }
+  
+  .simulation-mode {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 15px;
+  }
+  
+  .simulation-mode button {
+    background-color: #95a5a6;
+  }
+  
+  .simulation-mode button.active {
+    background-color: #3498db;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>バネ力学シミュレーション</h1>
+  
+  <div class="simulation-mode">
+    <button id="mode-chain" class="active">チェーン</button>
+    <button id="mode-cloth">クロス</button>
+    <button id="mode-circle">円形</button>
+  </div>
+  
+  <div class="sliders">
+    <div class="slider-container">
+      <label for="spring-constant">バネ定数:</label>
+      <input type="range" id="spring-constant" min="0.01" max="0.5" step="0.01" value="0.1">
+      <span class="value-display" id="spring-constant-value">0.1</span>
+    </div>
+    
+    <div class="slider-container">
+      <label for="spring-damping">減衰係数:</label>
+      <input type="range" id="spring-damping" min="0.5" max="1" step="0.01" value="0.95">
+      <span class="value-display" id="spring-damping-value">0.95</span>
+    </div>
+    
+    <div class="slider-container">
+      <label for="gravity-strength">重力:</label>
+      <input type="range" id="gravity-strength" min="0" max="1" step="0.01" value="0.2">
+      <span class="value-display" id="gravity-strength-value">0.2</span>
+    </div>
+  </div>
+  
+  <div class="controls">
+    <button id="reset">リセット</button>
+    <button id="toggle-gravity">重力 ON/OFF</button>
+    <button id="toggle-fixed">固定点 ON/OFF</button>
+    <button id="toggle-wind">風 ON/OFF</button>
+  </div>
+  
+  <div id="canvas-container"></div>
+  
+  <div class="simulation-info">
+    <p>シミュレーションの説明:</p>
+    <ul>
+      <li>マウスドラッグで粒子を動かせます</li>
+      <li>チェーン: 直線状に繋がったバネ</li>
+      <li>クロス: 格子状のバネネットワーク</li>
+      <li>円形: 円形に配置されたバネ構造</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+  let particles = [];
+  let springs = [];
+  let springConstant = 0.1;
+  let springDamping = 0.95;
+  let gravityStrength = 0.2;
+  let gravityOn = true;
+  let fixedPointsOn = true;
+  let windOn = false;
+  let windForce = 0;
+  let windDirection = 1;
+  let selectedParticle = null;
+  let simulationMode = 'chain';
+  
+  // スライダーの値を取得
+  document.getElementById('spring-constant').addEventListener('input', function() {
+    springConstant = parseFloat(this.value);
+    document.getElementById('spring-constant-value').textContent = springConstant.toFixed(2);
+    updateSprings();
+  });
+  
+  document.getElementById('spring-damping').addEventListener('input', function() {
+    springDamping = parseFloat(this.value);
+    document.getElementById('spring-damping-value').textContent = springDamping.toFixed(2);
+  });
+  
+  document.getElementById('gravity-strength').addEventListener('input', function() {
+    gravityStrength = parseFloat(this.value);
+    document.getElementById('gravity-strength-value').textContent = gravityStrength.toFixed(2);
+  });
+  
+  // ボタンの動作
+  document.getElementById('reset').addEventListener('click', function() {
+    resetSimulation();
+  });
+  
+  document.getElementById('toggle-gravity').addEventListener('click', function() {
+    gravityOn = !gravityOn;
+    this.textContent = gravityOn ? '重力 ON/OFF' : '重力 ON/OFF (OFF)';
+  });
+  
+  document.getElementById('toggle-fixed').addEventListener('click', function() {
+    fixedPointsOn = !fixedPointsOn;
+    this.textContent = fixedPointsOn ? '固定点 ON/OFF' : '固定点 ON/OFF (OFF)';
+    updateFixedPoints();
+  });
+  
+  document.getElementById('toggle-wind').addEventListener('click', function() {
+    windOn = !windOn;
+    this.textContent = windOn ? '風 ON/OFF (ON)' : '風 ON/OFF';
+  });
+  
+  // シミュレーションモードの切り替え
+  document.getElementById('mode-chain').addEventListener('click', function() {
+    simulationMode = 'chain';
+    updateActiveButton();
+    resetSimulation();
+  });
+  
+  document.getElementById('mode-cloth').addEventListener('click', function() {
+    simulationMode = 'cloth';
+    updateActiveButton();
+    resetSimulation();
+  });
+  
+  document.getElementById('mode-circle').addEventListener('click', function() {
+    simulationMode = 'circle';
+    updateActiveButton();
+    resetSimulation();
+  });
+  
+  function updateActiveButton() {
+    document.getElementById('mode-chain').classList.remove('active');
+    document.getElementById('mode-cloth').classList.remove('active');
+    document.getElementById('mode-circle').classList.remove('active');
+    document.getElementById('mode-' + simulationMode).classList.add('active');
+  }
+  
+  function updateSprings() {
+    springs.forEach(spring => {
+      spring.k = springConstant;
+    });
+  }
+  
+  function updateFixedPoints() {
+    if (simulationMode === 'chain') {
+      particles[0].fixed = fixedPointsOn;
+    } else if (simulationMode === 'cloth') {
+      // クロスの上部を固定
+      for (let i = 0; i < 10; i++) {
+        particles[i].fixed = fixedPointsOn;
+      }
+    } else if (simulationMode === 'circle') {
+      // 円の中央を固定
+      particles[particles.length - 1].fixed = fixedPointsOn;
+    }
+  }
+  
+  function resetSimulation() {
+    particles = [];
+    springs = [];
+    
+    if (simulationMode === 'chain') {
+      createChain();
+    } else if (simulationMode === 'cloth') {
+      createCloth();
+    } else if (simulationMode === 'circle') {
+      createCircle();
+    }
+  }
+  
+  // p5.js スケッチ
+  new p5(function(p) {
+    // 粒子クラス
+    class Particle {
+      constructor(x, y, fixed = false) {
+        this.pos = p.createVector(x, y);
+        this.prevPos = p.createVector(x, y);
+        this.vel = p.createVector(0, 0);
+        this.acc = p.createVector(0, 0);
+        this.fixed = fixed;
+        this.radius = 6;
+      }
+      
+      update() {
+        if (this.fixed) return;
+        
+        // 加速度を適用
+        this.vel.add(this.acc);
+        this.vel.mult(springDamping); // 減衰
+        
+        // 位置を更新
+        this.prevPos = p.createVector(this.pos.x, this.pos.y);
+        this.pos.add(this.vel);
+        
+        // 加速度をリセット
+        this.acc.set(0, 0);
+        
+        // 画面の端での衝突
+        const bounce = 0.9;
+        if (this.pos.x > p.width - this.radius) {
+          this.pos.x = p.width - this.radius;
+          this.vel.x *= -bounce;
+        } else if (this.pos.x < this.radius) {
+          this.pos.x = this.radius;
+          this.vel.x *= -bounce;
+        }
+        
+        if (this.pos.y > p.height - this.radius) {
+          this.pos.y = p.height - this.radius;
+          this.vel.y *= -bounce;
+        } else if (this.pos.y < this.radius) {
+          this.pos.y = this.radius;
+          this.vel.y *= -bounce;
+        }
+      }
+      
+      applyForce(force) {
+        if (this.fixed) return;
+        this.acc.add(force);
+      }
+      
+      display() {
+        p.noStroke();
+        if (this.fixed) {
+          p.fill(220, 50, 50);
+        } else {
+          p.fill(50, 100, 200);
+        }
+        p.circle(this.pos.x, this.pos.y, this.radius * 2);
+      }
+    }
+    
+    // バネクラス
+    class Spring {
+      constructor(p1, p2, length, k) {
+        this.p1 = p1;
+        this.p2 = p2;
+        this.restLength = length;
+        this.k = k; // バネ定数
+      }
+      
+      update() {
+        // 2点間のベクトル
+        let force = p5.Vector.sub(this.p2.pos, this.p1.pos);
+        let currentLength = force.mag();
+        
+        // フックの法則に基づく力を計算
+        let stretch = currentLength - this.restLength;
+        force.normalize();
+        force.mult(this.k * stretch);
+        
+        // 両方の粒子に力を適用（反対方向）
+        this.p1.applyForce(force);
+        force.mult(-1);
+        this.p2.applyForce(force);
+      }
+      
+      display() {
+        // バネの伸び具合で色を変える
+        let d = p5.Vector.dist(this.p1.pos, this.p2.pos);
+        let stretch = d - this.restLength;
+        
+        // 伸びた/縮んだ状態で色を変える
+        if (stretch > 0) {
+          p.stroke(p.map(stretch, 0, 50, 100, 255), 100, 100);
+        } else {
+          p.stroke(100, p.map(stretch, 0, -50, 100, 255), 100);
+        }
+        
+        p.strokeWeight(2);
+        p.line(this.p1.pos.x, this.p1.pos.y, this.p2.pos.x, this.p2.pos.y);
+      }
+    }
+    
+    // チェーンを作成
+    window.createChain = function() {
+      const numParticles = 15;
+      const spacing = p.width / (numParticles + 1);
+      
+      // 粒子を作成
+      for (let i = 0; i < numParticles; i++) {
+        let x = spacing + i * spacing;
+        let y = p.height / 3;
+        let fixed = (i === 0) && fixedPointsOn;
+        particles.push(new Particle(x, y, fixed));
+      }
+      
+      // バネを作成（隣接する粒子同士を接続）
+      for (let i = 0; i < particles.length - 1; i++) {
+        let restLength = p5.Vector.dist(particles[i].pos, particles[i + 1].pos);
+        springs.push(new Spring(particles[i], particles[i + 1], restLength, springConstant));
+      }
+    };
+    
+    // クロスを作成
+    window.createCloth = function() {
+      const rows = 10;
+      const cols = 10;
+      const spacing = 30;
+      const startX = p.width / 2 - (cols * spacing) / 2;
+      const startY = 50;
+      
+      // 粒子の2次元グリッドを作成
+      for (let i = 0; i < rows; i++) {
+        for (let j = 0; j < cols; j++) {
+          let x = startX + j * spacing;
+          let y = startY + i * spacing;
+          let fixed = (i === 0) && fixedPointsOn;
+          particles.push(new Particle(x, y, fixed));
+        }
+      }
+      
+      // 横方向のバネ
+      for (let i = 0; i < rows; i++) {
+        for (let j = 0; j < cols - 1; j++) {
+          let p1 = particles[i * cols + j];
+          let p2 = particles[i * cols + j + 1];
+          let restLength = p5.Vector.dist(p1.pos, p2.pos);
+          springs.push(new Spring(p1, p2, restLength, springConstant));
+        }
+      }
+      
+      // 縦方向のバネ
+      for (let i = 0; i < rows - 1; i++) {
+        for (let j = 0; j < cols; j++) {
+          let p1 = particles[i * cols + j];
+          let p2 = particles[(i + 1) * cols + j];
+          let restLength = p5.Vector.dist(p1.pos, p2.pos);
+          springs.push(new Spring(p1, p2, restLength, springConstant));
+        }
+      }
+      
+      // 斜め方向のバネ（補強用）
+      for (let i = 0; i < rows - 1; i++) {
+        for (let j = 0; j < cols - 1; j++) {
+          let p1 = particles[i * cols + j];
+          let p2 = particles[(i + 1) * cols + j + 1];
+          let restLength = p5.Vector.dist(p1.pos, p2.pos);
+          springs.push(new Spring(p1, p2, restLength, springConstant));
+          
+          p1 = particles[i * cols + j + 1];
+          p2 = particles[(i + 1) * cols + j];
+          restLength = p5.Vector.dist(p1.pos, p2.pos);
+          springs.push(new Spring(p1, p2, restLength, springConstant));
+        }
+      }
+    };
+    
+    // 円形構造を作成
+    window.createCircle = function() {
+      const numParticles = 20; // 円周上の粒子数
+      const radius = 120; // 円の半径
+      const centerX = p.width / 2;
+      const centerY = p.height / 2;
+      
+      // 円周上に粒子を配置
+      for (let i = 0; i < numParticles; i++) {
+        let angle = p.TWO_PI * i / numParticles;
+        let x = centerX + radius * p.cos(angle);
+        let y = centerY + radius * p.sin(angle);
+        particles.push(new Particle(x, y, false));
+      }
+      
+      // 中心に一つの粒子（固定点）
+      particles.push(new Particle(centerX, centerY, fixedPointsOn));
+      const centerParticle = particles[particles.length - 1];
+      
+      // 円周の隣接粒子同士を接続
+      for (let i = 0; i < numParticles; i++) {
+        let p1 = particles[i];
+        let p2 = particles[(i + 1) % numParticles];
+        let restLength = p5.Vector.dist(p1.pos, p2.pos);
+        springs.push(new Spring(p1, p2, restLength, springConstant));
+        
+        // 中心と各粒子を接続（スポーク）
+        restLength = p5.Vector.dist(p1.pos, centerParticle.pos);
+        springs.push(new Spring(p1, centerParticle, restLength, springConstant));
+      }
+      
+      // 対角線を追加（補強）
+      for (let i = 0; i < numParticles; i++) {
+        let p1 = particles[i];
+        let p2 = particles[(i + 5) % numParticles]; // 少し離れた粒子と接続
+        let restLength = p5.Vector.dist(p1.pos, p2.pos);
+        springs.push(new Spring(p1, p2, restLength, springConstant * 0.5)); // 弱いバネ
+      }
+    };
+    
+    p.setup = function() {
+      let canvas = p.createCanvas(600, 400);
+      canvas.parent('canvas-container');
+      resetSimulation();
+    };
+    
+    p.draw = function() {
+      p.background(240);
+      
+      // 風の強さをランダムに変化
+      if (windOn) {
+        if (p.frameCount % 60 === 0) {
+          windDirection = p.random(-1, 1);
+        }
+        windForce = p.noise(p.frameCount * 0.01) * 0.2 * windDirection;
+      } else {
+        windForce = 0;
+      }
+      
+      // バネの力を更新
+      for (let spring of springs) {
+        spring.update();
+      }
+      
+      // すべての粒子を更新
+      for (let particle of particles) {
+        // 重力を適用
+        if (gravityOn) {
+          particle.applyForce(p.createVector(0, gravityStrength));
+        }
+        
+        // 風を適用
+        if (windOn) {
+          particle.applyForce(p.createVector(windForce, 0));
+        }
+        
+        particle.update();
+      }
+      
+      // バネを描画
+      for (let spring of springs) {
+        spring.display();
+      }
+      
+      // 粒子を描画
+      for (let particle of particles) {
+        particle.display();
+      }
+      
+      // 情報表示
+      p.fill(0);
+      p.textSize(12);
+      p.text(`モード: ${getModeName()}`, 10, 20);
+      p.text(`バネ定数: ${springConstant.toFixed(2)}`, 10, 40);
+      p.text(`減衰係数: ${springDamping.toFixed(2)}`, 10, 60);
+      p.text(`重力: ${gravityOn ? 'ON' : 'OFF'}`, 10, 80);
+      p.text(`固定点: ${fixedPointsOn ? 'ON' : 'OFF'}`, 10, 100);
+      p.text(`風: ${windOn ? 'ON' : 'OFF'}`, 10, 120);
+      
+      if (windOn) {
+        drawWind();
+      }
+    };
+    
+    function getModeName() {
+      switch(simulationMode) {
+        case 'chain': return 'チェーン';
+        case 'cloth': return 'クロス';
+        case 'circle': return '円形';
+        default: return simulationMode;
+      }
+    }
+    
+    function drawWind() {
+      p.stroke(100, 100, 200, 150);
+      p.strokeWeight(1);
+      
+      for (let y = 20; y < p.height; y += 30) {
+        for (let x = 20; x < p.width; x += 40) {
+          let length = 15 * Math.abs(windForce) * 5;
+          let dir = windForce > 0 ? 1 : -1;
+          
+          p.line(x, y, x + length * dir, y);
+          p.line(x + length * dir, y, x + length * dir - 5 * dir, y - 5);
+          p.line(x + length * dir, y, x + length * dir - 5 * dir, y + 5);
+        }
+      }
+    }
+    
+    p.mousePressed = function() {
+      // クリックした粒子を選択
+      for (let particle of particles) {
+        let d = p.dist(p.mouseX, p.mouseY, particle.pos.x, particle.pos.y);
+        if (d < particle.radius * 2) {
+          selectedParticle = particle;
+          break;
+        }
+      }
+    };
+    
+    p.mouseDragged = function() {
+      // 選択した粒子をドラッグ
+      if (selectedParticle && !selectedParticle.fixed) {
+        selectedParticle.pos.x = p.mouseX;
+        selectedParticle.pos.y = p.mouseY;
+        selectedParticle.vel.set(0, 0);
+      }
+    };
+    
+    p.mouseReleased = function() {
+      selectedParticle = null;
+    };
+    
+  }, 'canvas-container');
+</script>
+</body>
+</html>

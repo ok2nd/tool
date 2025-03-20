@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>物理シミュレーション</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.js"></script>
+<style>
+    body {
+        margin: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background-color: #f0f0f0;
+    }
+    canvas {
+        border: 2px solid black;
+    }
+</style>
+</head>
+<body>
+<script>
+let particles = [];
+
+function setup() {
+    createCanvas(600, 400);
+    for (let i = 0; i < 10; i++) {
+        particles.push(new Particle(random(width), random(height), random(5, 15)));
+    }
+}
+
+function draw() {
+    background(220);
+    for (let particle of particles) {
+        particle.update();
+        particle.display();
+    }
+}
+
+class Particle {
+    constructor(x, y, r) {
+        this.x = x;
+        this.y = y;
+        this.r = r;
+        this.vx = random(-2, 2);
+        this.vy = random(-2, 2);
+        this.ax = 0;
+        this.ay = 0.05;
+    }
+
+    update() {
+        this.vx += this.ax;
+        this.vy += this.ay;
+        this.x += this.vx;
+        this.y += this.vy;
+        
+        if (this.x - this.r < 0 || this.x + this.r > width) {
+            this.vx *= -0.9;
+        }
+        if (this.y - this.r < 0 || this.y + this.r > height) {
+            this.vy *= -0.9;
+        }
+    }
+
+    display() {
+        fill(255, 100, 100);
+        ellipse(this.x, this.y, this.r * 2);
+    }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>物理シミュレーション</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.js"></script>
+<style>
+    body {
+        margin: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background-color: #f0f0f0;
+    }
+    canvas {
+        border: 2px solid black;
+    }
+</style>
+</head>
+<body>
+<script>
+let balls = [];
+let gravity = 0.2;
+
+function setup() {
+    createCanvas(600, 400);
+    for (let i = 0; i < 5; i++) {
+        balls.push(new Ball(random(width), random(height / 2), random(20, 40)));
+    }
+}
+
+function draw() {
+    background(220);
+    for (let ball of balls) {
+        ball.update();
+        ball.checkEdges();
+        ball.display();
+    }
+}
+
+class Ball {
+    constructor(x, y, r) {
+        this.x = x;
+        this.y = y;
+        this.r = r;
+        this.vx = random(-2, 2);
+        this.vy = random(-2, 2);
+    }
+
+    update() {
+        this.vy += gravity;
+        this.x += this.vx;
+        this.y += this.vy;
+    }
+
+    checkEdges() {
+        if (this.x - this.r < 0 || this.x + this.r > width) {
+            this.vx *= -0.9;
+        }
+        if (this.y + this.r > height) {
+            this.y = height - this.r;
+            this.vy *= -0.8;
+        }
+    }
+
+    display() {
+        fill(100, 150, 255);
+        ellipse(this.x, this.y, this.r * 2);
+    }
+}
+</script>
+</body>
+</html>

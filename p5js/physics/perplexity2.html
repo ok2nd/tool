@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>流体シミュレーション</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.8.0/p5.js"></script>
+<style>
+  canvas {
+    border: 2px solid #333;
+    margin: 20px auto;
+    display: block;
+  }
+  body {
+    background-color: #f0f0f0;
+    font-family: Arial, sans-serif;
+  }
+</style>
+</head>
+<body>
+<script>
+let particles = [];
+let obstacles = [];
+const PARTICLE_COUNT = 500;
+const OBSTACLE_COUNT = 5;
+
+function setup() {
+  createCanvas(800, 600);
+  
+  // 粒子の初期化
+  for (let i = 0; i < PARTICLE_COUNT; i++) {
+    particles.push(new Particle(random(width), random(height)));
+  }
+  
+  // 障害物の初期化
+  for (let i = 0; i < OBSTACLE_COUNT; i++) {
+    obstacles.push(new Obstacle(random(width), random(height), random(30, 80)));
+  }
+}
+
+function draw() {
+  background(240);
+  
+  // 粒子の更新と描画
+  for (let particle of particles) {
+    particle.update();
+    particle.display();
+    
+    // 障害物との衝突検出
+    for (let obstacle of obstacles) {
+      particle.collide(obstacle);
+    }
+  }
+  
+  // 障害物の描画
+  for (let obstacle of obstacles) {
+    obstacle.display();
+  }
+}
+
+class Particle {
+  constructor(x, y) {
+    this.pos = createVector(x, y);
+    this.vel = createVector(0, 0);
+    this.acc = createVector(0, 0);
+    this.radius = 5;
+    this.maxSpeed = 4;
+    this.maxForce = 0.2;
+  }
+  
+  update() {
+    this.vel.add(this.acc);
+    this.vel.limit(this.maxSpeed);
+    this.pos.add(this.vel);
+    this.acc.mult(0);
+    
+    // 画面端での反射
+    if (this.pos.x < 0 || this.pos.x > width) this.vel.x *= -1;
+    if (this.pos.y < 0 || this.pos.y > height) this.vel.y *= -1;
+    
+    // 重力の適用
+    this.applyForce(createVector(0, 0.1));
+    
+    // マウスに引き寄せられる力
+    let mouseForce = p5.Vector.sub(createVector(mouseX, mouseY), this.pos);
+    mouseForce.setMag(0.1);
+    this.applyForce(mouseForce);
+  }
+  
+  applyForce(force) {
+    this.acc.add(force);
+  }
+  
+  collide(obstacle) {
+    let d = dist(this.pos.x, this.pos.y, obstacle.pos.x, obstacle.pos.y);
+    if (d < this.radius + obstacle.radius) {
+      let normal = p5.Vector.sub(this.pos, obstacle.pos).normalize();
+      this.vel.reflect(normal);
+      this.pos = p5.Vector.add(obstacle.pos, p5.Vector.mult(normal, this.radius + obstacle.radius));
+    }
+  }
+  
+  display() {
+    noStroke();
+    fill(0, 150, 255, 150);
+    ellipse(this.pos.x, this.pos.y, this.radius * 2);
+  }
+}
+
+class Obstacle {
+  constructor(x, y, r) {
+    this.pos = createVector(x, y);
+    this.radius = r;
+  }
+  
+  display() {
+    noStroke();
+    fill(100, 100, 100);
+    ellipse(this.pos.x, this.pos.y, this.radius * 2);
+  }
+}
+
+function mouseDragged() {
+  particles.push(new Particle(mouseX, mouseY));
+  if (particles.length > PARTICLE_COUNT) {
+    particles.splice(0, 1);
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>バネと重力のシミュレーション</title>
+<style>
+  body {
+    margin: 0;
+    overflow: hidden;
+  }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
+</head>
+<body>
+<script>
+  let anchor;
+  let ball;
+  let spring;
+  const gravity = 0.1;
+
+  function setup() {
+    createCanvas(windowWidth, windowHeight);
+    anchor = createVector(width / 2, 50);
+    ball = new Ball(width / 2, height / 2, 30);
+    spring = new Spring(100, 0.1); // restLength, k
+  }
+
+  function draw() {
+    background(220);
+    spring.connect(anchor, ball);
+    ball.applyForce(createVector(0, gravity));
+    ball.update();
+    spring.display();
+    ball.display();
+    ellipse(anchor.x, anchor.y, 10); // アンカーの描画
+  }
+
+  class Ball {
+    constructor(x, y, r) {
+      this.position = createVector(x, y);
+      this.velocity = createVector(0, 0);
+      this.acceleration = createVector(0, 0);
+      this.radius = r;
+    }
+
+    applyForce(force) {
+      this.acceleration.add(force);
+    }
+
+    update() {
+      this.velocity.add(this.acceleration);
+      this.position.add(this.velocity);
+      this.acceleration.mult(0); // 加速度のリセット
+    }
+
+    display() {
+      ellipse(this.position.x, this.position.y, this.radius * 2);
+    }
+  }
+
+  class Spring {
+    constructor(restLength, k) {
+      this.restLength = restLength;
+      this.k = k;
+    }
+
+    connect(anchor, ball) {
+      let force = p5.Vector.sub(ball.position, anchor);
+      let distance = force.mag();
+      let stretch = distance - this.restLength;
+      force.normalize();
+      force.mult(-this.k * stretch);
+      ball.applyForce(force);
+    }
+
+    display() {
+      line(anchor.x, anchor.y, ball.position.x, ball.position.y);
+    }
+  }
+</script>
+</body>
+</html>

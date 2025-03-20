@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>物理シミュレーション</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+
+        canvas {
+            border: 1px solid #000;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+</head>
+<body>
+    <script>
+        let balls = [];
+
+        function setup() {
+            createCanvas(800, 600);
+            for (let i = 0; i < 10; i++) {
+                balls.push(new Ball(random(width), random(height), random(20, 40)));
+            }
+        }
+
+        function draw() {
+            background(220);
+            for (let ball of balls) {
+                ball.update();
+                ball.display();
+                ball.checkEdges(balls);
+            }
+        }
+
+        class Ball {
+            constructor(x, y, r) {
+                this.position = createVector(x, y);
+                this.velocity = createVector(random(-2, 2), random(-2, 2));
+                this.radius = r;
+                this.gravity = createVector(0, 0.1);
+            }
+
+            update() {
+                this.velocity.add(this.gravity);
+                this.position.add(this.velocity);
+
+                // 簡単な衝突検知
+                for (let other of balls) {
+                    if (other !== this) {
+                        let d = dist(this.position.x, this.position.y, other.position.x, other.position.y);
+                        if (d < this.radius + other.radius) {
+                            this.velocity.mult(-1); // 反発
+                        }
+                    }
+                }
+            }
+
+            display() {
+                fill(127);
+                stroke(0);
+                ellipse(this.position.x, this.position.y, this.radius * 2);
+            }
+
+            checkEdges(balls) {
+                if (this.position.y + this.radius > height) {
+                    this.position.y = height - this.radius;
+                    this.velocity.y *= -0.9; // 地面との衝突
+                }
+                if (this.position.x + this.radius > width || this.position.x - this.radius < 0) {
+                    this.velocity.x *= -1; // 壁との衝突
+                }
+            }
+        }
+    </script>
+</body>
+</html>

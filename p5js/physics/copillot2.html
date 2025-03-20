@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>壁に跳ね返るシミュレーション</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #e8f5e9;
+    }
+
+    canvas {
+      display: block;
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.js"></script>
+</head>
+<body>
+  <script>
+    let ball;
+
+    function setup() {
+      createCanvas(400, 400);
+      ball = new Ball(width / 2, 50, 20);
+    }
+
+    function draw() {
+      background(230);
+      ball.update();
+      ball.show();
+    }
+
+    class Ball {
+      constructor(x, y, r) {
+        this.x = x;
+        this.y = y;
+        this.r = r;
+        this.xSpeed = 3;
+        this.ySpeed = 0;
+        this.gravity = 0.5;
+        this.damping = 0.8;
+      }
+
+      update() {
+        // 重力の影響を加える
+        this.ySpeed += this.gravity;
+        this.x += this.xSpeed;
+        this.y += this.ySpeed;
+
+        // 床での衝突判定
+        if (this.y + this.r > height) {
+          this.y = height - this.r;
+          this.ySpeed *= -this.damping; // 跳ね返り
+        }
+
+        // 左右の壁での衝突判定
+        if (this.x - this.r < 0 || this.x + this.r > width) {
+          this.xSpeed *= -1; // 反転
+        }
+      }
+
+      show() {
+        fill(255, 100, 150);
+        noStroke();
+        ellipse(this.x, this.y, this.r * 2);
+      }
+    }
+  </script>
+</body>
+</html>

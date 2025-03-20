@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>物理シミュレーション</title>
+<style>
+  body {
+    margin: 0;
+    overflow: hidden;
+  }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
+</head>
+<body>
+<script>
+  let balls = [];
+  const gravity = 0.1;
+
+  function setup() {
+    createCanvas(windowWidth, windowHeight);
+    for (let i = 0; i < 10; i++) {
+      balls.push(new Ball(random(width), random(height), random(20, 40)));
+    }
+  }
+
+  function draw() {
+    background(220);
+    for (let ball of balls) {
+      ball.update();
+      ball.display();
+      ball.checkCollision();
+    }
+  }
+
+  class Ball {
+    constructor(x, y, r) {
+      this.position = createVector(x, y);
+      this.velocity = createVector(random(-2, 2), random(-2, 2));
+      this.radius = r;
+    }
+
+    update() {
+      this.velocity.y += gravity;
+      this.position.add(this.velocity);
+
+      // 壁との衝突判定
+      if (this.position.x < this.radius || this.position.x > width - this.radius) {
+        this.velocity.x *= -1;
+      }
+      if (this.position.y < this.radius || this.position.y > height - this.radius) {
+        this.velocity.y *= -1;
+      }
+    }
+
+    display() {
+      ellipse(this.position.x, this.position.y, this.radius * 2);
+    }
+    
+    checkCollision() {
+      for (let other of balls) {
+        if (other !== this) {
+          let distance = dist(this.position.x, this.position.y, other.position.x, other.position.y);
+          if (distance < this.radius + other.radius) {
+            // 衝突時の処理（簡単な速度交換）
+            let tempVelocity = this.velocity.copy();
+            this.velocity = other.velocity.copy();
+            other.velocity = tempVelocity;
+          }
+        }
+      }
+    }
+  }
+</script>
+</body>
+</html>

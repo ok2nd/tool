@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>物理シミュレーション</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
+<style>
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: sans-serif;
+    background-color: #f5f5f5;
+  }
+  
+  .container {
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  h1 {
+    text-align: center;
+    color: #333;
+  }
+  
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 20px;
+    justify-content: center;
+  }
+  
+  button {
+    padding: 8px 16px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  
+  button:hover {
+    background-color: #3e8e41;
+  }
+  
+  canvas {
+    display: block;
+    margin: 0 auto;
+    border: 1px solid #ddd;
+  }
+  
+  .sliders {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  
+  .slider-container {
+    display: flex;
+    align-items: center;
+  }
+  
+  .slider-container label {
+    width: 120px;
+  }
+  
+  input[type="range"] {
+    flex-grow: 1;
+  }
+  
+  .value-display {
+    width: 40px;
+    text-align: right;
+    margin-left: 10px;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>物理シミュレーション</h1>
+  
+  <div class="sliders">
+    <div class="slider-container">
+      <label for="gravity">重力:</label>
+      <input type="range" id="gravity" min="0" max="2" step="0.01" value="0.2">
+      <span class="value-display" id="gravity-value">0.2</span>
+    </div>
+    
+    <div class="slider-container">
+      <label for="bounce">反発係数:</label>
+      <input type="range" id="bounce" min="0" max="1" step="0.01" value="0.7">
+      <span class="value-display" id="bounce-value">0.7</span>
+    </div>
+    
+    <div class="slider-container">
+      <label for="friction">摩擦:</label>
+      <input type="range" id="friction" min="0" max="0.1" step="0.001" value="0.01">
+      <span class="value-display" id="friction-value">0.01</span>
+    </div>
+  </div>
+  
+  <div class="controls">
+    <button id="add-ball">ボールを追加</button>
+    <button id="reset">リセット</button>
+    <button id="toggle-gravity">重力 ON/OFF</button>
+    <button id="toggle-collision">衝突 ON/OFF</button>
+  </div>
+  
+  <div id="canvas-container"></div>
+</div>
+
+<script>
+  let balls = [];
+  let gravity = 0.2;
+  let bounce = 0.7;
+  let friction = 0.01;
+  let gravityOn = true;
+  let collisionOn = true;
+  
+  // スライダーの値を取得
+  document.getElementById('gravity').addEventListener('input', function() {
+    gravity = parseFloat(this.value);
+    document.getElementById('gravity-value').textContent = gravity.toFixed(2);
+  });
+  
+  document.getElementById('bounce').addEventListener('input', function() {
+    bounce = parseFloat(this.value);
+    document.getElementById('bounce-value').textContent = bounce.toFixed(2);
+  });
+  
+  document.getElementById('friction').addEventListener('input', function() {
+    friction = parseFloat(this.value);
+    document.getElementById('friction-value').textContent = friction.toFixed(3);
+  });
+  
+  // ボタンの動作
+  document.getElementById('add-ball').addEventListener('click', function() {
+    if (balls.length < 30) { // 最大30個まで
+      addRandomBall();
+    }
+  });
+  
+  document.getElementById('reset').addEventListener('click', function() {
+    balls = [];
+  });
+  
+  document.getElementById('toggle-gravity').addEventListener('click', function() {
+    gravityOn = !gravityOn;
+    this.textContent = gravityOn ? '重力 ON/OFF' : '重力 ON/OFF (OFF)';
+  });
+  
+  document.getElementById('toggle-collision').addEventListener('click', function() {
+    collisionOn = !collisionOn;
+    this.textContent = collisionOn ? '衝突 ON/OFF' : '衝突 ON/OFF (OFF)';
+  });
+  
+  // p5.js スケッチ
+  new p5(function(p) {
+    // ボールクラス
+    class Ball {
+      constructor(x, y, radius) {
+        this.pos = p.createVector(x, y);
+        this.vel = p.createVector(p.random(-2, 2), p.random(-2, 2));
+        this.acc = p.createVector(0, 0);
+        this.radius = radius;
+        this.mass = radius * 0.1;
+        this.color = p.color(
+          p.random(50, 255),
+          p.random(50, 255),
+          p.random(50, 255),
+          200
+        );
+      }
+      
+      applyForce(force) {
+        // F = ma, so a = F/m
+        let f = p5.Vector.div(force, this.mass);
+        this.acc.add(f);
+      }
+      
+      update() {
+        // 重力が有効な場合
+        if (gravityOn) {
+          this.applyForce(p.createVector(0, gravity * this.mass));
+        }
+        
+        // 速度を更新
+        this.vel.add(this.acc);
+        // 摩擦を適用
+        this.vel.mult(1 - friction);
+        // 位置を更新
+        this.pos.add(this.vel);
+        // 加速度をリセット
+        this.acc.set(0, 0);
+        
+        // 壁との衝突
+        if (this.pos.x > p.width - this.radius) {
+          this.pos.x = p.width - this.radius;
+          this.vel.x *= -bounce;
+        } else if (this.pos.x < this.radius) {
+          this.pos.x = this.radius;
+          this.vel.x *= -bounce;
+        }
+        
+        if (this.pos.y > p.height - this.radius) {
+          this.pos.y = p.height - this.radius;
+          this.vel.y *= -bounce;
+        } else if (this.pos.y < this.radius) {
+          this.pos.y = this.radius;
+          this.vel.y *= -bounce;
+        }
+      }
+      
+      checkCollision(other) {
+        if (!collisionOn) return;
+        
+        // 2つのボール間の距離を計算
+        let distance = p.dist(this.pos.x, this.pos.y, other.pos.x, other.pos.y);
+        let minDist = this.radius + other.radius;
+        
+        // 衝突していない場合、何もしない
+        if (distance > minDist) return;
+        
+        // 衝突を解決
+        let angle = p.atan2(other.pos.y - this.pos.y, other.pos.x - this.pos.x);
+        let overlap = minDist - distance;
+        
+        // 衝突解決のために位置を調整
+        let dx = overlap * p.cos(angle) * 0.5;
+        let dy = overlap * p.sin(angle) * 0.5;
+        
+        this.pos.x -= dx;
+        this.pos.y -= dy;
+        other.pos.x += dx;
+        other.pos.y += dy;
+        
+        // 速度の更新
+        let thisSpeed = this.vel.mag();
+        let otherSpeed = other.vel.mag();
+        
+        let thisDirection = p.atan2(this.vel.y, this.vel.x);
+        let otherDirection = p.atan2(other.vel.y, other.vel.x);
+        
+        let thisVelX = thisSpeed * p.cos(thisDirection - angle);
+        let thisVelY = thisSpeed * p.sin(thisDirection - angle);
+        let otherVelX = otherSpeed * p.cos(otherDirection - angle);
+        let otherVelY = otherSpeed * p.sin(otherDirection - angle);
+        
+        // 運動量と反発係数を考慮した計算
+        let thisFinalVelX = ((this.mass - other.mass) * thisVelX + 2 * other.mass * otherVelX) / (this.mass + other.mass);
+        let otherFinalVelX = ((other.mass - this.mass) * otherVelX + 2 * this.mass * thisVelX) / (this.mass + other.mass);
+        
+        // 反発係数を適用
+        thisFinalVelX *= bounce;
+        otherFinalVelX *= bounce;
+        
+        // 新しい速度を設定
+        this.vel.x = p.cos(angle) * thisFinalVelX + p.cos(angle + p.HALF_PI) * thisVelY;
+        this.vel.y = p.sin(angle) * thisFinalVelX + p.sin(angle + p.HALF_PI) * thisVelY;
+        other.vel.x = p.cos(angle) * otherFinalVelX + p.cos(angle + p.HALF_PI) * otherVelY;
+        other.vel.y = p.sin(angle) * otherFinalVelX + p.sin(angle + p.HALF_PI) * otherVelY;
+      }
+      
+      display() {
+        p.noStroke();
+        p.fill(this.color);
+        p.circle(this.pos.x, this.pos.y, this.radius * 2);
+        
+        // 速度ベクトルを表示
+        p.stroke(0, 0, 0, 100);
+        p.line(
+          this.pos.x,
+          this.pos.y,
+          this.pos.x + this.vel.x * 5,
+          this.pos.y + this.vel.y * 5
+        );
+      }
+    }
+    
+    p.setup = function() {
+      let canvas = p.createCanvas(600, 400);
+      canvas.parent('canvas-container');
+      
+      // 初期ボールを追加
+      for (let i = 0; i < 5; i++) {
+        addRandomBall();
+      }
+    };
+    
+    p.draw = function() {
+      p.background(240);
+      
+      // すべてのボールを更新して表示
+      for (let i = 0; i < balls.length; i++) {
+        balls[i].update();
+        
+        // 他のすべてのボールとの衝突をチェック
+        for (let j = i + 1; j < balls.length; j++) {
+          balls[i].checkCollision(balls[j]);
+        }
+        
+        balls[i].display();
+      }
+      
+      // 情報表示
+      p.fill(0);
+      p.textSize(12);
+      p.text(`ボール数: ${balls.length}`, 10, 20);
+      p.text(`重力: ${gravityOn ? 'ON' : 'OFF'}`, 10, 40);
+      p.text(`衝突: ${collisionOn ? 'ON' : 'OFF'}`, 10, 60);
+    };
+    
+    p.mousePressed = function() {
+      // キャンバス内でクリックした場合、その位置にボールを追加
+      if (p.mouseX > 0 && p.mouseX < p.width && p.mouseY > 0 && p.mouseY < p.height) {
+        balls.push(new Ball(p.mouseX, p.mouseY, p.random(10, 30)));
+      }
+    };
+    
+    // ランダムな場所にボールを追加する関数
+    window.addRandomBall = function() {
+      let radius = p.random(10, 30);
+      let x = p.random(radius, p.width - radius);
+      let y = p.random(radius, p.height - radius);
+      
+      // すでに存在するボールと重ならないように確認
+      let validPosition = true;
+      for (let i = 0; i < balls.length; i++) {
+        let d = p.dist(x, y, balls[i].pos.x, balls[i].pos.y);
+        if (d < radius + balls[i].radius + 5) {
+          validPosition = false;
+          break;
+        }
+      }
+      
+      if (validPosition || balls.length === 0) {
+        balls.push(new Ball(x, y, radius));
+      } else {
+        // 位置が有効でない場合は再試行
+        if (balls.length < 25) { // 密集しすぎると無限ループになるのを防ぐ
+          addRandomBall();
+        }
+      }
+    };
+  }, 'canvas-container');
+</script>
+</body>
+</html>
