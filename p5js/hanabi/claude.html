@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>花火シミュレーション</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
+<style>
+  body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background-color: #000;
+  }
+  canvas {
+    display: block;
+  }
+  .controls {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    background-color: rgba(0, 0, 0, 0.7);
+    padding: 15px;
+    border-radius: 8px;
+    color: white;
+    font-family: Arial, sans-serif;
+  }
+  button {
+    background-color: #4CAF50;
+    border: none;
+    color: white;
+    padding: 10px 15px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 4px 2px;
+    cursor: pointer;
+    border-radius: 4px;
+  }
+  label {
+    margin-right: 10px;
+  }
+  select {
+    padding: 5px;
+    margin-right: 15px;
+  }
+</style>
+</head>
+<body>
+<div class="controls">
+  <label for="color">色:</label>
+  <select id="color">
+    <option value="random">ランダム</option>
+    <option value="red">赤</option>
+    <option value="blue">青</option>
+    <option value="green">緑</option>
+    <option value="gold">金</option>
+    <option value="purple">紫</option>
+  </select>
+  
+  <label for="type">タイプ:</label>
+  <select id="type">
+    <option value="normal">通常</option>
+    <option value="chrysanthemum">菊</option>
+    <option value="willow">柳</option>
+    <option value="peony">牡丹</option>
+  </select>
+  
+  <button id="launchBtn">打ち上げる</button>
+</div>
+
+<script>
+let fireworks = [];
+let gravity;
+let selectedColor = "random";
+let selectedType = "normal";
+
+function setup() {
+  createCanvas(windowWidth, windowHeight);
+  colorMode(RGB);
+  gravity = createVector(0, 0.2);
+  background(0);
+  
+  // コントロールのイベントリスナー
+  document.getElementById('color').addEventListener('change', function() {
+    selectedColor = this.value;
+  });
+  
+  document.getElementById('type').addEventListener('change', function() {
+    selectedType = this.value;
+  });
+  
+  document.getElementById('launchBtn').addEventListener('click', function() {
+    launchFirework();
+  });
+}
+
+function draw() {
+  // 背景を少し透明にして残像効果を作る
+  background(0, 25);
+  
+  // ランダムで自動的に花火を打ち上げる（確率的に）
+  if (random(1) < 0.03) {
+    launchFirework();
+  }
+  
+  // 花火を更新して描画
+  for (let i = fireworks.length - 1; i >= 0; i--) {
+    fireworks[i].update();
+    fireworks[i].show();
+    
+    if (fireworks[i].done()) {
+      fireworks.splice(i, 1);
+    }
+  }
+}
+
+function launchFirework() {
+  let x = random(width * 0.2, width * 0.8);
+  let y = height;
+  let targetY = random(height * 0.1, height * 0.5);
+  
+  let color;
+  switch (selectedColor) {
+    case "red":
+      color = [255, 50, 50];
+      break;
+    case "blue":
+      color = [50, 50, 255];
+      break;
+    case "green":
+      color = [50, 255, 50];
+      break;
+    case "gold":
+      color = [255, 215, 0];
+      break;
+    case "purple":
+      color = [128, 0, 128];
+      break;
+    case "random":
+    default:
+      color = [random(100, 255), random(100, 255), random(100, 255)];
+  }
+  
+  fireworks.push(new Firework(x, y, targetY, color, selectedType));
+}
+
+// マウスクリックでも花火を打ち上げる
+function mousePressed() {
+  launchFirework();
+}
+
+// ウィンドウサイズ変更時にキャンバスをリサイズ
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+}
+
+// 花火クラス
+class Firework {
+  constructor(x, y, targetY, color, type) {
+    this.pos = createVector(x, y);
+    this.type = type;
+    this.color = color;
+    this.particles = [];
+    this.exploded = false;
+    
+    // 打ち上げる速度を設定
+    this.vel = createVector(0, -random(8, 16));
+    // 目標の高さを設定
+    this.targetY = targetY;
+  }
+  
+  update() {
+    if (!this.exploded) {
+      // 重力を適用
+      this.vel.add(gravity);
+      this.pos.add(this.vel);
+      
+      // 頂点に達したら爆発
+      if (this.vel.y >= 0 || this.pos.y <= this.targetY) {
+        this.explode();
+      }
+    }
+    
+    // 爆発後はパーティクルを更新
+    for (let i = this.particles.length - 1; i >= 0; i--) {
+      this.particles[i].update();
+      
+      if (this.particles[i].isDead()) {
+        this.particles.splice(i, 1);
+      }
+    }
+  }
+  
+  explode() {
+    this.exploded = true;
+    
+    let particleCount;
+    let spreadFactor;
+    
+    // 花火のタイプに応じてパーティクルの数と拡散係数を設定
+    switch (this.type) {
+      case "chrysanthemum":
+        particleCount = 200;
+        spreadFactor = 5;
+        break;
+      case "willow":
+        particleCount = 150;
+        spreadFactor = 3;
+        break;
+      case "peony":
+        particleCount = 300;
+        spreadFactor = 4;
+        break;
+      case "normal":
+      default:
+        particleCount = 100;
+        spreadFactor = 4;
+    }
+    
+    for (let i = 0; i < particleCount; i++) {
+      const p = new Particle(this.pos.x, this.pos.y, this.color, this.type, spreadFactor);
+      this.particles.push(p);
+    }
+  }
+  
+  show() {
+    if (!this.exploded) {
+      // 打ち上げ中の花火の尾を描く
+      stroke(this.color[0], this.color[1], this.color[2]);
+      strokeWeight(4);
+      point(this.pos.x, this.pos.y);
+      
+      // 尾の軌跡
+      for (let i = 0; i < 5; i++) {
+        let trailPos = createVector(
+          this.pos.x, 
+          this.pos.y + i * 2 * this.vel.y * -0.1
+        );
+        strokeWeight(4 - i * 0.8);
+        stroke(this.color[0], this.color[1], this.color[2], 255 - i * 50);
+        point(trailPos.x, trailPos.y);
+      }
+    }
+    
+    // パーティクルを描画
+    for (let particle of this.particles) {
+      particle.show();
+    }
+  }
+  
+  done() {
+    return this.exploded && this.particles.length === 0;
+  }
+}
+
+// パーティクルクラス
+class Particle {
+  constructor(x, y, color, type, spreadFactor) {
+    this.pos = createVector(x, y);
+    this.lifespan = 255;
+    this.color = color;
+    this.type = type;
+    
+    // タイプに応じた動きを設定
+    switch (type) {
+      case "chrysanthemum":
+        // 菊は均等に広がる
+        let angle = random(TWO_PI);
+        let speed = random(0.5, 2) * spreadFactor;
+        this.vel = createVector(cos(angle) * speed, sin(angle) * speed);
+        this.decay = random(1, 3);
+        break;
+      case "willow":
+        // 柳は下方向に垂れる
+        let willowAngle = random(TWO_PI);
+        let willowSpeed = random(0.5, 3) * spreadFactor;
+        this.vel = createVector(cos(willowAngle) * willowSpeed, sin(willowAngle) * willowSpeed);
+        this.vel.y += 1; // 少し下向きに調整
+        this.decay = random(0.5, 1.5);
+        break;
+      case "peony":
+        // 牡丹は大きく華やかに広がる
+        let peonyAngle = random(TWO_PI);
+        let peonySpeed = random(1, 4) * spreadFactor;
+        this.vel = createVector(cos(peonyAngle) * peonySpeed, sin(peonyAngle) * peonySpeed);
+        this.decay = random(1, 2);
+        break;
+      case "normal":
+      default:
+        // 通常の花火
+        this.vel = p5.Vector.random2D();
+        this.vel.mult(random(1, 3) * spreadFactor);
+        this.decay = random(1.5, 3);
+    }
+    
+    this.acc = createVector(0, 0);
+  }
+  
+  update() {
+    // 重力を適用
+    this.acc.add(gravity);
+    this.vel.add(this.acc);
+    this.pos.add(this.vel);
+    this.acc.mult(0);
+    
+    // タイプに応じた特殊な動き
+    if (this.type === "willow") {
+      // 柳はゆっくり落ちる
+      this.vel.mult(0.98);
+    } else {
+      // 他のタイプは徐々に減速
+      this.vel.mult(0.95);
+    }
+    
+    // 寿命を減らす
+    this.lifespan -= this.decay;
+  }
+  
+  show() {
+    if (this.lifespan > 0) {
+      stroke(
+        this.color[0], 
+        this.color[1], 
+        this.color[2], 
+        this.lifespan
+      );
+      strokeWeight(2);
+      point(this.pos.x, this.pos.y);
+      
+      // 光の残像効果
+      if (random(1) < 0.3) {
+        strokeWeight(1);
+        stroke(
+          min(255, this.color[0] + 50), 
+          min(255, this.color[1] + 50), 
+          min(255, this.color[2] + 50), 
+          this.lifespan * 0.5
+        );
+        point(this.pos.x + random(-2, 2), this.pos.y + random(-2, 2));
+      }
+    }
+  }
+  
+  isDead() {
+    return this.lifespan <= 0;
+  }
+}
+</script>
+</body>
+</html>

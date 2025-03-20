@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>水の流れと波紋シミュレーション</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
+<style>
+  body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background-color: #111;
+    font-family: 'Arial', sans-serif;
+  }
+  
+  canvas {
+    display: block;
+  }
+  
+  .controls {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background-color: rgba(0, 0, 0, 0.7);
+    padding: 15px;
+    border-radius: 8px;
+    color: white;
+    width: 200px;
+  }
+  
+  .control-group {
+    margin-bottom: 10px;
+  }
+  
+  h2 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 18px;
+    text-align: center;
+    color: #4dd0e1;
+    border-bottom: 1px solid #4dd0e1;
+    padding-bottom: 5px;
+  }
+  
+  label {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 14px;
+  }
+  
+  input[type="range"] {
+    width: 100%;
+  }
+  
+  .value-display {
+    text-align: right;
+    font-size: 12px;
+    color: #aaa;
+  }
+  
+  button {
+    background-color: #4dd0e1;
+    color: #000;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 5px;
+    transition: background-color 0.3s;
+  }
+  
+  button:hover {
+    background-color: #26c6da;
+  }
+  
+  .select-wrapper {
+    margin-bottom: 10px;
+  }
+  
+  select {
+    width: 100%;
+    padding: 5px;
+    background-color: #333;
+    color: white;
+    border: 1px solid #555;
+    border-radius: 4px;
+  }
+  
+  .instruction {
+    font-size: 12px;
+    color: #aaa;
+    margin-top: 15px;
+    padding-top: 10px;
+    border-top: 1px solid #555;
+  }
+</style>
+</head>
+<body>
+<div class="controls">
+  <h2>水のシミュレーション</h2>
+  
+  <div class="select-wrapper">
+    <label for="mode-select">モード:</label>
+    <select id="mode-select">
+      <option value="ripple">波紋</option>
+      <option value="flow">流れ</option>
+      <option value="rain">雨</option>
+      <option value="obstacles">障害物</option>
+    </select>
+  </div>
+  
+  <div class="control-group">
+    <label for="damping-slider">減衰係数:</label>
+    <input type="range" id="damping-slider" min="85" max="99" value="96">
+    <div class="value-display" id="damping-value">0.96</div>
+  </div>
+  
+  <div class="control-group">
+    <label for="ripple-size-slider">波紋サイズ:</label>
+    <input type="range" id="ripple-size-slider" min="50" max="500" value="200">
+    <div class="value-display" id="ripple-size-value">200</div>
+  </div>
+  
+  <div class="control-group">
+    <label for="flow-speed-slider">流れの強さ:</label>
+    <input type="range" id="flow-speed-slider" min="1" max="10" value="2">
+    <div class="value-display" id="flow-speed-value">2</div>
+  </div>
+  
+  <div class="control-group">
+    <label for="color-scheme">カラーモード:</label>
+    <select id="color-scheme">
+      <option value="water">水 (青)</option>
+      <option value="thermal">サーマル</option>
+      <option value="neon">ネオン</option>
+      <option value="monochrome">モノクローム</option>
+    </select>
+  </div>
+  
+  <button id="reset-btn">リセット</button>
+  
+  <div class="instruction">
+    画面をクリックまたはドラッグして波紋を作成できます。
+  </div>
+</div>
+
+<script>
+// 水の流れと波紋のシミュレーション
+let cols, rows;
+let scale = 4; // ピクセルの大きさ（小さいほど高解像度だが処理が重くなる）
+let current, previous;
+let damping = 0.96; // 減衰係数
+let rippleSize = 200; // 波紋の大きさ
+let flowSpeed = 2; // 流れの速さ
+let colorScheme = 'water'; // カラースキーム
+let mode = 'ripple'; // シミュレーションモード
+let obstacles = []; // 障害物
+
+// UI要素
+let dampingSlider, rippleSizeSlider, flowSpeedSlider;
+let dampingValueDisplay, rippleSizeValueDisplay, flowSpeedValueDisplay;
+let modeSelect, colorSchemeSelect, resetBtn;
+
+function setup() {
+  createCanvas(windowWidth, windowHeight);
+  cols = floor(width / scale);
+  rows = floor(height / scale);
+  
+  // 2Dアレイの初期化
+  current = new Array(cols).fill().map(() => new Array(rows).fill(0));
+  previous = new Array(cols).fill().map(() => new Array(rows).fill(0));
+  
+  // UI要素の取得
+  dampingSlider = select('#damping-slider');
+  rippleSizeSlider = select('#ripple-size-slider');
+  flowSpeedSlider = select('#flow-speed-slider');
+  
+  dampingValueDisplay = select('#damping-value');
+  rippleSizeValueDisplay = select('#ripple-size-value');
+  flowSpeedValueDisplay = select('#flow-speed-value');
+  
+  modeSelect = select('#mode-select');
+  colorSchemeSelect = select('#color-scheme');
+  resetBtn = select('#reset-btn');
+  
+  // イベントリスナーの設定
+  dampingSlider.input(() => {
+    damping = dampingSlider.value() / 100;
+    dampingValueDisplay.html(damping.toFixed(2));
+  });
+  
+  rippleSizeSlider.input(() => {
+    rippleSize = rippleSizeSlider.value();
+    rippleSizeValueDisplay.html(rippleSize);
+  });
+  
+  flowSpeedSlider.input(() => {
+    flowSpeed = flowSpeedSlider.value();
+    flowSpeedValueDisplay.html(flowSpeed);
+  });
+  
+  modeSelect.changed(() => {
+    mode = modeSelect.value();
+    resetSimulation();
+  });
+  
+  colorSchemeSelect.changed(() => {
+    colorScheme = colorSchemeSelect.value();
+  });
+  
+  resetBtn.mousePressed(resetSimulation);
+  
+  // 初期値の設定
+  dampingValueDisplay.html(damping.toFixed(2));
+  rippleSizeValueDisplay.html(rippleSize);
+  flowSpeedValueDisplay.html(flowSpeed);
+  
+  // 障害物モードの場合、ランダムに障害物を生成
+  if (mode === 'obstacles') {
+    generateObstacles();
+  }
+}
+
+function draw() {
+  background(0);
+  
+  // モードに応じた処理
+  if (mode === 'flow') {
+    // 左から右への水の流れを生成
+    for (let i = 0; i < flowSpeed; i++) {
+      previous[0][floor(random(5, rows-5))] = 500;
+    }
+  } else if (mode === 'rain') {
+    // ランダムな位置に雨粒（波紋）を生成
+    if (frameCount % 5 === 0) {
+      let x = floor(random(cols));
+      let y = floor(random(rows));
+      previous[x][y] = 500;
+    }
+  }
+  
+  // マウスのドラッグによる波紋の生成
+  if (mouseIsPressed) {
+    let mouseXGrid = floor(mouseX / scale);
+    let mouseYGrid = floor(mouseY / scale);
+    
+    if (mouseXGrid >= 0 && mouseXGrid < cols && mouseYGrid >= 0 && mouseYGrid < rows) {
+      previous[mouseXGrid][mouseYGrid] = rippleSize;
+    }
+  }
+  
+  // 波紋の計算
+  calculateRipples();
+  
+  // 表示
+  renderWater();
+  
+  // 配列の入れ替え
+  [current, previous] = [previous, current];
+}
+
+function calculateRipples() {
+  // 波紋の計算（中央差分法による波動方程式の解）
+  for (let i = 1; i < cols - 1; i++) {
+    for (let j = 1; j < rows - 1; j++) {
+      // 障害物の場合はスキップ
+      if (mode === 'obstacles' && isObstacle(i, j)) {
+        continue;
+      }
+      
+      // 上下左右の値から新しい値を計算
+      current[i][j] = (
+        previous[i-1][j] + 
+        previous[i+1][j] + 
+        previous[i][j-1] + 
+        previous[i][j+1]
+      ) / 2 - current[i][j];
+      
+      // 減衰を適用
+      current[i][j] = current[i][j] * damping;
+    }
+  }
+}
+
+function renderWater() {
+  // ピクセルごとに描画
+  for (let i = 0; i < cols; i++) {
+    for (let j = 0; j < rows; j++) {
+      let x = i * scale;
+      let y = j * scale;
+      
+      // 障害物の描画
+      if (mode === 'obstacles' && isObstacle(i, j)) {
+        fill(100);
+        noStroke();
+        rect(x, y, scale, scale);
+        continue;
+      }
+      
+      // 波紋の値を色に変換
+      let value = current[i][j];
+      let col;
+      
+      switch (colorScheme) {
+        case 'water':
+          // 青系の水
+          let blue = map(value, -100, 100, 0, 255);
+          col = color(0, 100 + blue/3, 170 + blue/2);
+          break;
+        case 'thermal':
+          // 熱分布のような色
+          if (value < 0) {
+            // 寒色
+            let c = map(value, -100, 0, 0, 1);
+            col = lerpColor(color(0, 0, 255), color(0, 255, 255), c);
+          } else {
+            // 暖色
+            let c = map(value, 0, 100, 0, 1);
+            col = lerpColor(color(0, 255, 0), color(255, 0, 0), c);
+          }
+          break;
+        case 'neon':
+          // 明るいネオンカラー
+          let h = map(value, -100, 100, 180, 360) % 360;
+          colorMode(HSB, 360, 100, 100);
+          col = color(h, 100, 100);
+          colorMode(RGB, 255);
+          break;
+        case 'monochrome':
+          // モノクロ
+          let bright = map(value, -100, 100, 0, 255);
+          col = color(bright);
+          break;
+      }
+      
+      // ピクセルを描画
+      fill(col);
+      noStroke();
+      rect(x, y, scale, scale);
+    }
+  }
+}
+
+function resetSimulation() {
+  // シミュレーションをリセット
+  current = new Array(cols).fill().map(() => new Array(rows).fill(0));
+  previous = new Array(cols).fill().map(() => new Array(rows).fill(0));
+  
+  // 障害物モードの場合、新しい障害物を生成
+  if (mode === 'obstacles') {
+    generateObstacles();
+  } else {
+    obstacles = [];
+  }
+}
+
+function generateObstacles() {
+  // 障害物をクリア
+  obstacles = [];
+  
+  // ランダムな障害物を生成
+  for (let i = 0; i < 5; i++) {
+    let obstacleX = floor(random(cols/4, cols*3/4));
+    let obstacleY = floor(random(rows/4, rows*3/4));
+    let obstacleSize = floor(random(5, 15));
+    
+    obstacles.push({
+      x: obstacleX,
+      y: obstacleY,
+      size: obstacleSize
+    });
+  }
+}
+
+function isObstacle(x, y) {
+  // 指定した座標が障害物かどうかをチェック
+  for (let obs of obstacles) {
+    let dx = x - obs.x;
+    let dy = y - obs.y;
+    let distSq = dx*dx + dy*dy;
+    
+    if (distSq < obs.size * obs.size) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function windowResized() {
+  // ウィンドウサイズが変更されたときにキャンバスをリサイズ
+  resizeCanvas(windowWidth, windowHeight);
+  
+  // 新しいサイズに合わせて配列を再作成
+  let oldCols = cols;
+  let oldRows = rows;
+  
+  cols = floor(width / scale);
+  rows = floor(height / scale);
+  
+  let newCurrent = new Array(cols).fill().map(() => new Array(rows).fill(0));
+  let newPrevious = new Array(cols).fill().map(() => new Array(rows).fill(0));
+  
+  // 以前の値をコピー
+  for (let i = 0; i < min(cols, oldCols); i++) {
+    for (let j = 0; j < min(rows, oldRows); j++) {
+      newCurrent[i][j] = current[i][j];
+      newPrevious[i][j] = previous[i][j];
+    }
+  }
+  
+  current = newCurrent;
+  previous = newPrevious;
+}
+</script>
+</body>
+</html>

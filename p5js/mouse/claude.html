@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>キャッチ・ザ・ドット！ - マウス操作ゲーム</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
+<style>
+  body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background-color: #f0f0f0;
+    font-family: 'Arial', sans-serif;
+  }
+  
+  canvas {
+    display: block;
+  }
+  
+  .game-ui {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background-color: rgba(255, 255, 255, 0.8);
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  .score {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 10px;
+  }
+  
+  .timer {
+    font-size: 16px;
+    margin-bottom: 10px;
+  }
+  
+  .high-score {
+    font-size: 14px;
+    color: #555;
+  }
+  
+  .game-over {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(255, 255, 255, 0.9);
+    padding: 30px;
+    border-radius: 15px;
+    text-align: center;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    display: none;
+  }
+  
+  h1 {
+    margin-top: 0;
+    color: #333;
+  }
+  
+  button {
+    background-color: #4CAF50;
+    border: none;
+    color: white;
+    padding: 10px 20px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 10px 2px;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+  }
+  
+  button:hover {
+    background-color: #45a049;
+  }
+  
+  .level-selector {
+    margin-top: 15px;
+  }
+  
+  select {
+    padding: 8px;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+  }
+</style>
+</head>
+<body>
+<div class="game-ui">
+  <div class="score">スコア: 0</div>
+  <div class="timer">残り時間: 60秒</div>
+  <div class="high-score">ハイスコア: 0</div>
+</div>
+
+<div class="game-over">
+  <h1>ゲームオーバー！</h1>
+  <div class="final-score">あなたのスコア: 0</div>
+  <div class="level-selector">
+    <label for="difficulty">難易度: </label>
+    <select id="difficulty">
+      <option value="easy">簡単</option>
+      <option value="normal" selected>普通</option>
+      <option value="hard">難しい</option>
+    </select>
+  </div>
+  <button id="restart-btn">もう一度プレイ</button>
+</div>
+
+<script>
+// ゲーム設定
+let gameConfig = {
+  easy: {
+    targetCount: 5,
+    enemyCount: 3,
+    targetSpeed: 2,
+    enemySpeed: 1.5,
+    bonusFrequency: 10,
+    gameTime: 60
+  },
+  normal: {
+    targetCount: 8,
+    enemyCount: 5,
+    targetSpeed: 3,
+    enemySpeed: 2.5,
+    bonusFrequency: 15,
+    gameTime: 60
+  },
+  hard: {
+    targetCount: 12,
+    enemyCount: 8,
+    targetSpeed: 4,
+    enemySpeed: 3.5,
+    bonusFrequency: 20,
+    gameTime: 60
+  }
+};
+
+// ゲーム変数
+let player;
+let targets = [];
+let enemies = [];
+let bonusItems = [];
+let score = 0;
+let highScore = 0;
+let gameTimer = 60;
+let gameActive = true;
+let lastBonusTime = 0;
+let currentLevel = 'normal';
+let config = gameConfig.normal;
+let effects = [];
+let powerUpActive = false;
+let powerUpTimer = 0;
+let combo = 0;
+let comboTimer = 0;
+
+function setup() {
+  createCanvas(windowWidth, windowHeight);
+  initGame();
+  
+  // イベントリスナーの設定
+  document.getElementById('restart-btn').addEventListener('click', restartGame);
+  document.getElementById('difficulty').addEventListener('change', function() {
+    currentLevel = this.value;
+    config = gameConfig[currentLevel];
+  });
+}
+
+function initGame() {
+  // プレイヤーの初期化
+  player = {
+    x: width / 2,
+    y: height / 2,
+    size: 30,
+    speed: 5,
+    color: color(50, 150, 255),
+    magnetRange: 100
+  };
+  
+  // ゲーム要素の初期化
+  targets = [];
+  enemies = [];
+  bonusItems = [];
+  effects = [];
+  
+  for (let i = 0; i < config.targetCount; i++) {
+    spawnTarget();
+  }
+  
+  for (let i = 0; i < config.enemyCount; i++) {
+    spawnEnemy();
+  }
+  
+  // ゲーム状態の初期化
+  score = 0;
+  gameTimer = config.gameTime;
+  gameActive = true;
+  lastBonusTime = 0;
+  powerUpActive = false;
+  powerUpTimer = 0;
+  combo = 0;
+  comboTimer = 0;
+  
+  // UI更新
+  updateUI();
+  
+  // ゲームオーバー画面を非表示
+  document.querySelector('.game-over').style.display = 'none';
+}
+
+function draw() {
+  background(240);
+  
+  if (gameActive) {
+    // プレイヤーの更新
+    updatePlayer();
+    
+    // ゲーム要素の更新
+    updateTargets();
+    updateEnemies();
+    updateBonusItems();
+    updateEffects();
+    
+    // パワーアップとコンボの更新
+    updatePowerUp();
+    updateCombo();
+    
+    // 当たり判定
+    checkCollisions();
+    
+    // 新しいボーナスアイテムの生成
+    if (frameCount - lastBonusTime > config.bonusFrequency * 60) {
+      spawnBonusItem();
+      lastBonusTime = frameCount;
+    }
+    
+    // タイマーの更新
+    if (frameCount % 60 === 0 && gameTimer > 0) {
+      gameTimer--;
+      updateUI();
+      
+      if (gameTimer === 0) {
+        endGame();
+      }
+    }
+  }
+  
+  // マウス位置に十字線を描画
+  drawCrosshair();
+}
+
+function updatePlayer() {
+  // プレイヤーは常にマウス位置に移動
+  player.x = mouseX;
+  player.y = mouseY;
+  
+  // 画面外に出ないように制限
+  player.x = constrain(player.x, player.size / 2, width - player.size / 2);
+  player.y = constrain(player.y, player.size / 2, height - player.size / 2);
+  
+  // プレイヤーの描画
+  if (powerUpActive) {
+    // パワーアップ中は色が変わる
+    fill(255, 100, 50);
+    stroke(255, 200, 0);
+    strokeWeight(3);
+    
+    // パワーアップ中は磁石範囲を表示
+    noFill();
+    stroke(255, 200, 0, 100);
+    strokeWeight(2);
+    ellipse(player.x, player.y, player.magnetRange * 2);
+  } else {
+    fill(player.color);
+    stroke(30, 100, 200);
+    strokeWeight(2);
+  }
+  
+  ellipse(player.x, player.y, player.size);
+}
+
+function spawnTarget() {
+  let target = {
+    x: random(width),
+    y: random(height),
+    size: random(15, 25),
+    speedX: random(-config.targetSpeed, config.targetSpeed),
+    speedY: random(-config.targetSpeed, config.targetSpeed),
+    color: color(0, 200, 100),
+    points: 10
+  };
+  
+  // プレイヤーの近くには生成しない
+  while (dist(target.x, target.y, player.x, player.y) < 150) {
+    target.x = random(width);
+    target.y = random(height);
+  }
+  
+  targets.push(target);
+}
+
+function updateTargets() {
+  for (let i = 0; i < targets.length; i++) {
+    let t = targets[i];
+    
+    // パワーアップ中はプレイヤーに引き寄せられる
+    if (powerUpActive && dist(t.x, t.y, player.x, player.y) < player.magnetRange) {
+      let angle = atan2(player.y - t.y, player.x - t.x);
+      t.x += cos(angle) * 3;
+      t.y += sin(angle) * 3;
+    } else {
+      // 通常の移動
+      t.x += t.speedX;
+      t.y += t.speedY;
+    }
+    
+    // 画面端での跳ね返り
+    if (t.x < t.size/2 || t.x > width - t.size/2) {
+      t.speedX *= -1;
+      t.x = constrain(t.x, t.size/2, width - t.size/2);
+    }
+    if (t.y < t.size/2 || t.y > height - t.size/2) {
+      t.speedY *= -1;
+      t.y = constrain(t.y, t.size/2, height - t.size/2);
+    }
+    
+    // ターゲットの描画
+    fill(t.color);
+    noStroke();
+    ellipse(t.x, t.y, t.size);
+  }
+}
+
+function spawnEnemy() {
+  // 敵の初期位置（画面外から）
+  let side = floor(random(4));
+  let x, y;
+  
+  switch(side) {
+    case 0: // 上
+      x = random(width);
+      y = -20;
+      break;
+    case 1: // 右
+      x = width + 20;
+      y = random(height);
+      break;
+    case 2: // 下
+      x = random(width);
+      y = height + 20;
+      break;
+    case 3: // 左
+      x = -20;
+      y = random(height);
+      break;
+  }
+  
+  let enemy = {
+    x: x,
+    y: y,
+    size: random(30, 40),
+    speedX: 0,
+    speedY: 0,
+    color: color(255, 50, 50),
+    chaseSpeed: random(0.8, 1.2) * config.enemySpeed
+  };
+  
+  enemies.push(enemy);
+}
+
+function updateEnemies() {
+  for (let i = 0; i < enemies.length; i++) {
+    let e = enemies[i];
+    
+    // プレイヤーを追いかける
+    let angle = atan2(player.y - e.y, player.x - e.x);
+    e.speedX = cos(angle) * e.chaseSpeed;
+    e.speedY = sin(angle) * e.chaseSpeed;
+    
+    e.x += e.speedX;
+    e.y += e.speedY;
+    
+    // 画面外に出た場合の処理
+    if (e.x < -50 || e.x > width + 50 || e.y < -50 || e.y > height + 50) {
+      // 確率で画面の反対側に移動
+      if (random() < 0.5) {
+        let side = floor(random(4));
+        switch(side) {
+          case 0: // 上
+            e.x = random(width);
+            e.y = -20;
+            break;
+          case 1: // 右
+            e.x = width + 20;
+            e.y = random(height);
+            break;
+          case 2: // 下
+            e.x = random(width);
+            e.y = height + 20;
+            break;
+          case 3: // 左
+            e.x = -20;
+            e.y = random(height);
+            break;
+        }
+      }
+    }
+    
+    // 敵の描画
+    fill(e.color);
+    stroke(150, 30, 30);
+    strokeWeight(2);
+    
+    // スパイク形状
+    push();
+    translate(e.x, e.y);
+    rotate(frameCount * 0.02);
+    
+    beginShape();
+    for (let j = 0; j < 8; j++) {
+      let radius1 = e.size / 2;
+      let radius2 = e.size / 4;
+      let angle1 = j * PI / 4;
+      let angle2 = angle1 + PI / 8;
+      
+      let x1 = cos(angle1) * radius1;
+      let y1 = sin(angle1) * radius1;
+      let x2 = cos(angle2) * radius2;
+      let y2 = sin(angle2) * radius2;
+      
+      vertex(x1, y1);
+      vertex(x2, y2);
+    }
+    endShape(CLOSE);
+    pop();
+  }
+}
+
+function spawnBonusItem() {
+  let types = ['speed', 'magnet', 'shield', 'time'];
+  let type = random(types);
+  
+  let item = {
+    x: random(50, width - 50),
+    y: random(50, height - 50),
+    size: 30,
+    type: type,
+    collected: false,
+    lifespan: 240 // 4秒間表示
+  };
+  
+  // タイプに応じた色を設定
+  switch(type) {
+    case 'speed':
+      item.color = color(255, 200, 0);
+      break;
+    case 'magnet':
+      item.color = color(100, 100, 255);
+      break;
+    case 'shield':
+      item.color = color(0, 255, 255);
+      break;
+    case 'time':
+      item.color = color(255, 100, 255);
+      break;
+  }
+  
+  bonusItems.push(item);
+}
+
+function updateBonusItems() {
+  for (let i = bonusItems.length - 1; i >= 0; i--) {
+    let b = bonusItems[i];
+    
+    // 寿命を減らす
+    b.lifespan--;
+    
+    if (b.lifespan <= 0) {
+      bonusItems.splice(i, 1);
+      continue;
+    }
+    
+    // 点滅効果（残り時間が少ない時）
+    let alpha = 255;
+    if (b.lifespan < 60) {
+      alpha = map(sin(frameCount * 0.2), -1, 1, 100, 255);
+    }
+    
+    // アイテムの描画
+    fill(red(b.color), green(b.color), blue(b.color), alpha);
+    stroke(255);
+    strokeWeight(2);
+    ellipse(b.x, b.y, b.size);
+    
+    // アイコンの描画
+    fill(255);
+    noStroke();
+    textAlign(CENTER, CENTER);
+    textSize(14);
+    
+    switch(b.type) {
+      case 'speed':
+        text('S', b.x, b.y);
+        break;
+      case 'magnet':
+        text('M', b.x, b.y);
+        break;
+      case 'shield':
+        text('P', b.x, b.y);
+        break;
+      case 'time':
+        text('T', b.x, b.y);
+        break;
+    }
+  }
+}
+
+function updatePowerUp() {
+  if (powerUpActive) {
+    powerUpTimer--;
+    
+    if (powerUpTimer <= 0) {
+      powerUpActive = false;
+    }
+  }
+}
+
+function updateCombo() {
+  if (combo > 0) {
+    comboTimer--;
+    
+    if (comboTimer <= 0) {
+      combo = 0;
+    }
+  }
+}
+
+function activatePowerUp(type) {
+  switch(type) {
+    case 'speed':
+      // プレイヤーの速度アップ（実際にはマウス移動なので効果なし）
+      spawnEffect('スピードアップ！', color(255, 200, 0));
+      break;
+    case 'magnet':
+      // 磁石効果
+      powerUpActive = true;
+      powerUpTimer = 300; // 5秒間
+      spawnEffect('マグネット！', color(100, 100, 255));
+      break;
+    case 'shield':
+      // 一時的無敵
+      powerUpActive = true;
+      powerUpTimer = 360; // 6秒間
+      spawnEffect('シールド！', color(0, 255, 255));
+      break;
+    case 'time':
+      // 時間追加
+      gameTimer += 10;
+      spawnEffect('+10秒！', color(255, 100, 255));
+      updateUI();
+      break;
+  }
+}
+
+function checkCollisions() {
+  // プレイヤーとターゲットの衝突チェック
+  for (let i = targets.length - 1; i >= 0; i--) {
+    if (dist(player.x, player.y, targets[i].x, targets[i].y) < (player.size + targets[i].size) / 2) {
+      // コンボボーナス計算
+      let points = targets[i].points;
+      combo++;
+      comboTimer = 120; // 2秒間のコンボウィンドウ
+      
+      if (combo > 1) {
+        let bonus = Math.floor(points * (combo * 0.5));
+        points += bonus;
+        spawnEffect(`${combo}コンボ！ +${bonus}`, color(255, 215, 0));
+      }
+      
+      // スコア加算
+      score += points;
+      updateUI();
+      
+      // エフェクト生成
+      spawnEffect(`+${points}`, color(0, 255, 0));
+      
+      // ターゲット削除と新しいターゲット生成
+      targets.splice(i, 1);
+      spawnTarget();
+    }
+  }
+  
+  // プレイヤーと敵の衝突チェック
+  if (!powerUpActive) { // パワーアップ中は無敵
+    for (let i = 0; i < enemies.length; i++) {
+      if (dist(player.x, player.y, enemies[i].x, enemies[i].y) < (player.size + enemies[i].size) / 2) {
+        // ゲームオーバー
+        endGame();
+        return;
+      }
+    }
+  }
+  
+  // プレイヤーとボーナスアイテムの衝突チェック
+  for (let i = bonusItems.length - 1; i >= 0; i--) {
+    if (dist(player.x, player.y, bonusItems[i].x, bonusItems[i].y) < (player.size + bonusItems[i].size) / 2) {
+      // パワーアップを有効化
+      activatePowerUp(bonusItems[i].type);
+      
+      // アイテムを削除
+      bonusItems.splice(i, 1);
+    }
+  }
+}
+
+function spawnEffect(text, color) {
+  let effect = {
+    x: player.x,
+    y: player.y - 30,
+    text: text,
+    color: color,
+    alpha: 255,
+    lifespan: 60
+  };
+  
+  effects.push(effect);
+}
+
+function updateEffects() {
+  for (let i = effects.length - 1; i >= 0; i--) {
+    let e = effects[i];
+    
+    e.y -= 1; // 上に移動
+    e.alpha -= 255 / e.lifespan; // フェードアウト
+    e.lifespan--;
+    
+    if (e.lifespan <= 0) {
+      effects.splice(i, 1);
+      continue;
+    }
+    
+    // エフェクトの描画
+    fill(red(e.color), green(e.color), blue(e.color), e.alpha);
+    stroke(0, e.alpha);
+    strokeWeight(3);
+    textSize(16);
+    textAlign(CENTER);
+    text(e.text, e.x, e.y);
+  }
+}
+
+function drawCrosshair() {
+  stroke(100, 100, 255, 150);
+  strokeWeight(1);
+  line(mouseX, 0, mouseX, height);
+  line(0, mouseY, width, mouseY);
+  
+  noFill();
+  stroke(100, 100, 255, 200);
+  strokeWeight(2);
+  ellipse(mouseX, mouseY, 20);
+}
+
+function updateUI() {
+  document.querySelector('.score').innerText = `スコア: ${score}`;
+  document.querySelector('.timer').innerText = `残り時間: ${gameTimer}秒`;
+  document.querySelector('.high-score').innerText = `ハイスコア: ${highScore}`;
+}
+
+function endGame() {
+  gameActive = false;
+  
+  // ハイスコアの更新
+  if (score > highScore) {
+    highScore = score;
+  }
+  
+  // ゲームオーバー画面の表示
+  document.querySelector('.game-over').style.display = 'block';
+  document.querySelector('.final-score').innerText = `あなたのスコア: ${score}`;
+}
+
+function restartGame() {
+  currentLevel = document.getElementById('difficulty').value;
+  config = gameConfig[currentLevel];
+  initGame();
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+}
+
+function mousePressed() {
+  // ゲーム中はクリックでもコリジョンチェック
+  if (gameActive) {
+    checkCollisions();
+  }
+}
+</script>
+</body>
+</html>
