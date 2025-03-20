@@ -74,12 +74,12 @@ h1 {
 	margin-bottom: 10px;
 }
 .image-preview {
-	max-width: 800px;	/* 400px */
+	max-width: 500px;	/* 400px */
 	text-align: center;
 }
 .image-preview img {
 	max-width: 100%;
-	max-height: 800px;	/* 400px */
+	max-height: 500px;	/* 400px */
 	border: 1px solid #ddd;
 	border-radius: 4px;
 	box-shadow: 0 2px 5px rgba(0,0,0,0.1);
@@ -102,7 +102,7 @@ canvas {
 	background-color: #4CAF50;
 	color: white;
 	border: none;
-	padding: 5px 16px;
+	padding: 5px 20px;
 	text-align: center;
 	text-decoration: none;
 	display: inline-block;
@@ -144,14 +144,16 @@ canvas {
 	<div class="container">
 		<div class="tone-curve-container">
 		<!--	<h3>トーンカーブ</h3>	-->
-			<canvas id="curve-canvas" width="280" height="280"></canvas>
+			<canvas id="curve-canvas" width="256" height="256"></canvas>
 			<p>トーンカーブをクリックしてポイントを追加し、ドラッグして調整します</p>
 			<button id="reset-btn" class="btn" disabled>リセット</button>
-			<button id="download-btn" class="btn" disabled>画像をダウンロード</button>
 		</div>
 		<div class="image-preview">
 		<!--	<h3>プレビュー</h3>	-->
 			<canvas id="preview-canvas"></canvas>
+			<div>
+				<button id="download-btn" class="btn" disabled>画像をダウンロード</button>
+			</div>
 		</div>
 	</div>
 </div>
@@ -304,8 +306,8 @@ document.addEventListener('DOMContentLoaded', function() {
 				originalImage = img;
 				
 				// プレビューキャンバスのサイズ設定
-				const maxWidth = 800;	/* 400 */
-				const maxHeight = 800;	/* 400 */
+				const maxWidth = 500;	/* 400 */
+				const maxHeight = 500;	/* 400 */
 				let width = img.width;
 				let height = img.height;
 				
