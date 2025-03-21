@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <title>画像アップスケーラー</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tensorflow/4.2.0/tf.min.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', 'Meiryo', sans-serif;
+      max-width: 1700px;
+      margin: 0 auto;
+      padding: 20px;
+      color: #333;
+    }
+    
+    h1 {
+      text-align: center;
+      color: #2c3e50;
+    }
+    
+    .container {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    
+    .dropzone {
+      border: 3px dashed #3498db;
+      border-radius: 10px;
+      padding: 40px;
+      text-align: center;
+      cursor: pointer;
+      background-color: #f8f9fa;
+      transition: background-color 0.3s;
+    }
+    
+    .dropzone:hover {
+      background-color: #e9ecef;
+    }
+    
+    .image-container {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    
+    .image-box {
+      flex: 1;
+      min-width: 300px;
+    }
+    
+    .image-box h3 {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    
+    .preview-container {
+      width: 100%;
+      height: 800px;
+      border: 1px solid #ddd;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #f8f9fa;
+    }
+    
+    .preview-container img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+    
+    .controls {
+      background-color: #f8f9fa;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    
+    .slider-container {
+      margin: 15px 0;
+    }
+    
+    .slider-container label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    
+    .slider-container .slider-info {
+      display: flex;
+      justify-content: space-between;
+    }
+    
+    input[type="range"] {
+      width: 100%;
+      margin: 10px 0;
+    }
+    
+    .button {
+      background-color: #3498db;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      text-align: center;
+      text-decoration: none;
+      display: inline-block;
+      font-size: 16px;
+      margin: 10px 0;
+      cursor: pointer;
+      border-radius: 5px;
+      transition: background-color 0.3s;
+    }
+    
+    .button:hover {
+      background-color: #2980b9;
+    }
+    
+    .button:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+    
+    .loading {
+      display: none;
+      text-align: center;
+      margin: 20px 0;
+    }
+    
+    .spinner {
+      border: 6px solid #f3f3f3;
+      border-top: 6px solid #3498db;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <h1>画像アップスケーラー</h1>
+  
+  <div class="container">
+    <div id="dropzone" class="dropzone">
+      <p>ここに画像をドラッグ＆ドロップまたはクリックして選択</p>
+      <input type="file" id="fileInput" style="display: none;" accept="image/*">
+    </div>
+    
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+      <p>処理中... しばらくお待ちください</p>
+    </div>
+    
+    <div class="image-container" id="imageContainer" style="display: none;">
+      <div class="image-box">
+        <h3>オリジナル画像</h3>
+        <div class="preview-container">
+          <img id="originalImage" src="" alt="オリジナル画像">
+        </div>
+      </div>
+      
+      <div class="image-box">
+        <h3>アップスケーリング画像</h3>
+        <div class="preview-container">
+          <img id="upscaledImage" src="" alt="アップスケーリング画像">
+        </div>
+      </div>
+    </div>
+    
+    <div class="controls" id="controls" style="display: none;">
+      <div class="slider-container">
+        <label for="sharpness">シャープネス</label>
+        <div class="slider-info">
+          <span>弱い</span>
+          <span id="sharpnessValue">50</span>
+          <span>強い</span>
+        </div>
+        <input type="range" id="sharpness" min="0" max="100" value="50">
+      </div>
+      
+      <div class="slider-container">
+        <label for="noiseReduction">ノイズ除去強度</label>
+        <div class="slider-info">
+          <span>弱い</span>
+          <span id="noiseReductionValue">50</span>
+          <span>強い</span>
+        </div>
+        <input type="range" id="noiseReduction" min="0" max="100" value="50">
+      </div>
+      
+      <div class="slider-container">
+        <label for="detailEnhancement">ディテール強化</label>
+        <div class="slider-info">
+          <span>弱い</span>
+          <span id="detailEnhancementValue">50</span>
+          <span>強い</span>
+        </div>
+        <input type="range" id="detailEnhancement" min="0" max="100" value="50">
+      </div>
+      
+      <button id="downloadButton" class="button" disabled>アップスケーリング画像をダウンロード</button>
+    </div>
+  </div>
+
+  <script>
+    // 変数定義
+    let originalImage = null;
+    let upscaledImageData = null;
+    let originalFileName = '';
+    let model = null;
+    
+    // DOM要素
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('fileInput');
+    const imageContainer = document.getElementById('imageContainer');
+    const originalImageEl = document.getElementById('originalImage');
+    const upscaledImageEl = document.getElementById('upscaledImage');
+    const controls = document.getElementById('controls');
+    const downloadButton = document.getElementById('downloadButton');
+    const loading = document.getElementById('loading');
+    
+    // スライダー要素
+    const sharpness = document.getElementById('sharpness');
+    const noiseReduction = document.getElementById('noiseReduction');
+    const detailEnhancement = document.getElementById('detailEnhancement');
+    const sharpnessValue = document.getElementById('sharpnessValue');
+    const noiseReductionValue = document.getElementById('noiseReductionValue');
+    const detailEnhancementValue = document.getElementById('detailEnhancementValue');
+    
+    // モデルの読み込み
+    async function loadModel() {
+      try {
+        // モバイルネットモデルをロード（デモ用）
+        model = await tf.loadLayersModel('https://storage.googleapis.com/tfjs-models/tfjs/mobilenet_v1_0.25_224/model.json');
+        console.log('モデルが正常に読み込まれました');
+      } catch (error) {
+        console.error('モデルの読み込みエラー:', error);
+        alert('モデルの読み込みに失敗しました。再度お試しください。');
+      }
+    }
+    
+    // ページ読み込み時にモデルをロード
+    window.addEventListener('load', loadModel);
+    
+    // ドラッグ＆ドロップイベント
+    dropzone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropzone.style.backgroundColor = '#e3f2fd';
+    });
+    
+    dropzone.addEventListener('dragleave', () => {
+      dropzone.style.backgroundColor = '#f8f9fa';
+    });
+    
+    dropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropzone.style.backgroundColor = '#f8f9fa';
+      
+      if (e.dataTransfer.files.length) {
+        handleFile(e.dataTransfer.files[0]);
+      }
+    });
+    
+    dropzone.addEventListener('click', () => {
+      fileInput.click();
+    });
+    
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files.length) {
+        handleFile(e.target.files[0]);
+      }
+    });
+    
+    // ファイル処理
+    function handleFile(file) {
+      if (!file.type.match('image.*')) {
+        alert('画像ファイルを選択してください');
+        return;
+      }
+      
+      originalFileName = file.name.split('.')[0];
+      const reader = new FileReader();
+      
+      reader.onload = async (e) => {
+        originalImage = new Image();
+        originalImage.onload = async () => {
+          // 元画像を表示
+          originalImageEl.src = e.target.result;
+          imageContainer.style.display = 'flex';
+          
+          // 処理中表示
+          loading.style.display = 'block';
+          
+          // アップスケーリング処理
+          await upscaleImage();
+          
+          // コントロールを表示
+          controls.style.display = 'block';
+          loading.style.display = 'none';
+          downloadButton.disabled = false;
+        };
+        originalImage.src = e.target.result;
+      };
+      
+      reader.readAsDataURL(file);
+    }
+    
+    // 画像のアップスケーリング処理
+    async function upscaleImage() {
+      try {
+        // canvasに元画像を描画
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // 元のサイズを取得
+        const originalWidth = originalImage.width;
+        const originalHeight = originalImage.height;
+        
+        // アップスケーリング後のサイズを設定（2倍）
+        const upscaledWidth = originalWidth * 2;
+        const upscaledHeight = originalHeight * 2;
+        
+        canvas.width = upscaledWidth;
+        canvas.height = upscaledHeight;
+        
+        // 画像データの取得
+        if (model) {
+          // TensorFlow.jsを使用して画像処理
+          const imageTensor = tf.browser.fromPixels(originalImage);
+          
+          // アップスケーリング（単純なリサイズ - 実際の超解像にはさらに複雑なモデルが必要）
+          const resized = tf.image.resizeBilinear(imageTensor, [upscaledHeight, upscaledWidth]);
+          
+          // Tensor を画像データに変換
+          const upscaledData = await tf.browser.toPixels(resized);
+          
+          // ImageDataに変換
+          const imageData = new ImageData(upscaledWidth, upscaledHeight);
+          for (let i = 0; i < upscaledData.length; i++) {
+            imageData.data[i] = upscaledData[i];
+          }
+          
+          // 画像データを保存
+          upscaledImageData = imageData;
+          
+          // 画像を描画
+          ctx.putImageData(imageData, 0, 0);
+          
+          // メモリの解放
+          imageTensor.dispose();
+          resized.dispose();
+        } else {
+          // モデルが読み込まれていない場合は通常のアップスケーリング
+          ctx.drawImage(originalImage, 0, 0, upscaledWidth, upscaledHeight);
+          upscaledImageData = ctx.getImageData(0, 0, upscaledWidth, upscaledHeight);
+        }
+        
+        // 画質調整を適用
+        applyImageEnhancements();
+      } catch (error) {
+        console.error('アップスケーリングエラー:', error);
+        alert('画像の処理中にエラーが発生しました。');
+      }
+    }
+    
+    // 画質調整を適用する関数
+    function applyImageEnhancements() {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      canvas.width = upscaledImageData.width;
+      canvas.height = upscaledImageData.height;
+      
+      // クローンを作成して処理
+      const processedData = new ImageData(
+        new Uint8ClampedArray(upscaledImageData.data),
+        upscaledImageData.width,
+        upscaledImageData.height
+      );
+      
+      const width = processedData.width;
+      const height = processedData.height;
+      const data = processedData.data;
+      
+      // シャープネスの値（0-100）
+      const sharpVal = parseInt(sharpness.value);
+      // ノイズ除去強度（0-100）
+      const noiseVal = parseInt(noiseReduction.value);
+      // ディテール強化（0-100）
+      const detailVal = parseInt(detailEnhancement.value);
+      
+      // シンプルなシャープネス処理
+      if (sharpVal > 0) {
+        const sharpFactor = sharpVal / 50; // 0 - 2の範囲に変換
+        
+        const tempData = new Uint8ClampedArray(data.length);
+        tempData.set(data);
+        
+        // 簡易的なシャープニングカーネル
+        for (let y = 1; y < height - 1; y++) {
+          for (let x = 1; x < width - 1; x++) {
+            for (let c = 0; c < 3; c++) {
+              const idx = (y * width + x) * 4 + c;
+              
+              // 中央のピクセル
+              const current = data[idx];
+              
+              // 周囲のピクセル
+              const top = data[((y - 1) * width + x) * 4 + c];
+              const bottom = data[((y + 1) * width + x) * 4 + c];
+              const left = data[(y * width + (x - 1)) * 4 + c];
+              const right = data[(y * width + (x + 1)) * 4 + c];
+              
+              // シャープネス計算
+              const sharp = 5 * current - top - bottom - left - right;
+              const newVal = current + (sharp * sharpFactor * 0.1);
+              
+              // 値を0-255の範囲に収める
+              tempData[idx] = Math.max(0, Math.min(255, newVal));
+            }
+          }
+        }
+        
+        // 処理した画像データを反映
+        for (let i = 0; i < data.length; i++) {
+          data[i] = tempData[i];
+        }
+      }
+      
+      // ノイズ除去
+      if (noiseVal > 0) {
+        const tempData = new Uint8ClampedArray(data.length);
+        tempData.set(data);
+        
+        const noiseStrength = noiseVal / 100;
+        
+        // 簡易的なノイズ除去（平滑化）
+        for (let y = 1; y < height - 1; y++) {
+          for (let x = 1; x < width - 1; x++) {
+            for (let c = 0; c < 3; c++) {
+              const idx = (y * width + x) * 4 + c;
+              
+              // 3x3の平均を計算
+              let sum = 0;
+              for (let dy = -1; dy <= 1; dy++) {
+                for (let dx = -1; dx <= 1; dx++) {
+                  const neighborIdx = ((y + dy) * width + (x + dx)) * 4 + c;
+                  sum += data[neighborIdx];
+                }
+              }
+              
+              const avg = sum / 9;
+              
+              // 元の値と平均の線形補間
+              tempData[idx] = data[idx] * (1 - noiseStrength) + avg * noiseStrength;
+            }
+          }
+        }
+        
+        // 処理した画像データを反映
+        for (let i = 0; i < data.length; i++) {
+          data[i] = tempData[i];
+        }
+      }
+      
+      // ディテール強化
+      if (detailVal > 0) {
+        const detailStrength = detailVal / 100;
+        
+        const tempData = new Uint8ClampedArray(data.length);
+        tempData.set(data);
+        
+        // 簡易的なディテール強化（コントラスト調整）
+        for (let i = 0; i < data.length; i += 4) {
+          for (let c = 0; c < 3; c++) {
+            // コントラストを調整
+            const val = data[i + c];
+            const adjusted = 128 + (val - 128) * (1 + detailStrength * 0.5);
+            tempData[i + c] = Math.max(0, Math.min(255, adjusted));
+          }
+        }
+        
+        // 処理した画像データを反映
+        for (let i = 0; i < data.length; i++) {
+          data[i] = tempData[i];
+        }
+      }
+      
+      // 処理した画像データをキャンバスに描画
+      ctx.putImageData(processedData, 0, 0);
+      
+      // アップスケールされた画像を表示
+      upscaledImageEl.src = canvas.toDataURL('image/jpeg');
+    }
+    
+    // スライダーの値変更イベント
+    sharpness.addEventListener('input', () => {
+      sharpnessValue.textContent = sharpness.value;
+      applyImageEnhancements();
+    });
+    
+    noiseReduction.addEventListener('input', () => {
+      noiseReductionValue.textContent = noiseReduction.value;
+      applyImageEnhancements();
+    });
+    
+    detailEnhancement.addEventListener('input', () => {
+      detailEnhancementValue.textContent = detailEnhancement.value;
+      applyImageEnhancements();
+    });
+    
+    // ダウンロードボタンの処理
+    downloadButton.addEventListener('click', () => {
+      if (!upscaledImageEl.src) return;
+      
+      const link = document.createElement('a');
+      link.download = `${originalFileName}-S${sharpness.value}-N${noiseReduction.value}-D${detailEnhancement.value}.jpg`;
+      link.href = upscaledImageEl.src;
+      link.click();
+    });
+  </script>
+</body>
+</html>

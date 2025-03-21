@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <title>画像アップスケーラー</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', 'Meiryo', sans-serif;
+      max-width: 1700px;
+      margin: 0 auto;
+      padding: 20px;
+      color: #333;
+    }
+    
+    h1 {
+      text-align: center;
+      color: #2c3e50;
+    }
+    
+    .container {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    
+    .dropzone {
+      border: 3px dashed #3498db;
+      border-radius: 10px;
+      padding: 40px;
+      text-align: center;
+      cursor: pointer;
+      background-color: #f8f9fa;
+      transition: background-color 0.3s;
+    }
+    
+    .dropzone:hover {
+      background-color: #e9ecef;
+    }
+    
+    .image-container {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    
+    .image-box {
+      flex: 1;
+      min-width: 300px;
+    }
+    
+    .image-box h3 {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    
+    .preview-container {
+      width: 100%;
+      height: 800px;
+      border: 1px solid #ddd;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #f8f9fa;
+    }
+    
+    .preview-container img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+    
+    .controls {
+      background-color: #f8f9fa;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    
+    .slider-container {
+      margin: 15px 0;
+    }
+    
+    .slider-container label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    
+    .slider-container .slider-info {
+      display: flex;
+      justify-content: space-between;
+    }
+    
+    input[type="range"] {
+      width: 100%;
+      margin: 10px 0;
+    }
+    
+    .button {
+      background-color: #3498db;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      text-align: center;
+      text-decoration: none;
+      display: inline-block;
+      font-size: 16px;
+      margin: 10px 0;
+      cursor: pointer;
+      border-radius: 5px;
+      transition: background-color 0.3s;
+    }
+    
+    .button:hover {
+      background-color: #2980b9;
+    }
+    
+    .button:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+    
+    .loading {
+      display: none;
+      text-align: center;
+      margin: 20px 0;
+    }
+    
+    .spinner {
+      border: 6px solid #f3f3f3;
+      border-top: 6px solid #3498db;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <h1>画像アップスケーラー</h1>
+  
+  <div class="container">
+    <div id="dropzone" class="dropzone">
+      <p>ここに画像をドラッグ＆ドロップまたはクリックして選択</p>
+      <input type="file" id="fileInput" style="display: none;" accept="image/*">
+    </div>
+    
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+      <p>処理中... しばらくお待ちください</p>
+    </div>
+    
+    <div class="image-container" id="imageContainer" style="display: none;">
+      <div class="image-box">
+        <h3>オリジナル画像</h3>
+        <div class="preview-container">
+          <img id="originalImage" src="" alt="オリジナル画像">
+        </div>
+      </div>
+      
+      <div class="image-box">
+        <h3>アップスケーリング画像</h3>
+        <div class="preview-container">
+          <img id="upscaledImage" src="" alt="アップスケーリング画像">
+        </div>
+      </div>
+    </div>
+    
+    <div class="controls" id="controls" style="display: none;">
+      <div class="slider-container">
+        <label for="sharpness">シャープネス</label>
+        <div class="slider-info">
+          <span>弱い</span>
+          <span id="sharpnessValue">50</span>
+          <span>強い</span>
+        </div>
+        <input type="range" id="sharpness" min="0" max="100" value="50">
+      </div>
+      
+      <div class="slider-container">
+        <label for="noiseReduction">ノイズ除去強度</label>
+        <div class="slider-info">
+          <span>弱い</span>
+          <span id="noiseReductionValue">50</span>
+          <span>強い</span>
+        </div>
+        <input type="range" id="noiseReduction" min="0" max="100" value="50">
+      </div>
+      
+      <div class="slider-container">
+        <label for="detailEnhancement">ディテール強化</label>
+        <div class="slider-info">
+          <span>弱い</span>
+          <span id="detailEnhancementValue">50</span>
+          <span>強い</span>
+        </div>
+        <input type="range" id="detailEnhancement" min="0" max="100" value="50">
+      </div>
+      
+      <button id="downloadButton" class="button" disabled>アップスケーリング画像をダウンロード</button>
+    </div>
+  </div>
+
+  <script>
+    // 変数定義
+    let originalImage = null;
+    let originalCanvas = null;
+    let upscaledCanvas = null;
+    let originalFileName = '';
+    
+    // DOM要素
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('fileInput');
+    const imageContainer = document.getElementById('imageContainer');
+    const originalImageEl = document.getElementById('originalImage');
+    const upscaledImageEl = document.getElementById('upscaledImage');
+    const controls = document.getElementById('controls');
+    const downloadButton = document.getElementById('downloadButton');
+    const loading = document.getElementById('loading');
+    
+    // スライダー要素
+    const sharpness = document.getElementById('sharpness');
+    const noiseReduction = document.getElementById('noiseReduction');
+    const detailEnhancement = document.getElementById('detailEnhancement');
+    const sharpnessValue = document.getElementById('sharpnessValue');
+    const noiseReductionValue = document.getElementById('noiseReductionValue');
+    const detailEnhancementValue = document.getElementById('detailEnhancementValue');
+    
+    // ドラッグ＆ドロップイベント
+    dropzone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropzone.style.backgroundColor = '#e3f2fd';
+    });
+    
+    dropzone.addEventListener('dragleave', () => {
+      dropzone.style.backgroundColor = '#f8f9fa';
+    });
+    
+    dropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropzone.style.backgroundColor = '#f8f9fa';
+      
+      if (e.dataTransfer.files.length) {
+        handleFile(e.dataTransfer.files[0]);
+      }
+    });
+    
+    dropzone.addEventListener('click', () => {
+      fileInput.click();
+    });
+    
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files.length) {
+        handleFile(e.target.files[0]);
+      }
+    });
+    
+    // ファイル処理
+    function handleFile(file) {
+      if (!file.type.match('image.*')) {
+        alert('画像ファイルを選択してください');
+        return;
+      }
+      
+      originalFileName = file.name.split('.')[0];
+      const reader = new FileReader();
+      
+      reader.onload = (e) => {
+        originalImage = new Image();
+        originalImage.onload = () => {
+          // 元画像を表示
+          originalImageEl.src = e.target.result;
+          imageContainer.style.display = 'flex';
+          
+          // 処理中表示
+          loading.style.display = 'block';
+          
+          // オリジナル画像をキャンバスに描画
+          originalCanvas = document.createElement('canvas');
+          const ctx = originalCanvas.getContext('2d');
+          originalCanvas.width = originalImage.width;
+          originalCanvas.height = originalImage.height;
+          ctx.drawImage(originalImage, 0, 0);
+          
+          // アップスケーリング処理
+          setTimeout(() => {
+            upscaleImage();
+            controls.style.display = 'block';
+            loading.style.display = 'none';
+            downloadButton.disabled = false;
+          }, 100);
+        };
+        originalImage.src = e.target.result;
+      };
+      
+      reader.readAsDataURL(file);
+    }
+    
+    // 画像のアップスケーリング処理
+    function upscaleImage() {
+      try {
+        // アップスケーリング後のサイズを設定（2倍）
+        const originalWidth = originalImage.width;
+        const originalHeight = originalImage.height;
+        const upscaledWidth = originalWidth * 2;
+        const upscaledHeight = originalHeight * 2;
+        
+        // 新しいキャンバスを作成
+        upscaledCanvas = document.createElement('canvas');
+        upscaledCanvas.width = upscaledWidth;
+        upscaledCanvas.height = upscaledHeight;
+        const ctx = upscaledCanvas.getContext('2d');
+        
+        // より安定したスケーリング方法
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(originalImage, 0, 0, upscaledWidth, upscaledHeight);
+        
+        // 画質調整を適用
+        applyImageEnhancements();
+      } catch (error) {
+        console.error('アップスケーリングエラー:', error);
+        alert('画像の処理中にエラーが発生しました。別の画像をお試しください。');
+      }
+    }
+    
+    // 画質調整を適用する関数
+    function applyImageEnhancements() {
+      // 元のアップスケーリング画像データを取得
+      const upscaledWidth = upscaledCanvas.width;
+      const upscaledHeight = upscaledCanvas.height;
+      
+      // 処理用の新しいキャンバスを作成
+      const processedCanvas = document.createElement('canvas');
+      processedCanvas.width = upscaledWidth;
+      processedCanvas.height = upscaledHeight;
+      const ctx = processedCanvas.getContext('2d');
+      
+      // まず元のアップスケーリング画像を描画
+      ctx.drawImage(upscaledCanvas, 0, 0);
+      
+      // 画像データを取得
+      const imageData = ctx.getImageData(0, 0, upscaledWidth, upscaledHeight);
+      const data = imageData.data;
+      
+      // スライダーの値を取得
+      const sharpVal = parseInt(sharpness.value);
+      const noiseVal = parseInt(noiseReduction.value);
+      const detailVal = parseInt(detailEnhancement.value);
+      
+      // 処理のためのクローンを作成
+      const tempData = new Uint8ClampedArray(data);
+      
+      // シャープネス処理
+      if (sharpVal !== 50) {
+        const sharpFactor = (sharpVal - 50) / 50; // -1 ? 1の範囲
+        
+        // 簡易的なアンシャープマスク
+        for (let y = 1; y < upscaledHeight - 1; y++) {
+          for (let x = 1; x < upscaledWidth - 1; x++) {
+            for (let c = 0; c < 3; c++) {
+              const idx = (y * upscaledWidth + x) * 4 + c;
+              
+              // 中央のピクセル
+              const center = data[idx];
+              
+              // 周囲のピクセルの平均を計算
+              let sum = 0;
+              for (let dy = -1; dy <= 1; dy++) {
+                for (let dx = -1; dx <= 1; dx++) {
+                  const nidx = ((y + dy) * upscaledWidth + (x + dx)) * 4 + c;
+                  sum += data[nidx];
+                }
+              }
+              const avg = sum / 9;
+              
+              // アンシャープマスク効果
+              const diff = center - avg;
+              tempData[idx] = Math.max(0, Math.min(255, center + diff * sharpFactor));
+            }
+          }
+        }
+      }
+      
+      // ノイズ除去
+      if (noiseVal !== 50) {
+        const noiseStrength = (noiseVal - 50) / 50; // -1 ? 1の範囲
+        
+        if (noiseStrength > 0) {
+          // ノイズ除去（平滑化）- より強いほど平滑化が強くなる
+          for (let y = 1; y < upscaledHeight - 1; y++) {
+            for (let x = 1; x < upscaledWidth - 1; x++) {
+              for (let c = 0; c < 3; c++) {
+                const idx = (y * upscaledWidth + x) * 4 + c;
+                
+                // 3x3の平均を計算
+                let sum = 0;
+                for (let dy = -1; dy <= 1; dy++) {
+                  for (let dx = -1; dx <= 1; dx++) {
+                    const nidx = ((y + dy) * upscaledWidth + (x + dx)) * 4 + c;
+                    sum += tempData[nidx];
+                  }
+                }
+                const avg = sum / 9;
+                
+                // 平滑化を適用
+                data[idx] = tempData[idx] * (1 - noiseStrength) + avg * noiseStrength;
+              }
+            }
+          }
+        } else {
+          // ノイズ強調（詳細強調）- より弱いほど詳細が強調される
+          for (let y = 1; y < upscaledHeight - 1; y++) {
+            for (let x = 1; x < upscaledWidth - 1; x++) {
+              for (let c = 0; c < 3; c++) {
+                const idx = (y * upscaledWidth + x) * 4 + c;
+                
+                const center = tempData[idx];
+                
+                // 周囲との差を計算
+                let diff = 0;
+                for (let dy = -1; dy <= 1; dy++) {
+                  for (let dx = -1; dx <= 1; dx++) {
+                    if (dx === 0 && dy === 0) continue;
+                    const nidx = ((y + dy) * upscaledWidth + (x + dx)) * 4 + c;
+                    diff += center - tempData[nidx];
+                  }
+                }
+                diff /= 8;
+                
+                // 詳細強調を適用
+                data[idx] = Math.max(0, Math.min(255, center - diff * noiseStrength));
+              }
+            }
+          }
+        }
+      }
+      
+      // ディテール強化
+      if (detailVal !== 50) {
+        const detailStrength = (detailVal - 50) / 50; // -1 ? 1の範囲
+        
+        // コントラスト調整によるディテール強化
+        for (let i = 0; i < data.length; i += 4) {
+          for (let c = 0; c < 3; c++) {
+            const val = data[i + c];
+            // コントラスト調整 - 詳細が増えるほどコントラストが上がる
+            const adjusted = 128 + (val - 128) * (1 + detailStrength);
+            data[i + c] = Math.max(0, Math.min(255, adjusted));
+          }
+        }
+      }
+      
+      // 処理した画像データをキャンバスに戻す
+      ctx.putImageData(imageData, 0, 0);
+      
+      // アップスケールされた画像を表示
+      upscaledImageEl.src = processedCanvas.toDataURL('image/jpeg');
+    }
+    
+    // スライダーの値変更イベント
+    sharpness.addEventListener('input', () => {
+      sharpnessValue.textContent = sharpness.value;
+      applyImageEnhancements();
+    });
+    
+    noiseReduction.addEventListener('input', () => {
+      noiseReductionValue.textContent = noiseReduction.value;
+      applyImageEnhancements();
+    });
+    
+    detailEnhancement.addEventListener('input', () => {
+      detailEnhancementValue.textContent = detailEnhancement.value;
+      applyImageEnhancements();
+    });
+    
+    // ダウンロードボタンの処理
+    downloadButton.addEventListener('click', () => {
+      if (!upscaledImageEl.src) return;
+      
+      const link = document.createElement('a');
+      link.download = `${originalFileName}-S${sharpness.value}-N${noiseReduction.value}-D${detailEnhancement.value}.jpg`;
+      link.href = upscaledImageEl.src;
+      link.click();
+    });
+  </script>
+</body>
+</html>
