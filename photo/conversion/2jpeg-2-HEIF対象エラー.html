@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>画像フォーマット変換アプリ</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f7fa;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .container {
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .upload-area {
+            border: 2px dashed #3498db;
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .upload-area:hover {
+            background-color: #ecf0f1;
+        }
+        
+        .upload-area.active {
+            background-color: #d6eaf8;
+            border-color: #2980b9;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            display: inline-block;
+            margin: 10px 0;
+        }
+        
+        .btn:hover {
+            background-color: #2980b9;
+        }
+        
+        .btn:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+        }
+        
+        .files-list {
+            margin-top: 20px;
+            text-align: left;
+        }
+        
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        
+        .status {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 4px;
+            display: none;
+        }
+        
+        .status.success {
+            background-color: #d4edda;
+            color: #155724;
+            display: block;
+        }
+        
+        .status.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            display: block;
+        }
+        
+        .status.info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            display: block;
+        }
+        
+        .progress-container {
+            width: 100%;
+            background-color: #e9ecef;
+            border-radius: 4px;
+            margin: 20px 0;
+            display: none;
+        }
+        
+        .progress-bar {
+            height: 10px;
+            background-color: #3498db;
+            width: 0%;
+            border-radius: 4px;
+            transition: width 0.3s;
+        }
+        
+        .preview-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .preview-item {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .preview-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .remove-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background-color: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .help-text {
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-top: 10px;
+        }
+        
+        .loading-libraries {
+            text-align: center;
+            padding: 20px;
+            display: none;
+        }
+        
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: #09f;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>画像フォーマット変換アプリ</h1>
+        
+        <div class="loading-libraries" id="loadingLibraries">
+            <div class="spinner"></div>
+            <p>必要なライブラリを読み込み中...</p>
+        </div>
+        
+        <div class="upload-area" id="uploadArea">
+            <p>ここにファイルをドラッグ＆ドロップするか、クリックして選択してください</p>
+            <p class="help-text">対応フォーマット: PNG, WEBP, HEIF/HEIC, AVIF → JPEG</p>
+            <input type="file" id="fileInput" class="file-input" accept="image/*" multiple>
+        </div>
+        
+        <div class="preview-container" id="previewContainer"></div>
+        
+        <div id="filesInfo" class="files-list"></div>
+        
+        <div class="progress-container" id="progressContainer">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+        
+        <div class="status" id="statusMessage"></div>
+        
+        <div style="text-align: center;">
+            <button id="convertBtn" class="btn" disabled>JPEGに変換</button>
+        </div>
+    </div>
+
+    <!-- ライブラリの読み込み -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const uploadArea = document.getElementById('uploadArea');
+            const fileInput = document.getElementById('fileInput');
+            const filesInfo = document.getElementById('filesInfo');
+            const convertBtn = document.getElementById('convertBtn');
+            const statusMessage = document.getElementById('statusMessage');
+            const progressContainer = document.getElementById('progressContainer');
+            const progressBar = document.getElementById('progressBar');
+            const previewContainer = document.getElementById('previewContainer');
+            const loadingLibraries = document.getElementById('loadingLibraries');
+            
+            let selectedFiles = [];
+            let heifDecoder = null;
+            let isLibraryLoaded = false;
+            
+            // HEIF/AVIF対応のためのライブラリをロード
+            loadLibraries();
+            
+            async function loadLibraries() {
+                loadingLibraries.style.display = 'block';
+                uploadArea.style.display = 'none';
+                convertBtn.disabled = true;
+                
+                try {
+                    // libheif.jsのスクリプトを動的にロード
+                    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/libheif-js/1.14.0/libheif.js');
+                    
+                    // 必要に応じてwasm-featureを無効化
+                    if (window.libheif) {
+                        window.libheif.HeifDecoder.disableWebAssemblyFeatures = ['simd', 'threads', 'bulk-memory'];
+                        heifDecoder = new window.libheif.HeifDecoder();
+                        isLibraryLoaded = true;
+                        
+                        showStatus('ライブラリの読み込みが完了しました。', 'success');
+                    } else {
+                        showStatus('HEIF/AVIFサポートライブラリの読み込みに失敗しました。これらの形式は変換できない場合があります。', 'error');
+                    }
+                } catch (error) {
+                    console.error('ライブラリの読み込みエラー:', error);
+                    showStatus('ライブラリの読み込みに失敗しました。一部の画像形式が使用できません。', 'error');
+                } finally {
+                    loadingLibraries.style.display = 'none';
+                    uploadArea.style.display = 'block';
+                    convertBtn.disabled = selectedFiles.length === 0;
+                }
+            }
+            
+            function loadScript(src) {
+                return new Promise((resolve, reject) => {
+                    const script = document.createElement('script');
+                    script.src = src;
+                    script.onload = resolve;
+                    script.onerror = reject;
+                    document.head.appendChild(script);
+                });
+            }
+            
+            // ドラッグ&ドロップのイベント設定
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('active');
+            });
+            
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.classList.remove('active');
+            });
+            
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('active');
+                
+                const files = e.dataTransfer.files;
+                handleFiles(files);
+            });
+            
+            uploadArea.addEventListener('click', () => {
+                fileInput.click();
+            });
+            
+            fileInput.addEventListener('change', () => {
+                handleFiles(fileInput.files);
+            });
+            
+            convertBtn.addEventListener('click', convertImages);
+            
+            // ファイル処理関数
+            function handleFiles(files) {
+                // ファイル拡張子またはMIMEタイプをチェック
+                const validExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.heif', '.heic', '.avif'];
+                const validMimeTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/heif', 'image/heic', 'image/avif'];
+                
+                const imageFiles = Array.from(files).filter(file => {
+                    const ext = '.' + file.name.split('.').pop().toLowerCase();
+                    return validMimeTypes.includes(file.type) || validExtensions.includes(ext);
+                });
+                
+                if (imageFiles.length === 0) {
+                    showStatus('エラー: 画像ファイルを選択してください', 'error');
+                    return;
+                }
+                
+                // 選択されたファイルを追加
+                selectedFiles = [...selectedFiles, ...imageFiles];
+                updateFilesList();
+                updatePreview();
+                convertBtn.disabled = selectedFiles.length === 0;
+            }
+            
+            function updateFilesList() {
+                filesInfo.innerHTML = '';
+                
+                if (selectedFiles.length === 0) {
+                    filesInfo.innerHTML = '<p>ファイルが選択されていません</p>';
+                    return;
+                }
+                
+                const fileListEl = document.createElement('div');
+                fileListEl.innerHTML = `<p><strong>${selectedFiles.length}個のファイルが選択されています:</strong></p>`;
+                
+                selectedFiles.forEach((file, index) => {
+                    const fileItem = document.createElement('div');
+                    fileItem.className = 'file-item';
+                    fileItem.innerHTML = `
+                        <span>${file.name} (${formatFileSize(file.size)})</span>
+                        <button class="btn" data-index="${index}">削除</button>
+                    `;
+                    fileListEl.appendChild(fileItem);
+                    
+                    // 削除ボタンのイベント
+                    const deleteBtn = fileItem.querySelector('button');
+                    deleteBtn.addEventListener('click', () => {
+                        selectedFiles.splice(index, 1);
+                        updateFilesList();
+                        updatePreview();
+                        convertBtn.disabled = selectedFiles.length === 0;
+                    });
+                });
+                
+                filesInfo.appendChild(fileListEl);
+            }
+            
+            async function updatePreview() {
+                previewContainer.innerHTML = '';
+                
+                for (let index = 0; index < selectedFiles.length; index++) {
+                    const file = selectedFiles[index];
+                    const previewItem = document.createElement('div');
+                    previewItem.className = 'preview-item';
+                    
+                    try {
+                        const imgURL = await generatePreviewURL(file);
+                        
+                        const img = document.createElement('img');
+                        img.src = imgURL;
+                        img.onerror = () => {
+                            img.src = createTextAsImage(file.name);
+                        };
+                        
+                        const removeBtn = document.createElement('button');
+                        removeBtn.className = 'remove-btn';
+                        removeBtn.innerHTML = 'x';
+                        removeBtn.addEventListener('click', () => {
+                            selectedFiles.splice(index, 1);
+                            updateFilesList();
+                            updatePreview();
+                            convertBtn.disabled = selectedFiles.length === 0;
+                        });
+                        
+                        previewItem.appendChild(img);
+                        previewItem.appendChild(removeBtn);
+                        previewContainer.appendChild(previewItem);
+                    } catch (error) {
+                        console.error('プレビュー生成エラー:', error);
+                        // プレビューできない場合はファイル名を表示
+                        const textPreview = createTextAsImage(file.name);
+                        
+                        const img = document.createElement('img');
+                        img.src = textPreview;
+                        
+                        const removeBtn = document.createElement('button');
+                        removeBtn.className = 'remove-btn';
+                        removeBtn.innerHTML = 'x';
+                        removeBtn.addEventListener('click', () => {
+                            selectedFiles.splice(index, 1);
+                            updateFilesList();
+                            updatePreview();
+                            convertBtn.disabled = selectedFiles.length === 0;
+                        });
+                        
+                        previewItem.appendChild(img);
+                        previewItem.appendChild(removeBtn);
+                        previewContainer.appendChild(previewItem);
+                    }
+                }
+            }
+            
+            async function generatePreviewURL(file) {
+                const fileExt = file.name.split('.').pop().toLowerCase();
+                
+                // HEIF/HEIC/AVIFファイルの場合
+                if (['heif', 'heic', 'avif'].includes(fileExt) && isLibraryLoaded && heifDecoder) {
+                    try {
+                        const buffer = await file.arrayBuffer();
+                        const data = new Uint8Array(buffer);
+                        
+                        // HEIFデコード
+                        const image = await decodeHeifImage(data);
+                        return image;
+                    } catch (error) {
+                        console.error('HEIFデコードエラー:', error);
+                        // 標準的な方法でプレビューを試みる
+                        return URL.createObjectURL(file);
+                    }
+                } else {
+                    // その他の形式はURLを直接使用
+                    return URL.createObjectURL(file);
+                }
+            }
+            
+            function createTextAsImage(text) {
+                const canvas = document.createElement('canvas');
+                canvas.width = 100;
+                canvas.height = 100;
+                const ctx = canvas.getContext('2d');
+                
+                // 背景
+                ctx.fillStyle = '#f0f0f0';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // テキスト
+                ctx.fillStyle = '#333';
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                
+                // 長すぎる場合は省略
+                let displayText = text;
+                if (displayText.length > 10) {
+                    displayText = displayText.substring(0, 7) + '...';
+                }
+                
+                ctx.fillText(displayText, canvas.width / 2, canvas.height / 2);
+                
+                return canvas.toDataURL();
+            }
+            
+            // HEIF画像をデコードする関数
+            async function decodeHeifImage(data) {
+                return new Promise((resolve, reject) => {
+                    try {
+                        if (!heifDecoder) {
+                            reject(new Error('HEIFデコーダーが利用できません'));
+                            return;
+                        }
+                        
+                        heifDecoder.decode(data).then(images => {
+                            if (images.length > 0) {
+                                const image = images[0];
+                                const canvas = document.createElement('canvas');
+                                canvas.width = image.get_width();
+                                canvas.height = image.get_height();
+                                
+                                const context = canvas.getContext('2d');
+                                const imageData = context.createImageData(canvas.width, canvas.height);
+                                
+                                const rgba = image.get_rgba_array();
+                                for (let i = 0; i < rgba.length; i++) {
+                                    imageData.data[i] = rgba[i];
+                                }
+                                
+                                context.putImageData(imageData, 0, 0);
+                                resolve(canvas.toDataURL('image/jpeg'));
+                            } else {
+                                reject(new Error('HEIF画像のデコードに失敗しました'));
+                            }
+                        }).catch(error => {
+                            reject(error);
+                        });
+                    } catch (error) {
+                        reject(error);
+                    }
+                });
+            }
+            
+            // 画像変換処理
+            async function convertImages() {
+                if (selectedFiles.length === 0) return;
+                
+                showStatus('変換中...', 'info');
+                progressContainer.style.display = 'block';
+                progressBar.style.width = '0%';
+                convertBtn.disabled = true;
+                
+                try {
+                    const convertedImages = [];
+                    
+                    for (let i = 0; i < selectedFiles.length; i++) {
+                        const file = selectedFiles[i];
+                        const convertedImage = await convertToJpeg(file);
+                        convertedImages.push({
+                            data: convertedImage,
+                            name: file.name.split('.')[0] + '.jpg'
+                        });
+                        
+                        // 進捗バーの更新
+                        const progress = ((i + 1) / selectedFiles.length) * 100;
+                        progressBar.style.width = progress + '%';
+                    }
+                    
+                    // ダウンロード処理
+                    if (convertedImages.length === 1) {
+                        // 単一ファイルの場合は直接ダウンロード
+                        downloadSingleFile(convertedImages[0].data, convertedImages[0].name);
+                    } else {
+                        // 複数ファイルの場合はZIPに圧縮してダウンロード
+                        await downloadAsZip(convertedImages);
+                    }
+                    
+                    showStatus('変換が完了しました！', 'success');
+                } catch (error) {
+                    console.error('変換エラー:', error);
+                    showStatus('変換中にエラーが発生しました: ' + error.message, 'error');
+                } finally {
+                    convertBtn.disabled = false;
+                    setTimeout(() => {
+                        progressContainer.style.display = 'none';
+                    }, 1000);
+                }
+            }
+            
+            // JPEG変換関数
+            async function convertToJpeg(file) {
+                const fileExt = file.name.split('.').pop().toLowerCase();
+                
+                // HEIF/HEIC/AVIFファイルの場合
+                if (['heif', 'heic', 'avif'].includes(fileExt) && isLibraryLoaded && heifDecoder) {
+                    try {
+                        const buffer = await file.arrayBuffer();
+                        const data = new Uint8Array(buffer);
+                        
+                        // HEIFデコード
+                        const jpegDataURL = await decodeHeifImage(data);
+                        
+                        // Base64データをバイナリに変換
+                        const binaryData = atob(jpegDataURL.split(',')[1]);
+                        const array = new Uint8Array(binaryData.length);
+                        for (let i = 0; i < binaryData.length; i++) {
+                            array[i] = binaryData.charCodeAt(i);
+                        }
+                        
+                        return array;
+                    } catch (error) {
+                        console.error('HEIF変換エラー:', error);
+                        // 標準的な方法で変換を試みる
+                        return standardConversion(file);
+                    }
+                } else {
+                    // その他の形式は標準的な方法で変換
+                    return standardConversion(file);
+                }
+            }
+            
+            // 標準的な画像変換処理
+            function standardConversion(file) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    
+                    reader.onload = function(e) {
+                        const img = new Image();
+                        
+                        img.onload = function() {
+                            const canvas = document.createElement('canvas');
+                            canvas.width = img.width;
+                            canvas.height = img.height;
+                            
+                            const ctx = canvas.getContext('2d');
+                            ctx.fillStyle = 'white';
+                            ctx.fillRect(0, 0, canvas.width, canvas.height);
+                            ctx.drawImage(img, 0, 0);
+                            
+                            // JPEG形式で出力
+                            const jpegData = canvas.toDataURL('image/jpeg', 0.9);
+                            
+                            // Base64データをバイナリに変換
+                            const binaryData = atob(jpegData.split(',')[1]);
+                            const array = new Uint8Array(binaryData.length);
+                            for (let i = 0; i < binaryData.length; i++) {
+                                array[i] = binaryData.charCodeAt(i);
+                            }
+                            
+                            resolve(array);
+                        };
+                        
+                        img.onerror = function() {
+                            reject(new Error(`${file.name}の読み込みに失敗しました`));
+                        };
+                        
+                        img.src = e.target.result;
+                    };
+                    
+                    reader.onerror = function() {
+                        reject(new Error(`${file.name}の読み込みに失敗しました`));
+                    };
+                    
+                    reader.readAsDataURL(file);
+                });
+            }
+            
+            // 単一ファイルダウンロード関数
+            function downloadSingleFile(data, fileName) {
+                const blob = new Blob([data], { type: 'image/jpeg' });
+                const url = URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+            
+            // ZIPファイルダウンロード関数
+            async function downloadAsZip(images) {
+                const zip = new JSZip();
+                
+                images.forEach(image => {
+                    zip.file(image.name, image.data);
+                });
+                
+                const zipBlob = await zip.generateAsync({ type: 'blob' });
+                const url = URL.createObjectURL(zipBlob);
+                
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'converted_images.zip';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+            
+            // ステータスメッセージ表示関数
+            function showStatus(message, type) {
+                statusMessage.textContent = message;
+                statusMessage.className = 'status';
+                
+                if (type) {
+                    statusMessage.classList.add(type);
+                }
+            }
+            
+            // ファイルサイズのフォーマット関数
+            function formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+        });
+    </script>
+</body>
+</html>
