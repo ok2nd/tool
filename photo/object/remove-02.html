@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>オブジェクト除去アプリ</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        .upload-container {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 2px dashed #ccc;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        #upload-label {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #3498db;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        #upload-label:hover {
+            background-color: #2980b9;
+        }
+        #file-input {
+            display: none;
+        }
+        .canvas-container {
+            position: relative;
+            margin: 0 auto;
+            display: none;
+            border: 1px solid #ddd;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            padding: 10px;
+            background-color: #fff;
+        }
+        #image-canvas {
+            cursor: crosshair;
+            max-width: 100%;
+            height: auto;
+        }
+        .buttons {
+            margin-top: 15px;
+            text-align: center;
+            display: none;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 0 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        #cancel-btn {
+            background-color: #e74c3c;
+            color: white;
+        }
+        #cancel-btn:hover {
+            background-color: #c0392b;
+        }
+        #remove-btn {
+            background-color: #2ecc71;
+            color: white;
+        }
+        #remove-btn:hover {
+            background-color: #27ae60;
+        }
+        #download-btn {
+            background-color: #9b59b6;
+            color: white;
+        }
+        #download-btn:hover {
+            background-color: #8e44ad;
+        }
+        .instructions {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-left: 4px solid #3498db;
+            border-radius: 3px;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 10px;
+            color: #3498db;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>オブジェクト除去アプリ</h1>
+        
+        <div class="instructions">
+            <p>1. 画像をアップロードします</p>
+            <p>2. マウスドラッグで除去したいオブジェクトを自由に囲みます</p>
+            <p>3. 「オブジェクト除去」ボタンをクリックして処理を実行します</p>
+            <p>4. 結果に満足したら「ダウンロード」ボタンで保存できます</p>
+        </div>
+        
+        <div class="upload-container">
+            <label id="upload-label" for="file-input">画像をアップロード</label>
+            <input type="file" id="file-input" accept="image/jpeg, image/png">
+        </div>
+        
+        <div class="canvas-container" id="canvas-container">
+            <canvas id="image-canvas"></canvas>
+        </div>
+        
+        <div class="loading" id="loading">処理中...</div>
+        
+        <div class="buttons" id="buttons">
+            <button id="cancel-btn">キャンセル</button>
+            <button id="remove-btn">オブジェクト除去</button>
+            <button id="download-btn">ダウンロード</button>
+        </div>
+    </div>
+
+    <script>
+        // DOM要素
+        const fileInput = document.getElementById('file-input');
+        const imageCanvas = document.getElementById('image-canvas');
+        const canvasContainer = document.getElementById('canvas-container');
+        const buttons = document.getElementById('buttons');
+        const cancelBtn = document.getElementById('cancel-btn');
+        const removeBtn = document.getElementById('remove-btn');
+        const downloadBtn = document.getElementById('download-btn');
+        const loadingElement = document.getElementById('loading');
+        
+        // キャンバスのコンテキスト
+        const ctx = imageCanvas.getContext('2d');
+        
+        // 画像関連の変数
+        let originalImage = null;
+        let currentImage = null;
+        let isDrawing = false;
+        let origFileName = '';
+        
+        // 自由曲線の描画用
+        let pathPoints = [];
+        
+        // 画像をアップロードしたときの処理
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            // オリジナルファイル名を保存（拡張子を除く）
+            origFileName = file.name.replace(/\.[^/.]+$/, "");
+            
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const img = new Image();
+                img.onload = function() {
+                    // キャンバスのサイズを設定
+                    imageCanvas.width = img.width;
+                    imageCanvas.height = img.height;
+                    
+                    // 画像を描画
+                    ctx.drawImage(img, 0, 0);
+                    
+                    // 元の画像を保存
+                    originalImage = new Image();
+                    originalImage.src = imageCanvas.toDataURL();
+                    
+                    // 現在の画像を保存
+                    currentImage = new Image();
+                    currentImage.src = imageCanvas.toDataURL();
+                    
+                    // キャンバスと操作ボタンを表示
+                    canvasContainer.style.display = 'block';
+                    buttons.style.display = 'block';
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+        
+        // マウスイベントの処理 - 自由曲線描画
+        imageCanvas.addEventListener('mousedown', function(e) {
+            const rect = imageCanvas.getBoundingClientRect();
+            const scaleX = imageCanvas.width / rect.width;
+            const scaleY = imageCanvas.height / rect.height;
+            
+            const startX = (e.clientX - rect.left) * scaleX;
+            const startY = (e.clientY - rect.top) * scaleY;
+            
+            // 新しいパスを開始
+            pathPoints = [];
+            pathPoints.push({ x: startX, y: startY });
+            
+            isDrawing = true;
+            
+            // 前回の選択範囲を消去してキャンバスをリセット
+            ctx.clearRect(0, 0, imageCanvas.width, imageCanvas.height);
+            ctx.drawImage(currentImage, 0, 0);
+            
+            // パスの描画を開始
+            ctx.beginPath();
+            ctx.moveTo(startX, startY);
+            ctx.strokeStyle = 'red';
+            ctx.lineWidth = 2;
+        });
+        
+        imageCanvas.addEventListener('mousemove', function(e) {
+            if (!isDrawing) return;
+            
+            const rect = imageCanvas.getBoundingClientRect();
+            const scaleX = imageCanvas.width / rect.width;
+            const scaleY = imageCanvas.height / rect.height;
+            
+            const mouseX = (e.clientX - rect.left) * scaleX;
+            const mouseY = (e.clientY - rect.top) * scaleY;
+            
+            // ポイントを追加
+            pathPoints.push({ x: mouseX, y: mouseY });
+            
+            // パスを描画
+            ctx.lineTo(mouseX, mouseY);
+            ctx.stroke();
+        });
+        
+        imageCanvas.addEventListener('mouseup', function() {
+            if (!isDrawing) return;
+            
+            isDrawing = false;
+            
+            // パスを閉じる
+            if (pathPoints.length > 2) {
+                ctx.lineTo(pathPoints[0].x, pathPoints[0].y);
+                ctx.closePath();
+                ctx.stroke();
+                
+                // 選択範囲を半透明の赤で塗りつぶす
+                ctx.fillStyle = 'rgba(255, 0, 0, 0.2)';
+                ctx.fill();
+            }
+        });
+        
+        // キャンセルボタンの処理
+        cancelBtn.addEventListener('click', function() {
+            // 選択範囲をクリアして現在の画像を再描画
+            pathPoints = [];
+            ctx.clearRect(0, 0, imageCanvas.width, imageCanvas.height);
+            ctx.drawImage(currentImage, 0, 0);
+        });
+        
+        // オブジェクト除去ボタンの処理
+        removeBtn.addEventListener('click', function() {
+            if (pathPoints.length < 3) {
+                alert('除去する領域を囲んでください');
+                return;
+            }
+            
+            // 読み込み表示
+            loadingElement.style.display = 'block';
+            
+            // 非同期処理で実行（UIがブロックされないように）
+            setTimeout(() => {
+                // パスで囲まれた領域内のオブジェクトを除去
+                removeObjectInPath();
+                
+                // 現在の画像を更新
+                currentImage = new Image();
+                currentImage.src = imageCanvas.toDataURL();
+                
+                // 選択範囲をクリア
+                pathPoints = [];
+                
+                // 読み込み表示を非表示
+                loadingElement.style.display = 'none';
+            }, 100);
+        });
+        
+        // パスで囲まれた領域内のオブジェクトを除去する関数
+        function removeObjectInPath() {
+            // パスの境界ボックスを計算
+            const bounds = calculatePathBounds(pathPoints);
+            
+            // 画像データを取得
+            const imageData = ctx.getImageData(0, 0, imageCanvas.width, imageCanvas.height);
+            const data = imageData.data;
+            
+            // オフスクリーンキャンバスを作成（マスク用）
+            const maskCanvas = document.createElement('canvas');
+            maskCanvas.width = imageCanvas.width;
+            maskCanvas.height = imageCanvas.height;
+            const maskCtx = maskCanvas.getContext('2d');
+            
+            // マスクを描画
+            maskCtx.fillStyle = 'black';
+            maskCtx.fillRect(0, 0, maskCanvas.width, maskCanvas.height);
+            maskCtx.fillStyle = 'white';
+            maskCtx.beginPath();
+            maskCtx.moveTo(pathPoints[0].x, pathPoints[0].y);
+            for (let i = 1; i < pathPoints.length; i++) {
+                maskCtx.lineTo(pathPoints[i].x, pathPoints[i].y);
+            }
+            maskCtx.closePath();
+            maskCtx.fill();
+            
+            // マスクデータを取得
+            const maskData = maskCtx.getImageData(0, 0, maskCanvas.width, maskCanvas.height).data;
+            
+            // 境界の外側のピクセルを収集（インペインティングの参照として使用）
+            const outsidePixels = collectOutsidePixels(bounds, maskData, imageData);
+            
+            // パスで囲まれた領域をインペインティング
+            for (let y = Math.max(0, Math.floor(bounds.minY) - 1); y <= Math.min(imageCanvas.height - 1, Math.ceil(bounds.maxY) + 1); y++) {
+                for (let x = Math.max(0, Math.floor(bounds.minX) - 1); x <= Math.min(imageCanvas.width - 1, Math.ceil(bounds.maxX) + 1); x++) {
+                    const index = (y * imageCanvas.width + x) * 4;
+                    
+                    // マスクが白（255）の場合、この点は選択領域内
+                    if (maskData[index] === 255) {
+                        // 最も近い外側のピクセルを探す
+                        const nearestPixel = findNearestOutsidePixel(x, y, outsidePixels);
+                        
+                        // ピクセルをコピー
+                        data[index] = nearestPixel.r;     // Red
+                        data[index + 1] = nearestPixel.g; // Green
+                        data[index + 2] = nearestPixel.b; // Blue
+                        data[index + 3] = 255;            // Alpha
+                    }
+                }
+            }
+            
+            // 更新されたピクセルデータをキャンバスに戻す
+            ctx.putImageData(imageData, 0, 0);
+            
+            // 境界領域をスムージングして自然に見せる
+            smoothBoundaryRegion(bounds, maskData);
+        }
+        
+        // パスの境界ボックスを計算する関数
+        function calculatePathBounds(points) {
+            let minX = Infinity, minY = Infinity;
+            let maxX = -Infinity, maxY = -Infinity;
+            
+            for (const point of points) {
+                minX = Math.min(minX, point.x);
+                minY = Math.min(minY, point.y);
+                maxX = Math.max(maxX, point.x);
+                maxY = Math.max(maxY, point.y);
+            }
+            
+            return { minX, minY, maxX, maxY };
+        }
+        
+        // マスク領域の外側のピクセルを収集する関数
+        function collectOutsidePixels(bounds, maskData, imageData) {
+            const outsidePixels = [];
+            const data = imageData.data;
+            const margin = 20; // 外側の境界マージン
+            
+            // 境界ボックスの周囲のピクセルを収集
+            const minX = Math.max(0, Math.floor(bounds.minX) - margin);
+            const minY = Math.max(0, Math.floor(bounds.minY) - margin);
+            const maxX = Math.min(imageCanvas.width - 1, Math.ceil(bounds.maxX) + margin);
+            const maxY = Math.min(imageCanvas.height - 1, Math.ceil(bounds.maxY) + margin);
+            
+            for (let y = minY; y <= maxY; y++) {
+                for (let x = minX; x <= maxX; x++) {
+                    const index = (y * imageCanvas.width + x) * 4;
+                    
+                    // マスクが黒（0）の場合、この点は選択領域外
+                    if (maskData[index] === 0) {
+                        outsidePixels.push({
+                            x: x,
+                            y: y,
+                            r: data[index],
+                            g: data[index + 1],
+                            b: data[index + 2],
+                            a: data[index + 3]
+                        });
+                    }
+                }
+            }
+            
+            return outsidePixels;
+        }
+        
+        // 最も近い外側のピクセルを見つける関数
+        function findNearestOutsidePixel(x, y, outsidePixels) {
+            let minDistance = Infinity;
+            let nearestPixel = null;
+            
+            // 最も近い10個のピクセルから選択するためのヒューリスティック
+            const pixelsToCheck = Math.min(10, outsidePixels.length);
+            const candidates = [];
+            
+            // 初期の候補を見つける
+            for (const pixel of outsidePixels) {
+                const dx = pixel.x - x;
+                const dy = pixel.y - y;
+                const distance = dx * dx + dy * dy;
+                
+                if (candidates.length < pixelsToCheck) {
+                    candidates.push({ pixel, distance });
+                    candidates.sort((a, b) => a.distance - b.distance);
+                } else if (distance < candidates[candidates.length - 1].distance) {
+                    candidates.pop();
+                    candidates.push({ pixel, distance });
+                    candidates.sort((a, b) => a.distance - b.distance);
+                }
+            }
+            
+            // 候補から最適なものを選択（ランダム要素を加えて自然に）
+            const randomFactor = 0.3; // ランダム性の要素を調整
+            const randomIndex = Math.floor(Math.random() * Math.min(3, candidates.length));
+            return candidates[randomIndex].pixel;
+        }
+        
+        // 境界領域をスムージングする関数
+        function smoothBoundaryRegion(bounds, maskData) {
+            // 境界領域のみをスムージングする
+            const margin = 5;
+            const region = {
+                x: Math.max(0, Math.floor(bounds.minX) - margin),
+                y: Math.max(0, Math.floor(bounds.minY) - margin),
+                width: Math.min(imageCanvas.width - Math.floor(bounds.minX) + margin, Math.ceil(bounds.maxX - bounds.minX) + 2 * margin),
+                height: Math.min(imageCanvas.height - Math.floor(bounds.minY) + margin, Math.ceil(bounds.maxY - bounds.minY) + 2 * margin)
+            };
+            
+            // 領域のイメージデータを取得
+            const imageData = ctx.getImageData(region.x, region.y, region.width, region.height);
+            
+            // スムージングアルゴリズムを適用
+            const smoothedData = applySmoothing(imageData, 2);
+            
+            // スムージングされたデータをキャンバスに戻す
+            ctx.putImageData(smoothedData, region.x, region.y);
+        }
+        
+        // 画像スムージングアルゴリズム
+        function applySmoothing(imageData, radius) {
+            const width = imageData.width;
+            const height = imageData.height;
+            const data = imageData.data;
+            const result = new Uint8ClampedArray(data);
+            
+            // ボックスブラーの適用（効率的なぼかし）
+            const boxBlur = (src, dst, width, height, radius) => {
+                const size = radius * 2 + 1;
+                const divisor = size * size;
+                
+                for (let y = 0; y < height; y++) {
+                    for (let x = 0; x < width; x++) {
+                        let r = 0, g = 0, b = 0, a = 0, count = 0;
+                        
+                        // 近傍のピクセルを合計
+                        for (let ky = -radius; ky <= radius; ky++) {
+                            const cy = y + ky;
+                            if (cy < 0 || cy >= height) continue;
+                            
+                            for (let kx = -radius; kx <= radius; kx++) {
+                                const cx = x + kx;
+                                if (cx < 0 || cx >= width) continue;
+                                
+                                const idx = (cy * width + cx) * 4;
+                                r += src[idx];
+                                g += src[idx + 1];
+                                b += src[idx + 2];
+                                a += src[idx + 3];
+                                count++;
+                            }
+                        }
+                        
+                        // 平均値を計算
+                        const idx = (y * width + x) * 4;
+                        dst[idx] = r / count;
+                        dst[idx + 1] = g / count;
+                        dst[idx + 2] = b / count;
+                        dst[idx + 3] = a / count;
+                    }
+                }
+            };
+            
+            // スムージングを適用
+            boxBlur(data, result, width, height, radius);
+            
+            // 結果を返す
+            return new ImageData(result, width, height);
+        }
+        
+        // ダウンロードボタンの処理
+        downloadBtn.addEventListener('click', function() {
+            if (!currentImage) {
+                alert('画像を処理してからダウンロードしてください');
+                return;
+            }
+            
+            // JPEGとしてダウンロード（ファイル名をオリジナル-edited.jpgに）
+            const link = document.createElement('a');
+            link.download = origFileName ? `${origFileName}-edited.jpg` : 'edited-image.jpg';
+            link.href = imageCanvas.toDataURL('image/jpeg', 0.9);
+            link.click();
+        });
+    </script>
+</body>
+</html>

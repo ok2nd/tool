@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>オブジェクト除去アプリ</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .upload-container {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 30px;
+            border: 2px dashed #ccc;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .upload-container:hover {
+            background-color: #f9f9f9;
+        }
+        #fileInput {
+            display: none;
+        }
+        .canvas-container {
+            position: relative;
+            margin: 0 auto;
+            display: none;
+            padding: 10px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+        }
+        #imageCanvas {
+            display: block;
+            margin: 0 auto;
+            border: 1px solid #ddd;
+        }
+        .button-container {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        #cancelBtn {
+            background-color: #f44336;
+        }
+        #cancelBtn:hover:not(:disabled) {
+            background-color: #d32f2f;
+        }
+        #removeBtn {
+            background-color: #4CAF50;
+        }
+        #removeBtn:hover:not(:disabled) {
+            background-color: #388e3c;
+        }
+        #downloadBtn {
+            background-color: #2196F3;
+        }
+        #downloadBtn:hover:not(:disabled) {
+            background-color: #1976D2;
+        }
+        .status {
+            margin-top: 15px;
+            text-align: center;
+            color: #666;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 10px;
+        }
+        .spinner {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        #debugImage {
+            max-width: 100%;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>オブジェクト除去アプリ</h1>
+        
+        <div id="uploadContainer" class="upload-container">
+            <p>ここに画像をドラッグ＆ドロップするか、クリックして選択してください</p>
+            <input type="file" id="fileInput" accept="image/jpeg" />
+        </div>
+        
+        <div id="canvasContainer" class="canvas-container">
+            <canvas id="imageCanvas"></canvas>
+        </div>
+        
+        <div class="button-container">
+            <button id="cancelBtn" disabled>キャンセル</button>
+            <button id="removeBtn" disabled>オブジェクト除去</button>
+            <button id="downloadBtn" disabled>ダウンロード</button>
+        </div>
+        
+        <div id="status" class="status"></div>
+        
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>処理中...</p>
+        </div>
+        
+        <!-- デバッグ用画像 -->
+        <img id="debugImage" alt="デバッグ用" />
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 要素の取得
+            const fileInput = document.getElementById('fileInput');
+            const uploadContainer = document.getElementById('uploadContainer');
+            const canvasContainer = document.getElementById('canvasContainer');
+            const imageCanvas = document.getElementById('imageCanvas');
+            const cancelBtn = document.getElementById('cancelBtn');
+            const removeBtn = document.getElementById('removeBtn');
+            const downloadBtn = document.getElementById('downloadBtn');
+            const statusElement = document.getElementById('status');
+            const loadingElement = document.getElementById('loading');
+            const debugImage = document.getElementById('debugImage');
+            
+            // 変数の初期化
+            let ctx = imageCanvas.getContext('2d');
+            let originalImage = null;
+            let drawingPaths = [];
+            let isDrawing = false;
+            let originalFileName = '';
+            let hasSelection = false;
+            let processedImageData = null;
+            
+            // アップロードコンテナのイベント
+            uploadContainer.addEventListener('click', () => fileInput.click());
+            
+            uploadContainer.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadContainer.style.backgroundColor = '#f0f0f0';
+            });
+            
+            uploadContainer.addEventListener('dragleave', () => {
+                uploadContainer.style.backgroundColor = '';
+            });
+            
+            uploadContainer.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadContainer.style.backgroundColor = '';
+                
+                if (e.dataTransfer.files.length > 0) {
+                    handleFile(e.dataTransfer.files[0]);
+                }
+            });
+            
+            fileInput.addEventListener('change', () => {
+                if (fileInput.files.length > 0) {
+                    handleFile(fileInput.files[0]);
+                }
+            });
+            
+            // ファイル処理
+            function handleFile(file) {
+                if (!file.type.match('image/jpeg')) {
+                    setStatus('エラー: JPEGファイルのみ対応しています。');
+                    return;
+                }
+                
+                originalFileName = file.name.replace(/\.[^/.]+$/, '');
+                
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        setupCanvas(img);
+                    };
+                    img.onerror = () => {
+                        setStatus('エラー: 画像の読み込みに失敗しました。');
+                        debugImage.src = e.target.result;
+                        debugImage.style.display = 'block';
+                    };
+                    img.src = e.target.result;
+                    originalImage = img;
+                };
+                reader.onerror = () => {
+                    setStatus('エラー: ファイルの読み込みに失敗しました。');
+                };
+                reader.readAsDataURL(file);
+            }
+            
+            // キャンバスのセットアップ
+            function setupCanvas(img) {
+                // 最大幅の計算
+                const maxWidth = Math.min(img.width, window.innerWidth - 80);
+                const scaleFactor = maxWidth / img.width;
+                const canvasWidth = Math.floor(img.width * scaleFactor);
+                const canvasHeight = Math.floor(img.height * scaleFactor);
+                
+                // キャンバスサイズの設定
+                imageCanvas.width = canvasWidth;
+                imageCanvas.height = canvasHeight;
+                
+                // 画像の描画
+                ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+                ctx.drawImage(img, 0, 0, canvasWidth, canvasHeight);
+                
+                // UI更新
+                canvasContainer.style.display = 'block';
+                uploadContainer.style.display = 'none';
+                setStatus('オブジェクトを囲むように線を描いてください');
+                
+                // マウスイベントのセットアップ
+                setupDrawingEvents();
+                
+                // ボタン状態の更新
+                updateButtonStates();
+            }
+            
+            // 描画イベントのセットアップ
+            function setupDrawingEvents() {
+                let currentPath = [];
+                
+                // マウスダウン
+                imageCanvas.addEventListener('mousedown', (e) => {
+                    isDrawing = true;
+                    const rect = imageCanvas.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    
+                    currentPath = [{ x, y }];
+                    
+                    // 描画開始
+                    ctx.beginPath();
+                    ctx.moveTo(x, y);
+                    ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)';
+                    ctx.lineWidth = 3;
+                    ctx.lineCap = 'round';
+                });
+                
+                // マウス移動
+                imageCanvas.addEventListener('mousemove', (e) => {
+                    if (!isDrawing) return;
+                    
+                    const rect = imageCanvas.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    
+                    currentPath.push({ x, y });
+                    
+                    // 線を描画
+                    ctx.lineTo(x, y);
+                    ctx.stroke();
+                });
+                
+                // マウスアップ（描画終了）
+                imageCanvas.addEventListener('mouseup', finishDrawing);
+                imageCanvas.addEventListener('mouseout', finishDrawing);
+                
+                function finishDrawing() {
+                    if (!isDrawing) return;
+                    isDrawing = false;
+                    
+                    if (currentPath.length > 1) {
+                        // パスを閉じる
+                        ctx.closePath();
+                        
+                        // パスを保存
+                        drawingPaths.push([...currentPath]);
+                        
+                        hasSelection = true;
+                        updateButtonStates();
+                    }
+                }
+            }
+            
+            // ステータスの更新
+            function setStatus(message) {
+                statusElement.textContent = message;
+            }
+            
+            // ボタン状態の更新
+            function updateButtonStates() {
+                cancelBtn.disabled = !hasSelection && !processedImageData;
+                removeBtn.disabled = !hasSelection || !!processedImageData;
+                downloadBtn.disabled = !processedImageData;
+            }
+            
+            // キャンセルボタンのイベント
+            cancelBtn.addEventListener('click', () => {
+                if (processedImageData) {
+                    // 処理済み画像から元の画像に戻す
+                    ctx.clearRect(0, 0, imageCanvas.width, imageCanvas.height);
+                    ctx.drawImage(originalImage, 0, 0, imageCanvas.width, imageCanvas.height);
+                    processedImageData = null;
+                    drawingPaths = [];
+                    hasSelection = false;
+                    setStatus('オブジェクトを囲むように線を描いてください');
+                } else {
+                    // 選択をクリア
+                    ctx.clearRect(0, 0, imageCanvas.width, imageCanvas.height);
+                    ctx.drawImage(originalImage, 0, 0, imageCanvas.width, imageCanvas.height);
+                    drawingPaths = [];
+                    hasSelection = false;
+                    setStatus('選択をクリアしました。新しい選択を行ってください');
+                }
+                updateButtonStates();
+            });
+            
+            // オブジェクト除去ボタンのイベント
+            removeBtn.addEventListener('click', () => {
+                if (!hasSelection) return;
+                
+                setStatus('オブジェクトを除去しています...');
+                loadingElement.style.display = 'block';
+                
+                // 非同期で処理を実行（UIブロックを防ぐ）
+                setTimeout(() => {
+                    try {
+                        // マスク用キャンバスの作成
+                        const maskCanvas = document.createElement('canvas');
+                        maskCanvas.width = imageCanvas.width;
+                        maskCanvas.height = imageCanvas.height;
+                        const maskCtx = maskCanvas.getContext('2d');
+                        
+                        // 白い背景
+                        maskCtx.fillStyle = 'white';
+                        maskCtx.fillRect(0, 0, maskCanvas.width, maskCanvas.height);
+                        
+                        // 選択領域を黒で描画
+                        maskCtx.fillStyle = 'black';
+                        for (const path of drawingPaths) {
+                            if (path.length < 2) continue;
+                            
+                            maskCtx.beginPath();
+                            maskCtx.moveTo(path[0].x, path[0].y);
+                            
+                            for (let i = 1; i < path.length; i++) {
+                                maskCtx.lineTo(path[i].x, path[i].y);
+                            }
+                            
+                            maskCtx.closePath();
+                            maskCtx.fill();
+                        }
+                        
+                        // インペイント処理の実行
+                        const resultCanvas = performBasicInpainting(imageCanvas, maskCanvas);
+                        
+                        // 結果を表示
+                        ctx.clearRect(0, 0, imageCanvas.width, imageCanvas.height);
+                        ctx.drawImage(resultCanvas, 0, 0);
+                        
+                        // 処理結果を保存
+                        processedImageData = imageCanvas.toDataURL('image/jpeg');
+                        drawingPaths = [];
+                        hasSelection = false;
+                        
+                        setStatus('オブジェクトが除去されました。ダウンロードボタンで保存できます');
+                    } catch (error) {
+                        console.error('Inpainting error:', error);
+                        setStatus('エラー: オブジェクト除去に失敗しました - ' + error.message);
+                    } finally {
+                        loadingElement.style.display = 'none';
+                        updateButtonStates();
+                    }
+                }, 100);
+            });
+            
+            // ダウンロードボタンのイベント
+            downloadBtn.addEventListener('click', () => {
+                if (!processedImageData) return;
+                
+                const link = document.createElement('a');
+                link.href = processedImageData;
+                link.download = `${originalFileName}-edited.jpg`;
+                link.click();
+                
+                setStatus(`画像を ${link.download} として保存しました`);
+            });
+            
+            // シンプルなインペイント処理の実装
+            function performBasicInpainting(sourceCanvas, maskCanvas) {
+                const width = sourceCanvas.width;
+                const height = sourceCanvas.height;
+                
+                // 結果用キャンバス
+                const resultCanvas = document.createElement('canvas');
+                resultCanvas.width = width;
+                resultCanvas.height = height;
+                const resultCtx = resultCanvas.getContext('2d');
+                
+                // オリジナル画像を結果キャンバスにコピー
+                resultCtx.drawImage(sourceCanvas, 0, 0);
+                
+                // 元画像と選択マスクのデータを取得
+                const sourceCtx = sourceCanvas.getContext('2d');
+                const maskCtx = maskCanvas.getContext('2d');
+                const sourceData = sourceCtx.getImageData(0, 0, width, height);
+                const maskData = maskCtx.getImageData(0, 0, width, height);
+                const resultData = resultCtx.getImageData(0, 0, width, height);
+                
+                // マスク領域の境界点を検出
+                const boundaryPoints = [];
+                for (let y = 1; y < height - 1; y++) {
+                    for (let x = 1; x < width - 1; x++) {
+                        const idx = (y * width + x) * 4;
+                        
+                        // マスク（黒）の領域
+                        if (maskData.data[idx] < 128) {
+                            // 周囲に白いピクセル（マスク外）があるか確認
+                            let isBoundary = false;
+                            for (let dy = -1; dy <= 1; dy++) {
+                                for (let dx = -1; dx <= 1; dx++) {
+                                    if (dx === 0 && dy === 0) continue;
+                                    
+                                    const nx = x + dx;
+                                    const ny = y + dy;
+                                    const nidx = (ny * width + nx) * 4;
+                                    
+                                    if (nx >= 0 && nx < width && ny >= 0 && ny < height && 
+                                        maskData.data[nidx] > 128) {
+                                        isBoundary = true;
+                                        break;
+                                    }
+                                }
+                                if (isBoundary) break;
+                            }
+                            
+                            if (isBoundary) {
+                                boundaryPoints.push({ x, y });
+                            }
+                        }
+                    }
+                }
+                
+                // 内部点（非境界のマスク領域）を検出
+                const interiorPoints = [];
+                for (let y = 0; y < height; y++) {
+                    for (let x = 0; x < width; x++) {
+                        const idx = (y * width + x) * 4;
+                        
+                        // マスク（黒）の領域で境界でない点
+                        if (maskData.data[idx] < 128) {
+                            let isBoundary = false;
+                            
+                            for (const bp of boundaryPoints) {
+                                if (bp.x === x && bp.y === y) {
+                                    isBoundary = true;
+                                    break;
+                                }
+                            }
+                            
+                            if (!isBoundary) {
+                                interiorPoints.push({ x, y });
+                            }
+                        }
+                    }
+                }
+                
+                // 境界点の処理（周囲のピクセルから平均値を計算）
+                for (const point of boundaryPoints) {
+                    const idx = (point.y * width + point.x) * 4;
+                    const samples = [];
+                    
+                    // 周囲のピクセルを収集
+                    for (let dy = -2; dy <= 2; dy++) {
+                        for (let dx = -2; dx <= 2; dx++) {
+                            const nx = point.x + dx;
+                            const ny = point.y + dy;
+                            
+                            if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+                                const nidx = (ny * width + nx) * 4;
+                                
+                                // マスク外のピクセルのみ使用
+                                if (maskData.data[nidx] > 128) {
+                                    samples.push({
+                                        r: sourceData.data[nidx],
+                                        g: sourceData.data[nidx + 1],
+                                        b: sourceData.data[nidx + 2],
+                                        dist: Math.sqrt(dx * dx + dy * dy)
+                                    });
+                                }
+                            }
+                        }
+                    }
+                    
+                    // 重み付き平均を計算
+                    if (samples.length > 0) {
+                        let sumR = 0, sumG = 0, sumB = 0, sumWeight = 0;
+                        
+                        for (const sample of samples) {
+                            const weight = 1 / (sample.dist + 0.1);
+                            sumR += sample.r * weight;
+                            sumG += sample.g * weight;
+                            sumB += sample.b * weight;
+                            sumWeight += weight;
+                        }
+                        
+                        // 結果に反映
+                        resultData.data[idx] = sumR / sumWeight;
+                        resultData.data[idx + 1] = sumG / sumWeight;
+                        resultData.data[idx + 2] = sumB / sumWeight;
+                    }
+                }
+                
+                // 内部点の処理（複数回のぼかし処理で徐々に埋める）
+                const iterations = 15;
+                for (let iter = 0; iter < iterations; iter++) {
+                    // 現在の状態をコピー
+                    const tempData = new Uint8ClampedArray(resultData.data);
+                    
+                    for (const point of interiorPoints) {
+                        const idx = (point.y * width + point.x) * 4;
+                        let sumR = 0, sumG = 0, sumB = 0, count = 0;
+                        
+                        // 周囲8方向のピクセルを使用
+                        for (let dy = -1; dy <= 1; dy++) {
+                            for (let dx = -1; dx <= 1; dx++) {
+                                if (dx === 0 && dy === 0) continue;
+                                
+                                const nx = point.x + dx;
+                                const ny = point.y + dy;
+                                
+                                if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+                                    const nidx = (ny * width + nx) * 4;
+                                    sumR += tempData[nidx];
+                                    sumG += tempData[nidx + 1];
+                                    sumB += tempData[nidx + 2];
+                                    count++;
+                                }
+                            }
+                        }
+                        
+                        if (count > 0) {
+                            resultData.data[idx] = sumR / count;
+                            resultData.data[idx + 1] = sumG / count;
+                            resultData.data[idx + 2] = sumB / count;
+                        }
+                    }
+                }
+                
+                // 結果を反映
+                resultCtx.putImageData(resultData, 0, 0);
+                
+                return resultCanvas;
+            }
+        });
+    </script>
+</body>
+</html>

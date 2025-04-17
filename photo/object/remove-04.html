@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>オブジェクト除去アプリ</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .app-container {
+            max-width: 900px;
+            width: 100%;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        
+        .upload-section {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 30px;
+            border: 2px dashed #ccc;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+        
+        .upload-section.highlight {
+            border-color: #3498db;
+            background-color: rgba(52, 152, 219, 0.1);
+        }
+        
+        #file-input {
+            display: none;
+        }
+        
+        .upload-btn {
+            background-color: #3498db;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        
+        .upload-btn:hover {
+            background-color: #2980b9;
+        }
+        
+        .editor-section {
+            display: none;
+            margin-top: 20px;
+        }
+        
+        .canvas-container {
+            position: relative;
+            margin: 0 auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        canvas {
+            display: block;
+            margin: 10px auto;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        .btn-cancel {
+            background-color: #e74c3c;
+            color: white;
+        }
+        
+        .btn-cancel:hover {
+            background-color: #c0392b;
+        }
+        
+        .btn-remove {
+            background-color: #2ecc71;
+            color: white;
+        }
+        
+        .btn-remove:hover {
+            background-color: #27ae60;
+        }
+        
+        .btn-download {
+            background-color: #9b59b6;
+            color: white;
+        }
+        
+        .btn-download:hover {
+            background-color: #8e44ad;
+        }
+        
+        .btn-reset {
+            background-color: #f39c12;
+            color: white;
+        }
+        
+        .btn-reset:hover {
+            background-color: #d35400;
+        }
+        
+        .status {
+            text-align: center;
+            margin: 10px 0;
+            font-style: italic;
+            color: #666;
+        }
+        
+        .loading {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            display: none;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top-color: #3498db;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        
+        .instructions {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .instructions h3 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+        
+        .instructions ul {
+            padding-left: 20px;
+            margin-bottom: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <h1>オブジェクト除去アプリ</h1>
+        
+        <div class="instructions">
+            <h3>使い方</h3>
+            <ul>
+                <li>画像をアップロードしてください</li>
+                <li>マウスドラッグで除去したいオブジェクトを囲みます</li>
+                <li>「オブジェクト除去」ボタンを押すと選択領域のオブジェクトが除去されます</li>
+                <li>「キャンセル」ボタンで最後の選択を取り消せます</li>
+                <li>「ダウンロード」ボタンで編集済み画像をダウンロードできます</li>
+                <li>「やり直す」ボタンでアップロード画面に戻ります</li>
+            </ul>
+        </div>
+
+        <div id="upload-section" class="upload-section">
+            <p>JPEG画像をドラッグ＆ドロップするか、以下のボタンをクリックしてください</p>
+            <input type="file" id="file-input" accept=".jpg, .jpeg">
+            <button class="upload-btn" id="upload-btn">画像を選択</button>
+        </div>
+
+        <div id="editor-section" class="editor-section">
+            <div class="canvas-container">
+                <canvas id="imageCanvas"></canvas>
+                <canvas id="drawCanvas"></canvas>
+                <div id="loading" class="loading">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+            
+            <div id="status" class="status">マウスでオブジェクトを囲んでください</div>
+            
+            <div class="controls">
+                <button id="cancel-btn" class="btn-cancel">キャンセル</button>
+                <button id="remove-btn" class="btn-remove">オブジェクト除去</button>
+                <button id="download-btn" class="btn-download">ダウンロード</button>
+                <button id="reset-btn" class="btn-reset">やり直す</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/inpaint.js/0.1.0/inpaint.min.js"></script>
+    <script>
+        // グローバル変数
+        let originalImage = null;
+        let currentImage = null;
+        let fileName = '';
+        let isDrawing = false;
+        let path = [];
+        let undoStack = [];
+        let imageCanvas, imageCtx, drawCanvas, drawCtx;
+        let maskCanvas, maskCtx;
+
+        // 初期化
+        document.addEventListener('DOMContentLoaded', function() {
+            // キャンバスの設定
+            imageCanvas = document.getElementById('imageCanvas');
+            imageCtx = imageCanvas.getContext('2d');
+            
+            drawCanvas = document.getElementById('drawCanvas');
+            drawCtx = drawCanvas.getContext('2d');
+            
+            // マスク用の非表示キャンバス
+            maskCanvas = document.createElement('canvas');
+            maskCtx = maskCanvas.getContext('2d');
+            
+            // ファイルアップロードの設定
+            const fileInput = document.getElementById('file-input');
+            const uploadBtn = document.getElementById('upload-btn');
+            const uploadSection = document.getElementById('upload-section');
+            
+            uploadBtn.addEventListener('click', () => fileInput.click());
+            
+            fileInput.addEventListener('change', handleFileSelect);
+            
+            // ドラッグ＆ドロップの設定
+            uploadSection.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadSection.classList.add('highlight');
+            });
+            
+            uploadSection.addEventListener('dragleave', () => {
+                uploadSection.classList.remove('highlight');
+            });
+            
+            uploadSection.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadSection.classList.remove('highlight');
+                
+                if (e.dataTransfer.files.length > 0) {
+                    const file = e.dataTransfer.files[0];
+                    if (file.type === 'image/jpeg') {
+                        handleFile(file);
+                    } else {
+                        alert('JPEGファイルのみ対応しています。');
+                    }
+                }
+            });
+            
+            // ボタンのイベント設定
+            document.getElementById('cancel-btn').addEventListener('click', cancelLastSelection);
+            document.getElementById('remove-btn').addEventListener('click', removeObject);
+            document.getElementById('download-btn').addEventListener('click', downloadImage);
+            document.getElementById('reset-btn').addEventListener('click', resetApp);
+            
+            // 描画イベントの設定
+            setupDrawingEvents();
+        });
+
+        // ファイル選択ハンドラー
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) {
+                handleFile(file);
+            }
+        }
+
+        // ファイル処理
+        function handleFile(file) {
+            if (!file.type.match('image/jpeg')) {
+                alert('JPEGファイルのみ対応しています。');
+                return;
+            }
+            
+            fileName = file.name.replace(/\.[^/.]+$/, '');
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    originalImage = img;
+                    setupEditor(img);
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // エディタのセットアップ
+        function setupEditor(img) {
+            // キャンバスサイズの設定
+            let width = img.width;
+            let height = img.height;
+            
+            // 画面サイズに合わせる
+            const maxWidth = Math.min(window.innerWidth - 80, 800);
+            const maxHeight = Math.min(window.innerHeight - 300, 600);
+            
+            if (width > maxWidth) {
+                const ratio = maxWidth / width;
+                width = maxWidth;
+                height = height * ratio;
+            }
+            
+            if (height > maxHeight) {
+                const ratio = maxHeight / height;
+                height = height * ratio;
+                width = width * ratio;
+            }
+            
+            // キャンバスサイズの設定
+            imageCanvas.width = width;
+            imageCanvas.height = height;
+            drawCanvas.width = width;
+            drawCanvas.height = height;
+            maskCanvas.width = width;
+            maskCanvas.height = height;
+            
+            // 画像を描画
+            imageCtx.drawImage(img, 0, 0, width, height);
+            currentImage = imageCtx.getImageData(0, 0, width, height);
+            
+            // キャンバススタイルの設定
+            drawCanvas.style.position = 'absolute';
+            drawCanvas.style.left = imageCanvas.offsetLeft + 'px';
+            drawCanvas.style.top = imageCanvas.offsetTop + 'px';
+            
+            // UIの表示切替
+            document.getElementById('upload-section').style.display = 'none';
+            document.getElementById('editor-section').style.display = 'block';
+            
+            // キャンバスコンテナのサイズ設定
+            const canvasContainer = document.querySelector('.canvas-container');
+            canvasContainer.style.width = width + 'px';
+            canvasContainer.style.height = height + 'px';
+            
+            // 初期化
+            path = [];
+            undoStack = [];
+            
+            // ステータス更新
+            updateStatus('マウスでオブジェクトを囲んでください');
+        }
+
+        // 描画イベントの設定
+        function setupDrawingEvents() {
+            drawCanvas.addEventListener('mousedown', startDrawing);
+            drawCanvas.addEventListener('mousemove', draw);
+            drawCanvas.addEventListener('mouseup', endDrawing);
+            drawCanvas.addEventListener('mouseout', endDrawing);
+            
+            // タッチイベントのサポート
+            drawCanvas.addEventListener('touchstart', handleTouchStart);
+            drawCanvas.addEventListener('touchmove', handleTouchMove);
+            drawCanvas.addEventListener('touchend', handleTouchEnd);
+        }
+
+        // タッチイベントハンドラー
+        function handleTouchStart(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent('mousedown', {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+            drawCanvas.dispatchEvent(mouseEvent);
+        }
+
+        function handleTouchMove(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent('mousemove', {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+            drawCanvas.dispatchEvent(mouseEvent);
+        }
+
+        function handleTouchEnd(e) {
+            e.preventDefault();
+            const mouseEvent = new MouseEvent('mouseup', {});
+            drawCanvas.dispatchEvent(mouseEvent);
+        }
+
+        // 描画開始
+        function startDrawing(e) {
+            isDrawing = true;
+            const rect = drawCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            path = [[x, y]];
+            
+            drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+            drawCtx.beginPath();
+            drawCtx.moveTo(x, y);
+            drawCtx.lineWidth = 2;
+            drawCtx.strokeStyle = 'red';
+        }
+
+        // 描画中
+        function draw(e) {
+            if (!isDrawing) return;
+            
+            const rect = drawCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            path.push([x, y]);
+            
+            drawCtx.lineTo(x, y);
+            drawCtx.stroke();
+        }
+
+        // 描画終了
+        function endDrawing() {
+            if (!isDrawing) return;
+            isDrawing = false;
+            
+            if (path.length < 3) {
+                drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+                path = [];
+                return;
+            }
+            
+            // パスを閉じる
+            drawCtx.lineTo(path[0][0], path[0][1]);
+            drawCtx.stroke();
+            
+            // 描画パスを保存
+            undoStack.push([...path]);
+            
+            updateStatus('「オブジェクト除去」ボタンを押すと選択したオブジェクトが除去されます');
+        }
+
+        // 最後の選択をキャンセル
+        function cancelLastSelection() {
+            if (undoStack.length > 0) {
+                undoStack.pop();
+                drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+                updateStatus('選択をキャンセルしました');
+            } else {
+                updateStatus('キャンセルする選択がありません');
+            }
+        }
+
+        // オブジェクト除去
+        function removeObject() {
+            if (undoStack.length === 0) {
+                updateStatus('除去するオブジェクトを選択してください');
+                return;
+            }
+            
+            showLoading(true);
+            
+            // 少し遅延を入れてUIの更新を反映させる
+            setTimeout(() => {
+                try {
+                    // マスクの作成
+                    maskCtx.clearRect(0, 0, maskCanvas.width, maskCanvas.height);
+                    maskCtx.fillStyle = 'black';
+                    maskCtx.fillRect(0, 0, maskCanvas.width, maskCanvas.height);
+                    maskCtx.fillStyle = 'white';
+                    
+                    // 選択領域を白で塗りつぶす
+                    const lastPath = undoStack[undoStack.length - 1];
+                    maskCtx.beginPath();
+                    maskCtx.moveTo(lastPath[0][0], lastPath[0][1]);
+                    
+                    for (let i = 1; i < lastPath.length; i++) {
+                        maskCtx.lineTo(lastPath[i][0], lastPath[i][1]);
+                    }
+                    
+                    maskCtx.closePath();
+                    maskCtx.fill();
+                    
+                    // 現在の画像とマスクを取得
+                    const imageData = imageCtx.getImageData(0, 0, imageCanvas.width, imageCanvas.height);
+                    const maskData = maskCtx.getImageData(0, 0, maskCanvas.width, maskCanvas.height);
+                    
+                    // インペイント処理の実行
+                    const resultData = performInpaint(imageData, maskData);
+                    
+                    // 結果を反映
+                    imageCtx.putImageData(resultData, 0, 0);
+                    currentImage = resultData;
+                    
+                    // 描画キャンバスをクリア
+                    drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+                    undoStack.pop();
+                    
+                    updateStatus('オブジェクトを除去しました。続けて選択できます。');
+                } catch (error) {
+                    console.error('オブジェクト除去中にエラーが発生しました:', error);
+                    updateStatus('エラーが発生しました。もう一度お試しください。');
+                }
+                
+                showLoading(false);
+            }, 100);
+        }
+
+        // インペイント（オブジェクト除去）処理
+        function performInpaint(imageData, maskData) {
+            // マスクデータを二値化（白黒）する
+            const maskPixels = new Uint8Array(maskData.data.buffer);
+            const width = maskData.width;
+            const height = maskData.height;
+            const mask = new Uint8Array(width * height);
+            
+            // マスクの準備（白い部分が除去対象）
+            for (let i = 0; i < width * height; i++) {
+                mask[i] = maskPixels[i * 4] > 127 ? 1 : 0;
+            }
+            
+            // 画像データをRGBA形式からRGB形式に変換
+            const pixels = new Uint8Array(imageData.data.buffer);
+            const image = new Uint8Array(width * height * 3);
+            
+            for (let i = 0; i < width * height; i++) {
+                image[i * 3] = pixels[i * 4];
+                image[i * 3 + 1] = pixels[i * 4 + 1];
+                image[i * 3 + 2] = pixels[i * 4 + 2];
+            }
+            
+            // インペイント処理（ライブラリを使用）
+            // ライブラリが使えない場合は代替処理
+            let result;
+            if (typeof inpaint !== 'undefined') {
+                // inpaint.jsライブラリを使用
+                const options = {
+                    radius: 5,
+                    iterations: 20
+                };
+                result = inpaint.inpaint(image, mask, width, height, options);
+            } else {
+                // 代替処理: 簡易的なインペイント（テスト用）
+                result = simpleInpaint(image, mask, width, height);
+            }
+            
+            // 結果をImageDataに戻す
+            const resultData = new ImageData(width, height);
+            const resultPixels = new Uint8Array(resultData.data.buffer);
+            
+            for (let i = 0; i < width * height; i++) {
+                resultPixels[i * 4] = result[i * 3];
+                resultPixels[i * 4 + 1] = result[i * 3 + 1];
+                resultPixels[i * 4 + 2] = result[i * 3 + 2];
+                resultPixels[i * 4 + 3] = 255;  // アルファは完全不透明
+            }
+            
+            return resultData;
+        }
+
+        // 簡易インペイント（ライブラリが使えない場合の代替処理）
+        function simpleInpaint(image, mask, width, height) {
+            const result = new Uint8Array(image.length);
+            image.forEach((val, i) => result[i] = val);
+            
+            // 近傍の平均値でインペイントする簡易的な実装
+            const radius = 5;
+            const maxIterations = 10;
+            
+            for (let iteration = 0; iteration < maxIterations; iteration++) {
+                for (let y = 0; y < height; y++) {
+                    for (let x = 0; x < width; x++) {
+                        const idx = y * width + x;
+                        
+                        if (mask[idx] === 1) {  // マスク内（修復対象）の場合
+                            let r = 0, g = 0, b = 0, count = 0;
+                            
+                            // 周囲のピクセルを集める
+                            for (let dy = -radius; dy <= radius; dy++) {
+                                for (let dx = -radius; dx <= radius; dx++) {
+                                    const nx = x + dx;
+                                    const ny = y + dy;
+                                    
+                                    // 画像の範囲外はスキップ
+                                    if (nx < 0 || nx >= width || ny < 0 || ny >= height) continue;
+                                    
+                                    const nidx = ny * width + nx;
+                                    
+                                    // マスク外のピクセルだけを使用
+                                    if (iteration === 0 && mask[nidx] === 1) continue;
+                                    
+                                    r += result[nidx * 3];
+                                    g += result[nidx * 3 + 1];
+                                    b += result[nidx * 3 + 2];
+                                    count++;
+                                }
+                            }
+                            
+                            // 平均値を計算
+                            if (count > 0) {
+                                result[idx * 3] = Math.round(r / count);
+                                result[idx * 3 + 1] = Math.round(g / count);
+                                result[idx * 3 + 2] = Math.round(b / count);
+                            }
+                        }
+                    }
+                }
+            }
+            
+            return result;
+        }
+
+        // 画像のダウンロード
+        function downloadImage() {
+            // キャンバスを一時的に作成して、選択線なしの画像を取得
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = imageCanvas.width;
+            tempCanvas.height = imageCanvas.height;
+            const tempCtx = tempCanvas.getContext('2d');
+            
+            // 現在の画像を描画
+            tempCtx.putImageData(currentImage, 0, 0);
+            
+            // データURLを作成
+            const dataURL = tempCanvas.toDataURL('image/jpeg', 0.9);
+            
+            // ダウンロードリンクを作成
+            const a = document.createElement('a');
+            a.href = dataURL;
+            a.download = `${fileName}-edited.jpg`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            
+            updateStatus('画像をダウンロードしました');
+        }
+
+        // アプリのリセット
+        function resetApp() {
+            // UIの表示切替
+            document.getElementById('upload-section').style.display = 'block';
+            document.getElementById('editor-section').style.display = 'none';
+            
+            // 変数のリセット
+            originalImage = null;
+            currentImage = null;
+            fileName = '';
+            path = [];
+            undoStack = [];
+            
+            // キャンバスのクリア
+            imageCtx.clearRect(0, 0, imageCanvas.width, imageCanvas.height);
+            drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+            maskCtx.clearRect(0, 0, maskCanvas.width, maskCanvas.height);
+            
+            // ファイル入力のリセット
+            document.getElementById('file-input').value = '';
+        }
+
+        // ステータス表示の更新
+        function updateStatus(message) {
+            document.getElementById('status').textContent = message;
+        }
+
+        // ローディング表示の切替
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'flex' : 'none';
+        }
+    </script>
+</body>
+</html>
