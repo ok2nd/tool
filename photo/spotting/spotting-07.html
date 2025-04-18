@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>画像スポッティングエディタ</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', 'Meiryo UI', sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .upload-container {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 30px;
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        
+        .upload-container:hover {
+            background-color: #f9f9f9;
+        }
+        
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+            align-items: center;
+        }
+        
+        .control-group {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        button {
+            padding: 8px 15px;
+            background-color: #4a90e2;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        button:hover {
+            background-color: #357ae8;
+        }
+        
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        
+        #resetBtn {
+            background-color: #e74c3c;
+        }
+        
+        #resetBtn:hover {
+            background-color: #c0392b;
+        }
+        
+        #undoBtn {
+            background-color: #f39c12;
+        }
+        
+        #undoBtn:hover {
+            background-color: #d35400;
+        }
+        
+        #downloadBtn {
+            background-color: #2ecc71;
+        }
+        
+        #downloadBtn:hover {
+            background-color: #27ae60;
+        }
+        
+        #imageContainer {
+            position: relative;
+            margin-top: 20px;
+            overflow: hidden;
+            cursor: crosshair;
+            text-align: center;
+        }
+        
+        #imagePreview {
+            max-width: 100%;
+            max-height: 80vh;
+            display: block;
+            margin: 0 auto;
+        }
+        
+        #cursor {
+            position: absolute;
+            pointer-events: none;
+            display: none;
+            border: 2px solid white;
+            box-shadow: 0 0 0 1px black;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+        }
+        
+        .instructions {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+        
+        .instructions h3 {
+            margin-top: 0;
+        }
+        
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>画像スポッティングエディタ</h1>
+        
+        <div id="uploadSection">
+            <div id="dropArea" class="upload-container">
+                <p>JPEG画像をドラッグ＆ドロップするか、クリックして選択してください</p>
+                <input type="file" id="fileInput" accept="image/jpeg" style="display: none;">
+            </div>
+        </div>
+        
+        <div id="editorSection" style="display: none;">
+            <div class="controls">
+                <div class="control-group slider-container">
+                    <label for="sizeSlider">スポッティングサイズ:</label>
+                    <input type="range" id="sizeSlider" min="1" max="100" value="20">
+                    <span id="sizeValue">20px</span>
+                </div>
+                
+                <div class="control-group">
+                    <button id="undoBtn" disabled>編集を戻す</button>
+                    <button id="resetBtn">最初からやり直す</button>
+                </div>
+                
+                <div class="control-group">
+                    <button id="downloadBtn">編集画像を保存</button>
+                </div>
+            </div>
+            
+            <div id="imageContainer">
+                <img id="imagePreview" alt="プレビュー画像">
+                <div id="cursor"></div>
+            </div>
+            
+            <div class="instructions">
+                <h3>使用方法</h3>
+                <p>・<strong>右クリック</strong>: 画像の一部を「スポッティング画像」として取得</p>
+                <p>・<strong>左クリック</strong>: 「スポッティング画像」で画像を上書き</p>
+                <p>・<strong>スライダー</strong>: スポッティングサイズを調整 (1-100px)</p>
+                <p>・<strong>編集を戻す</strong>: 直前の編集操作を取り消し</p>
+                <p>・<strong>最初からやり直す</strong>: 新しい画像をアップロード</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM要素の取得
+        const fileInput = document.getElementById('fileInput');
+        const dropArea = document.getElementById('dropArea');
+        const uploadSection = document.getElementById('uploadSection');
+        const editorSection = document.getElementById('editorSection');
+        const imagePreview = document.getElementById('imagePreview');
+        const imageContainer = document.getElementById('imageContainer');
+        const cursor = document.getElementById('cursor');
+        const sizeSlider = document.getElementById('sizeSlider');
+        const sizeValue = document.getElementById('sizeValue');
+        const undoBtn = document.getElementById('undoBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+
+        // グローバル変数
+        let originalImage = null;          // オリジナル画像オブジェクト
+        let originalFileName = '';         // オリジナル画像のファイル名
+        let spottingImage = null;          // スポッティング画像のImageDataオブジェクト
+        let currentSize = 20;              // 現在のスポッティングサイズ
+        let editHistory = [];              // 編集履歴を保存する配列
+        let currentImageData = null;       // 現在の編集中の画像データ
+        let displayCanvas = document.createElement('canvas');    // 表示用キャンバス
+        let displayCtx = displayCanvas.getContext('2d');         // 表示用キャンバスのコンテキスト
+        let editCanvas = document.createElement('canvas');       // 編集用キャンバス
+        let editCtx = editCanvas.getContext('2d');               // 編集用キャンバスのコンテキスト
+        let editorReady = false;           // エディタの準備状態
+
+        // ファイルアップロード処理の初期化
+        function initFileUpload() {
+            // クリックでファイル選択ダイアログを開く
+            dropArea.addEventListener('click', () => {
+                fileInput.click();
+            });
+
+            // ファイル選択時の処理
+            fileInput.addEventListener('change', handleFileSelect);
+
+            // ドラッグ&ドロップの処理
+            dropArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropArea.style.borderColor = '#4a90e2';
+            });
+
+            dropArea.addEventListener('dragleave', () => {
+                dropArea.style.borderColor = '#ccc';
+            });
+
+            dropArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropArea.style.borderColor = '#ccc';
+                
+                if (e.dataTransfer.files.length) {
+                    handleFile(e.dataTransfer.files[0]);
+                }
+            });
+        }
+
+        // ファイル選択時の処理
+        function handleFileSelect(e) {
+            if (e.target.files.length) {
+                handleFile(e.target.files[0]);
+            }
+        }
+
+        // ファイル処理
+        function handleFile(file) {
+            // JPEGファイルのみ受け付ける
+            if (!file.type.match('image/jpeg')) {
+                alert('JPEGファイルのみアップロードできます。');
+                return;
+            }
+
+            originalFileName = file.name;
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                originalImage = new Image();
+                originalImage.onload = () => {
+                    initEditor();
+                };
+                originalImage.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // エディタの初期化
+        function initEditor() {
+            // 編集セクションを表示
+            uploadSection.style.display = 'none';
+            editorSection.style.display = 'block';
+            
+            // 編集用キャンバスの設定（オリジナルサイズ）
+            editCanvas.width = originalImage.width;
+            editCanvas.height = originalImage.height;
+            editCtx.drawImage(originalImage, 0, 0);
+            
+            // 表示用キャンバスの設定（必要に応じてリサイズ）
+            let displayWidth = originalImage.width;
+            let displayHeight = originalImage.height;
+            
+            // 長辺が1200pxを超える場合はリサイズ
+            if (displayWidth > 1200 || displayHeight > 1200) {
+                if (displayWidth > displayHeight) {
+                    const ratio = 1200 / displayWidth;
+                    displayWidth = 1200;
+                    displayHeight = Math.floor(displayHeight * ratio);
+                } else {
+                    const ratio = 1200 / displayHeight;
+                    displayHeight = 1200;
+                    displayWidth = Math.floor(displayWidth * ratio);
+                }
+            }
+            
+            displayCanvas.width = displayWidth;
+            displayCanvas.height = displayHeight;
+            displayCtx.drawImage(originalImage, 0, 0, displayWidth, displayHeight);
+            
+            // 画像プレビューに表示
+            imagePreview.src = displayCanvas.toDataURL('image/jpeg');
+            imagePreview.width = displayWidth;
+            imagePreview.height = displayHeight;
+            
+            // 初期状態を履歴に保存
+            currentImageData = editCtx.getImageData(0, 0, editCanvas.width, editCanvas.height);
+            saveToHistory();
+            
+            // エディタの準備完了
+            editorReady = true;
+            
+            // イベントリスナーを設定
+            setupEventListeners();
+        }
+
+        // イベントリスナーの設定
+        function setupEventListeners() {
+            // マウス移動でカーソル表示
+            imageContainer.addEventListener('mousemove', (e) => {
+                updateCursorPosition(e);
+                showCursor();
+            });
+            
+            // マウスが画像から出たらカーソルを非表示
+            imageContainer.addEventListener('mouseleave', () => {
+                cursor.style.display = 'none';
+            });
+            
+            // 右クリックでスポッティング画像を取得
+            imageContainer.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                if (!editorReady) return;
+                
+                captureSpottingImage(e);
+            });
+            
+            // 左クリックでスポッティング画像を書き込み
+            imageContainer.addEventListener('click', (e) => {
+                if (!editorReady || !spottingImage) return;
+                
+                applySpottingImage(e);
+            });
+            
+            // サイズスライダーの変更
+            sizeSlider.addEventListener('input', () => {
+                currentSize = parseInt(sizeSlider.value);
+                sizeValue.textContent = `${currentSize}px`;
+                updateCursorSize();
+            });
+            
+            // 編集を戻すボタン
+            undoBtn.addEventListener('click', undoEdit);
+            
+            // リセットボタン
+            resetBtn.addEventListener('click', () => {
+                if (confirm('編集内容を破棄して、新しい画像をアップロードしますか？')) {
+                    resetEditor();
+                }
+            });
+            
+            // ダウンロードボタン
+            downloadBtn.addEventListener('click', downloadEditedImage);
+        }
+
+        // カーソル位置の更新
+        function updateCursorPosition(e) {
+            const rect = imagePreview.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            cursor.style.left = `${x}px`;
+            cursor.style.top = `${y}px`;
+        }
+
+        // カーソルサイズの更新
+        function updateCursorSize() {
+            // プレビュー画像のスケール比率を計算
+            const scaleX = imagePreview.width / editCanvas.width;
+            const scaledSize = currentSize * scaleX;
+            
+            cursor.style.width = `${scaledSize * 2}px`;
+            cursor.style.height = `${scaledSize * 2}px`;
+        }
+
+        // カーソルの表示
+        function showCursor() {
+            cursor.style.display = 'block';
+            updateCursorSize();
+        }
+
+        // スポッティング画像の取得
+        function captureSpottingImage(e) {
+            const rect = imagePreview.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            // クリック位置をオリジナル画像の座標に変換
+            const scaleX = editCanvas.width / imagePreview.width;
+            const scaleY = editCanvas.height / imagePreview.height;
+            
+            const origX = Math.floor(x * scaleX);
+            const origY = Math.floor(y * scaleY);
+            
+            // スポッティング画像を取得
+            const radius = currentSize;
+            
+            // 範囲チェック用の一時データを取得
+            const imageData = editCtx.getImageData(
+                Math.max(0, origX - radius),
+                Math.max(0, origY - radius),
+                Math.min(radius * 2, editCanvas.width - Math.max(0, origX - radius)),
+                Math.min(radius * 2, editCanvas.height - Math.max(0, origY - radius))
+            );
+            
+            // 円形スポッティング画像を作成
+            const tempCanvas = document.createElement('canvas');
+            const tempCtx = tempCanvas.getContext('2d');
+            tempCanvas.width = radius * 2;
+            tempCanvas.height = radius * 2;
+            
+            // 円形マスクを作成
+            tempCtx.beginPath();
+            tempCtx.arc(radius, radius, radius, 0, Math.PI * 2);
+            tempCtx.closePath();
+            tempCtx.clip();
+            
+            // 画像データを描画
+            tempCtx.drawImage(
+                editCanvas,
+                Math.max(0, origX - radius),
+                Math.max(0, origY - radius),
+                Math.min(radius * 2, editCanvas.width - Math.max(0, origX - radius)),
+                Math.min(radius * 2, editCanvas.height - Math.max(0, origY - radius)),
+                Math.max(0, radius - origX),
+                Math.max(0, radius - origY),
+                Math.min(radius * 2, editCanvas.width - Math.max(0, origX - radius)),
+                Math.min(radius * 2, editCanvas.height - Math.max(0, origY - radius))
+            );
+            
+            // スポッティング画像を保存
+            spottingImage = {
+                data: tempCtx.getImageData(0, 0, radius * 2, radius * 2),
+                radius: radius
+            };
+            
+            // カーソルスタイルを更新
+            const cursorCanvas = document.createElement('canvas');
+            const cursorCtx = cursorCanvas.getContext('2d');
+            cursorCanvas.width = radius * 2;
+            cursorCanvas.height = radius * 2;
+            cursorCtx.putImageData(spottingImage.data, 0, 0);
+            
+            cursor.style.backgroundImage = `url(${cursorCanvas.toDataURL()})`;
+            cursor.style.backgroundSize = 'cover';
+            cursor.style.backgroundPosition = 'center';
+        }
+
+        // スポッティング画像の適用
+        function applySpottingImage(e) {
+            if (!spottingImage) return;
+            
+            const rect = imagePreview.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            // クリック位置をオリジナル画像の座標に変換
+            const scaleX = editCanvas.width / imagePreview.width;
+            const scaleY = editCanvas.height / imagePreview.height;
+            
+            const origX = Math.floor(x * scaleX);
+            const origY = Math.floor(y * scaleY);
+            
+            const radius = spottingImage.radius;
+            
+            // 編集前の状態を保存
+            saveToHistory();
+            
+            // スポッティング画像を適用
+            const tempCanvas = document.createElement('canvas');
+            const tempCtx = tempCanvas.getContext('2d');
+            tempCanvas.width = editCanvas.width;
+            tempCanvas.height = editCanvas.height;
+            
+            // 現在の編集状態を描画
+            tempCtx.putImageData(currentImageData, 0, 0);
+            
+            // 円形マスクを作成
+            tempCtx.save();
+            tempCtx.beginPath();
+            tempCtx.arc(origX, origY, radius, 0, Math.PI * 2);
+            tempCtx.closePath();
+            tempCtx.clip();
+            
+            // スポッティング画像を描画
+            const spotCanvas = document.createElement('canvas');
+            const spotCtx = spotCanvas.getContext('2d');
+            spotCanvas.width = radius * 2;
+            spotCanvas.height = radius * 2;
+            spotCtx.putImageData(spottingImage.data, 0, 0);
+            
+            tempCtx.drawImage(spotCanvas, origX - radius, origY - radius);
+            tempCtx.restore();
+            
+            // 編集キャンバスを更新
+            currentImageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+            editCtx.putImageData(currentImageData, 0, 0);
+            
+            // 表示用キャンバスを更新
+            displayCtx.clearRect(0, 0, displayCanvas.width, displayCanvas.height);
+            displayCtx.drawImage(editCanvas, 0, 0, displayCanvas.width, displayCanvas.height);
+            
+            // プレビュー画像を更新
+            imagePreview.src = displayCanvas.toDataURL('image/jpeg');
+            
+            // 編集履歴ボタンを有効化
+            undoBtn.disabled = false;
+        }
+
+        // 編集履歴に保存
+        function saveToHistory() {
+            if (currentImageData) {
+                // ImageDataオブジェクトをディープコピー
+                const copy = new ImageData(
+                    new Uint8ClampedArray(currentImageData.data),
+                    currentImageData.width,
+                    currentImageData.height
+                );
+                editHistory.push(copy);
+            }
+        }
+
+        // 編集を元に戻す
+        function undoEdit() {
+            if (editHistory.length <= 1) return;
+            
+            // 最新の履歴を削除
+            editHistory.pop();
+            
+            // 一つ前の状態を取得
+            const previousState = editHistory[editHistory.length - 1];
+            
+            // 一つ前の状態をディープコピー
+            currentImageData = new ImageData(
+                new Uint8ClampedArray(previousState.data),
+                previousState.width,
+                previousState.height
+            );
+            
+            // 編集キャンバスを更新
+            editCtx.putImageData(currentImageData, 0, 0);
+            
+            // 表示用キャンバスを更新
+            displayCtx.clearRect(0, 0, displayCanvas.width, displayCanvas.height);
+            displayCtx.drawImage(editCanvas, 0, 0, displayCanvas.width, displayCanvas.height);
+            
+            // プレビュー画像を更新
+            imagePreview.src = displayCanvas.toDataURL('image/jpeg');
+            
+            // 履歴が一つしかない場合は元に戻すボタンを無効化
+            if (editHistory.length <= 1) {
+                undoBtn.disabled = true;
+            }
+        }
+
+        // 編集画像のダウンロード
+        function downloadEditedImage() {
+            // 編集後の画像をオリジナルサイズで保存
+            editCanvas.toBlob((blob) => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                
+                // ファイル名を設定
+                const fileName = originalFileName.replace(/\.[^/.]+$/, '') + '-edited.jpg';
+                
+                a.href = url;
+                a.download = fileName;
+                a.click();
+                
+                // 使用後にURLを解放
+                setTimeout(() => URL.revokeObjectURL(url), 100);
+            }, 'image/jpeg', 0.95);
+        }
+
+        // エディタのリセット
+        function resetEditor() {
+            editorReady = false;
+            spottingImage = null;
+            editHistory = [];
+            currentImageData = null;
+            undoBtn.disabled = true;
+            
+            // カーソルをリセット
+            cursor.style.backgroundImage = 'none';
+            cursor.style.display = 'none';
+            
+            // 表示を切り替え
+            editorSection.style.display = 'none';
+            uploadSection.style.display = 'block';
+            
+            // ファイル入力をリセット
+            fileInput.value = '';
+        }
+
+        // 初期化
+        initFileUpload();
+    </script>
+</body>
+</html>

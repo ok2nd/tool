@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>円形スポッティングツール</title>
+    <style>
+        body {
+            font-family: "Hiragino Sans", "Meiryo", sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .upload-container {
+            text-align: center;
+            padding: 40px;
+            border: 2px dashed #ccc;
+            margin-bottom: 20px;
+        }
+        .editor-container {
+            display: none;
+            flex-direction: column;
+            margin-top: 20px;
+        }
+        .canvas-container {
+            position: relative;
+            margin: 0 auto;
+            overflow: hidden;
+        }
+        canvas {
+            display: block;
+            margin: 0 auto;
+            border: 1px solid #ddd;
+            cursor: none;
+        }
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+        }
+        button {
+            padding: 8px 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .size-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 200px;
+        }
+        .instructions {
+            background-color: #f0f8ff;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .instructions ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        .instructions li {
+            margin-bottom: 5px;
+        }
+        .message {
+            text-align: center;
+            color: #4CAF50;
+            margin-top: 10px;
+            min-height: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>円形スポッティングツール</h1>
+        
+        <div class="instructions">
+            <h3>使い方:</h3>
+            <ul>
+                <li><strong>右クリック</strong>: 画像の一部を「スポッティング画像」として取り込みます</li>
+                <li><strong>左クリック</strong>: 取り込んだ「スポッティング画像」で画像の部分を上書きします</li>
+                <li>スライダーで「スポッティング画像」のサイズを調整できます</li>
+                <li>「編集を戻す」ボタンで編集操作を順番に取り消せます</li>
+                <li>「拡大/縮小」ボタンで画像の表示サイズを切り替えられます</li>
+            </ul>
+        </div>
+
+        <div id="uploadContainer" class="upload-container">
+            <input type="file" id="imageUpload" accept="image/jpeg" style="display: none;">
+            <button id="uploadButton">画像をアップロード</button>
+            <p>JPEG画像を選択してください</p>
+        </div>
+
+        <div id="editorContainer" class="editor-container">
+            <div class="controls">
+                <div class="size-control">
+                    <label for="circleSize">円形サイズ: </label>
+                    <input type="range" id="circleSize" min="1" max="100" value="20">
+                    <span id="circleSizeValue">20px</span>
+                </div>
+                <button id="undoButton" disabled>編集を戻す</button>
+                <button id="toggleZoomButton">拡大</button>
+                <button id="downloadButton">画像を保存</button>
+                <button id="resetButton">新しい画像</button>
+            </div>
+            
+            <div class="canvas-container" id="canvasContainer">
+                <canvas id="imageCanvas"></canvas>
+            </div>
+            
+            <div class="message" id="message"></div>
+        </div>
+    </div>
+
+    <script>
+        // グローバル変数
+        const state = {
+            originalImage: null,        // オリジナル画像オブジェクト
+            originalCanvas: null,       // 編集用の非表示キャンバス (元サイズ)
+            displayCanvas: null,        // 表示用キャンバス
+            ctx: null,                  // 表示用キャンバスのコンテキスト
+            originalCtx: null,          // 元サイズキャンバスのコンテキスト
+            spotImage: null,            // 「スポッティング画像」データ
+            circleSize: 20,             // 円形の直径 (ピクセル)
+            scaleRatio: 1,              // 表示スケール比率
+            isZoomed: false,            // 拡大表示状態か
+            history: [],                // 編集履歴を保存する配列
+            filename: '',               // アップロードされたファイル名
+            mouseX: 0,                  // マウスX座標
+            mouseY: 0                   // マウスY座標
+        };
+
+        // DOM要素
+        const uploadContainer = document.getElementById('uploadContainer');
+        const editorContainer = document.getElementById('editorContainer');
+        const imageUpload = document.getElementById('imageUpload');
+        const uploadButton = document.getElementById('uploadButton');
+        const imageCanvas = document.getElementById('imageCanvas');
+        const canvasContainer = document.getElementById('canvasContainer');
+        const circleSizeSlider = document.getElementById('circleSize');
+        const circleSizeValue = document.getElementById('circleSizeValue');
+        const undoButton = document.getElementById('undoButton');
+        const toggleZoomButton = document.getElementById('toggleZoomButton');
+        const downloadButton = document.getElementById('downloadButton');
+        const resetButton = document.getElementById('resetButton');
+        const message = document.getElementById('message');
+
+        // イベントリスナーの設定
+        uploadButton.addEventListener('click', () => imageUpload.click());
+        imageUpload.addEventListener('change', handleImageUpload);
+        circleSizeSlider.addEventListener('input', updateCircleSize);
+        undoButton.addEventListener('click', undoEdit);
+        toggleZoomButton.addEventListener('click', toggleZoom);
+        downloadButton.addEventListener('click', downloadImage);
+        resetButton.addEventListener('click', resetApp);
+        
+        // 画像アップロード処理
+        function handleImageUpload(e) {
+            const file = e.target.files[0];
+            if (!file || !file.type.match('image/jpeg')) {
+                showMessage('JPEGファイルのみアップロードできます', 'error');
+                return;
+            }
+            
+            state.filename = file.name;
+            const reader = new FileReader();
+            
+            reader.onload = function(event) {
+                // 画像の読み込み
+                state.originalImage = new Image();
+                state.originalImage.onload = function() {
+                    initializeEditor();
+                };
+                state.originalImage.src = event.target.result;
+            };
+            
+            reader.readAsDataURL(file);
+        }
+        
+        // エディタの初期化
+        function initializeEditor() {
+            // 表示サイズの計算
+            const maxSize = 1200;
+            const imgWidth = state.originalImage.width;
+            const imgHeight = state.originalImage.height;
+            let displayWidth, displayHeight;
+            
+            if (Math.max(imgWidth, imgHeight) > maxSize) {
+                if (imgWidth > imgHeight) {
+                    state.scaleRatio = maxSize / imgWidth;
+                    displayWidth = maxSize;
+                    displayHeight = imgHeight * state.scaleRatio;
+                } else {
+                    state.scaleRatio = maxSize / imgHeight;
+                    displayHeight = maxSize;
+                    displayWidth = imgWidth * state.scaleRatio;
+                }
+            } else {
+                displayWidth = imgWidth;
+                displayHeight = imgHeight;
+                state.scaleRatio = 1;
+            }
+            
+            // 元サイズのキャンバスの作成 (非表示)
+            state.originalCanvas = document.createElement('canvas');
+            state.originalCanvas.width = imgWidth;
+            state.originalCanvas.height = imgHeight;
+            state.originalCtx = state.originalCanvas.getContext('2d');
+            state.originalCtx.drawImage(state.originalImage, 0, 0);
+            
+            // 表示用キャンバスの設定
+            imageCanvas.width = displayWidth;
+            imageCanvas.height = displayHeight;
+            state.ctx = imageCanvas.getContext('2d');
+            state.ctx.drawImage(state.originalImage, 0, 0, displayWidth, displayHeight);
+            
+            // 履歴の初期化
+            state.history = [];
+            state.history.push(state.originalCtx.getImageData(0, 0, imgWidth, imgHeight));
+            
+            // UIの表示を切り替え
+            uploadContainer.style.display = 'none';
+            editorContainer.style.display = 'flex';
+            
+            // イベントリスナーを追加
+            setupCanvasEvents();
+            
+            // 初期状態では「元に戻す」ボタンを無効化
+            undoButton.disabled = true;
+            
+            // 拡大/縮小ボタンのテキストをリセット
+            state.isZoomed = false;
+            toggleZoomButton.textContent = '拡大';
+            
+            showMessage('画像を読み込みました。右クリックで円形部分を取得、左クリックで適用できます');
+        }
+        
+        // キャンバスのイベントリスナーを設定
+        function setupCanvasEvents() {
+            // マウス移動のイベント
+            imageCanvas.addEventListener('mousemove', handleMouseMove);
+            
+            // 右クリックでスポッティング画像の取得
+            imageCanvas.addEventListener('contextmenu', function(e) {
+                e.preventDefault(); // デフォルトの右クリックメニューを表示しない
+                captureSpotImage(e);
+            });
+            
+            // 左クリックでスポッティング画像の適用
+            imageCanvas.addEventListener('click', function(e) {
+                if (state.spotImage) {
+                    applySpotImage(e);
+                } else {
+                    showMessage('右クリックで先にスポッティング画像を取得してください');
+                }
+            });
+            
+            // マウスがキャンバスから出た時
+            imageCanvas.addEventListener('mouseout', function() {
+                state.ctx.clearRect(0, 0, imageCanvas.width, imageCanvas.height);
+                state.ctx.drawImage(state.originalCanvas, 0, 0, imageCanvas.width, imageCanvas.height);
+            });
+        }
+        
+        // マウス移動時の処理
+        function handleMouseMove(e) {
+            // マウス座標の取得
+            const rect = imageCanvas.getBoundingClientRect();
+            const scaleX = imageCanvas.width / rect.width;
+            const scaleY = imageCanvas.height / rect.height;
+            
+            state.mouseX = (e.clientX - rect.left) * scaleX;
+            state.mouseY = (e.clientY - rect.top) * scaleY;
+            
+            // キャンバスを再描画
+            redrawCanvas();
+            
+            // 円形カーソルの描画
+            drawCircleCursor();
+            
+            // スポッティング画像の表示（取得済みの場合）
+            if (state.spotImage) {
+                drawSpotImage();
+            }
+        }
+        
+        // キャンバスの再描画
+        function redrawCanvas() {
+            state.ctx.clearRect(0, 0, imageCanvas.width, imageCanvas.height);
+            state.ctx.drawImage(state.originalCanvas, 0, 0, imageCanvas.width, imageCanvas.height);
+        }
+        
+        // 円形カーソルの描画
+        function drawCircleCursor() {
+            const radius = state.circleSize / 2 * state.scaleRatio;
+            
+            state.ctx.beginPath();
+            state.ctx.arc(state.mouseX, state.mouseY, radius, 0, Math.PI * 2);
+            state.ctx.strokeStyle = '#ff0000';
+            state.ctx.lineWidth = 1;
+            state.ctx.stroke();
+        }
+        
+        // スポッティング画像の描画
+        function drawSpotImage() {
+            if (!state.spotImage) return;
+            
+            const radius = state.circleSize / 2 * state.scaleRatio;
+            const x = state.mouseX - radius;
+            const y = state.mouseY - radius;
+            const size = state.circleSize * state.scaleRatio;
+            
+            // 円形クリッピングパスの作成
+            state.ctx.save();
+            state.ctx.beginPath();
+            state.ctx.arc(state.mouseX, state.mouseY, radius, 0, Math.PI * 2);
+            state.ctx.clip();
+            
+            // スポッティング画像の描画
+            state.ctx.drawImage(state.spotImage, x, y, size, size);
+            
+            state.ctx.restore();
+        }
+        
+        // スポッティング画像の取得
+        function captureSpotImage(e) {
+            const radius = state.circleSize / 2;
+            const originalX = state.mouseX / state.scaleRatio - radius;
+            const originalY = state.mouseY / state.scaleRatio - radius;
+            const diameter = state.circleSize;
+            
+            // 元サイズのキャンバスから該当部分を取得
+            const imgData = state.originalCtx.getImageData(
+                Math.max(0, originalX), 
+                Math.max(0, originalY), 
+                Math.min(diameter, state.originalCanvas.width - originalX), 
+                Math.min(diameter, state.originalCanvas.height - originalY)
+            );
+            
+            // スポッティング画像用のキャンバスを作成
+            const spotCanvas = document.createElement('canvas');
+            spotCanvas.width = diameter;
+            spotCanvas.height = diameter;
+            const spotCtx = spotCanvas.getContext('2d');
+            
+            // 円形に切り抜いた画像を作成
+            spotCtx.putImageData(imgData, 0, 0);
+            
+            // スポッティング画像をImageオブジェクトとして保存
+            state.spotImage = new Image();
+            state.spotImage.src = spotCanvas.toDataURL();
+            
+            showMessage('スポッティング画像を取得しました。左クリックで適用できます');
+        }
+        
+        // スポッティング画像の適用
+        function applySpotImage(e) {
+            if (!state.spotImage) return;
+            
+            const radius = state.circleSize / 2;
+            const originalX = state.mouseX / state.scaleRatio - radius;
+            const originalY = state.mouseY / state.scaleRatio - radius;
+            const diameter = state.circleSize;
+            
+            // 現在の状態を履歴に保存
+            saveHistory();
+            
+            // 元サイズのキャンバスに円形画像を描画
+            state.originalCtx.save();
+            state.originalCtx.beginPath();
+            state.originalCtx.arc(
+                state.mouseX / state.scaleRatio, 
+                state.mouseY / state.scaleRatio, 
+                radius, 0, Math.PI * 2
+            );
+            state.originalCtx.clip();
+            
+            // スポッティング画像を適用
+            state.originalCtx.drawImage(
+                state.spotImage, 
+                originalX, 
+                originalY, 
+                diameter, 
+                diameter
+            );
+            
+            state.originalCtx.restore();
+            
+            // 表示用キャンバスを更新
+            redrawCanvas();
+            drawCircleCursor();
+            drawSpotImage();
+            
+            showMessage('スポッティング画像を適用しました');
+        }
+        
+        // 履歴の保存
+        function saveHistory() {
+            // 現在の状態をコピーして履歴に保存
+            const imgData = state.originalCtx.getImageData(
+                0, 0, state.originalCanvas.width, state.originalCanvas.height
+            );
+            state.history.push(imgData);
+            
+            // 「元に戻す」ボタンを有効化
+            undoButton.disabled = false;
+        }
+        
+        // 編集を元に戻す
+        function undoEdit() {
+            if (state.history.length <= 1) return;
+            
+            // 履歴から最新の状態を削除
+            state.history.pop();
+            
+            // 前の状態に戻す
+            const prevState = state.history[state.history.length - 1];
+            state.originalCtx.putImageData(prevState, 0, 0);
+            
+            // 表示用キャンバスを更新
+            redrawCanvas();
+            drawCircleCursor();
+            if (state.spotImage) {
+                drawSpotImage();
+            }
+            
+            if (state.history.length <= 1) {
+                undoButton.disabled = true;
+            }
+            
+            showMessage('前の状態に戻しました');
+        }
+        
+        // 円形サイズの更新
+        function updateCircleSize() {
+            state.circleSize = parseInt(circleSizeSlider.value);
+            circleSizeValue.textContent = state.circleSize + 'px';
+            
+            // キャンバスを再描画
+            redrawCanvas();
+            drawCircleCursor();
+            
+            if (state.spotImage) {
+                // 既存のスポッティング画像がある場合はクリア（サイズが変わったため）
+                state.spotImage = null;
+                showMessage('サイズが変更されました。右クリックで新しいスポッティング画像を取得してください');
+            }
+        }
+        
+        // ズーム切り替え
+        function toggleZoom() {
+            state.isZoomed = !state.isZoomed;
+            
+            if (state.isZoomed) {
+                // 元のサイズで表示
+                imageCanvas.width = state.originalCanvas.width;
+                imageCanvas.height = state.originalCanvas.height;
+                state.scaleRatio = 1;
+                toggleZoomButton.textContent = '縮小';
+            } else {
+                // 縮小表示
+                const maxSize = 1200;
+                const imgWidth = state.originalImage.width;
+                const imgHeight = state.originalImage.height;
+                
+                if (Math.max(imgWidth, imgHeight) > maxSize) {
+                    if (imgWidth > imgHeight) {
+                        state.scaleRatio = maxSize / imgWidth;
+                        imageCanvas.width = maxSize;
+                        imageCanvas.height = imgHeight * state.scaleRatio;
+                    } else {
+                        state.scaleRatio = maxSize / imgHeight;
+                        imageCanvas.height = maxSize;
+                        imageCanvas.width = imgWidth * state.scaleRatio;
+                    }
+                } else {
+                    imageCanvas.width = imgWidth;
+                    imageCanvas.height = imgHeight;
+                    state.scaleRatio = 1;
+                }
+                
+                toggleZoomButton.textContent = '拡大';
+            }
+            
+            // キャンバスを再描画
+            redrawCanvas();
+            
+            if (state.spotImage) {
+                // 既存のスポッティング画像があっても継続して使用可能
+                showMessage(state.isZoomed ? '拡大表示に切り替えました' : '縮小表示に切り替えました');
+            }
+        }
+        
+        // 画像のダウンロード
+        function downloadImage() {
+            // 元サイズのキャンバスからデータURLを取得
+            const dataURL = state.originalCanvas.toDataURL('image/jpeg');
+            
+            // ファイル名の生成
+            const baseName = state.filename.substring(0, state.filename.lastIndexOf('.')) || state.filename;
+            const downloadName = baseName + '-edited.jpg';
+            
+            // ダウンロードリンクを作成して自動クリック
+            const link = document.createElement('a');
+            link.href = dataURL;
+            link.download = downloadName;
+            link.click();
+            
+            showMessage('編集済み画像を保存しました: ' + downloadName);
+        }
+        
+        // アプリをリセット
+        function resetApp() {
+            // UIを初期状態に戻す
+            uploadContainer.style.display = 'block';
+            editorContainer.style.display = 'none';
+            
+            // 状態のリセット
+            state.originalImage = null;
+            state.originalCanvas = null;
+            state.spotImage = null;
+            state.history = [];
+            state.filename = '';
+            state.isZoomed = false;
+            
+            // ファイル選択をリセット
+            imageUpload.value = '';
+            
+            // 拡大/縮小ボタンのテキストを初期状態に戻す
+            toggleZoomButton.textContent = '拡大';
+            
+            showMessage('');
+        }
+        
+        // メッセージの表示
+        function showMessage(msg, type = 'info') {
+            message.textContent = msg;
+            message.style.color = type === 'error' ? '#ff0000' : '#4CAF50';
+        }
+    </script>
+</body>
+</html>

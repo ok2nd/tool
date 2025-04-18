@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>画像オブジェクト除去ツール</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      margin: 20px;
+    }
+    #canvasContainer {
+      position: relative;
+      display: inline-block;
+      margin: 10px;
+    }
+    canvas {
+      border: 1px solid #ccc;
+      margin: 10px;
+    }
+    #controls button {
+      margin: 5px;
+    }
+  </style>
+</head>
+<body>
+  <h1>画像オブジェクト除去ツール</h1>
+  <input type="file" id="upload" accept="image/jpeg">
+  <div id="canvasContainer">
+    <canvas id="canvas"></canvas>
+  </div>
+  <div id="controls">
+    <button id="removeObject">オブジェクト除去</button>
+    <button id="undo">キャンセル</button>
+    <button id="download">ダウンロード</button>
+  </div>
+
+  <script>
+    const upload = document.getElementById('upload');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const removeBtn = document.getElementById('removeObject');
+    const undoBtn = document.getElementById('undo');
+    const downloadBtn = document.getElementById('download');
+
+    let image = new Image();
+    let drawing = false;
+    let path = [];
+    let maskPaths = [];
+    let originalImageData;
+    let fileName = "output";
+
+    function resizeCanvasToImage(img) {
+      canvas.width = img.width;
+      canvas.height = img.height;
+      ctx.drawImage(img, 0, 0);
+      originalImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    }
+
+    upload.addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      fileName = file.name.replace(/\.jpg$/i, '');
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        image.onload = function() {
+          resizeCanvasToImage(image);
+        };
+        image.src = evt.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    canvas.addEventListener('mousedown', (e) => {
+      drawing = true;
+      path = [];
+      ctx.beginPath();
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      ctx.moveTo(x, y);
+      path.push([x, y]);
+    });
+
+    canvas.addEventListener('mousemove', (e) => {
+      if (!drawing) return;
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      ctx.lineTo(x, y);
+      ctx.strokeStyle = 'red';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      path.push([x, y]);
+    });
+
+    canvas.addEventListener('mouseup', () => {
+      drawing = false;
+      maskPaths.push([...path]);
+    });
+
+    function floodFillRemove(path) {
+      // Placeholder for advanced inpainting logic
+      // Replace this with a real inpainting algorithm like PatchMatch via WASM or similar
+      ctx.fillStyle = 'white';
+      ctx.beginPath();
+      ctx.moveTo(path[0][0], path[0][1]);
+      path.forEach(([x, y]) => ctx.lineTo(x, y));
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    removeBtn.addEventListener('click', () => {
+      if (maskPaths.length === 0) return;
+      // Save state
+      originalImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      maskPaths.forEach(path => floodFillRemove(path));
+      maskPaths = [];
+    });
+
+    undoBtn.addEventListener('click', () => {
+      if (originalImageData) {
+        ctx.putImageData(originalImageData, 0, 0);
+        maskPaths = [];
+      }
+    });
+
+    downloadBtn.addEventListener('click', () => {
+      const link = document.createElement('a');
+      link.download = `${fileName}-edited.jpg`;
+      link.href = canvas.toDataURL('image/jpeg');
+      link.click();
+    });
+  </script>
+</body>
+</html>

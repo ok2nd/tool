@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>画像スポッティングエディタ</title>
+    <style>
+        body {
+            font-family: 'Hiragino Sans', 'Meiryo', sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .upload-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        #upload-btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        #upload-btn:hover {
+            background-color: #45a049;
+        }
+        .controls {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f0f0f0;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .mode-info {
+            background-color: #e0f7fa;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .slider-container {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+        }
+        .slider-container span {
+            margin: 0 10px;
+        }
+        button {
+            background-color: #2196F3;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0b7dda;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .cancel-btn {
+            background-color: #f44336;
+        }
+        .cancel-btn:hover {
+            background-color: #d32f2f;
+        }
+        .save-btn {
+            background-color: #4CAF50;
+        }
+        .save-btn:hover {
+            background-color: #45a049;
+        }
+        .image-container {
+            position: relative;
+            margin: 20px auto;
+            width: fit-content;
+            height: fit-content;
+            cursor: none;
+        }
+        canvas {
+            max-width: 100%;
+            display: block;
+            margin: 0 auto;
+        }
+        .cursor-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 10;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>画像スポッティングエディタ</h1>
+        
+        <div class="upload-container" id="upload-section">
+            <p>JPEG画像をアップロードして、特定の部分をコピーして別の場所に適用できます。</p>
+            <input type="file" id="file-input" accept="image/jpeg" class="hidden">
+            <button id="upload-btn">画像をアップロード</button>
+        </div>
+        
+        <div id="editor-section" class="hidden">
+            <div class="mode-info" id="mode-info">スポッティング作成モード</div>
+            
+            <div class="controls">
+                <div class="slider-container" id="size-control">
+                    <span>スポッティングサイズ:</span>
+                    <input type="range" id="spotting-size" min="1" max="100" value="10">
+                    <span id="size-value">10px</span>
+                </div>
+                
+                <div class="buttons">
+                    <button id="create-spotting-btn" disabled>スポッティング作成モード</button>
+                    <button id="cancel-btn" class="cancel-btn hidden">キャンセル</button>
+                    <button id="undo-btn" disabled>画像の編集を戻す</button>
+                    <button id="save-btn" class="save-btn">編集画像を保存</button>
+                    <button id="reset-btn" class="cancel-btn">最初からやり直す</button>
+                </div>
+            </div>
+            
+            <div class="image-container">
+                <canvas id="image-canvas"></canvas>
+                <canvas id="cursor-canvas" class="cursor-canvas"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // グローバル変数
+        const maxSize = 1200; // 画像の最大サイズ
+        let originalImage = null; // オリジナル画像
+        let currentMode = 'create'; // 'create' または 'apply'
+        let spottingSize = 10; // スポッティングサイズ（初期値10px）
+        let spottingImage = null; // コピーしたスポッティング画像データ
+        let editHistory = []; // 編集履歴
+
+        // DOM要素の取得
+        const fileInput = document.getElementById('file-input');
+        const uploadBtn = document.getElementById('upload-btn');
+        const uploadSection = document.getElementById('upload-section');
+        const editorSection = document.getElementById('editor-section');
+        const modeInfo = document.getElementById('mode-info');
+        const sizeControl = document.getElementById('size-control');
+        const spottingSizeInput = document.getElementById('spotting-size');
+        const sizeValueDisplay = document.getElementById('size-value');
+        const createSpottingBtn = document.getElementById('create-spotting-btn');
+        const cancelBtn = document.getElementById('cancel-btn');
+        const undoBtn = document.getElementById('undo-btn');
+        const saveBtn = document.getElementById('save-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const imageCanvas = document.getElementById('image-canvas');
+        const cursorCanvas = document.getElementById('cursor-canvas');
+        const ctx = imageCanvas.getContext('2d');
+        const cursorCtx = cursorCanvas.getContext('2d');
+
+        // イベントリスナーの設定
+        uploadBtn.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', handleFileUpload);
+        spottingSizeInput.addEventListener('input', updateSpottingSize);
+        createSpottingBtn.addEventListener('click', switchToCreateMode);
+        cancelBtn.addEventListener('click', cancelSpotting);
+        undoBtn.addEventListener('click', undoEdit);
+        saveBtn.addEventListener('click', saveImage);
+        resetBtn.addEventListener('click', resetEditor);
+        imageCanvas.addEventListener('click', handleCanvasClick);
+        imageCanvas.addEventListener('mousemove', updateCursor);
+        imageCanvas.addEventListener('mouseout', () => cursorCtx.clearRect(0, 0, cursorCanvas.width, cursorCanvas.height));
+
+        // スポッティングサイズの更新
+        function updateSpottingSize() {
+            spottingSize = parseInt(spottingSizeInput.value);
+            sizeValueDisplay.textContent = `${spottingSize}px`;
+        }
+
+        // ファイルアップロード処理
+        function handleFileUpload(e) {
+            const file = e.target.files[0];
+            if (!file || !file.type.includes('jpeg')) {
+                alert('JPEGファイルを選択してください。');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const img = new Image();
+                img.onload = () => {
+                    // 画像のリサイズ処理
+                    let width = img.width;
+                    let height = img.height;
+                    
+                    if (width > maxSize || height > maxSize) {
+                        if (width > height) {
+                            height = height * (maxSize / width);
+                            width = maxSize;
+                        } else {
+                            width = width * (maxSize / height);
+                            height = maxSize;
+                        }
+                    }
+                    
+                    // キャンバスサイズの設定
+                    imageCanvas.width = width;
+                    imageCanvas.height = height;
+                    cursorCanvas.width = width;
+                    cursorCanvas.height = height;
+                    
+                    // 画像の描画
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    // オリジナル画像の保存
+                    originalImage = {
+                        element: img,
+                        data: ctx.getImageData(0, 0, width, height),
+                        filename: file.name
+                    };
+                    
+                    // 編集履歴の初期化
+                    editHistory = [ctx.getImageData(0, 0, width, height)];
+                    
+                    // UI表示の切り替え
+                    uploadSection.classList.add('hidden');
+                    editorSection.classList.remove('hidden');
+                    
+                    // 初期モード設定
+                    setMode('create');
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // モード切り替え
+        function setMode(mode) {
+            currentMode = mode;
+            
+            if (mode === 'create') {
+                modeInfo.textContent = 'スポッティング作成モード';
+                modeInfo.style.backgroundColor = '#e0f7fa';
+                sizeControl.classList.remove('hidden');
+                createSpottingBtn.disabled = true;
+                cancelBtn.classList.add('hidden');
+                spottingImage = null;
+                imageCanvas.style.cursor = 'none';
+            } else if (mode === 'apply') {
+                modeInfo.textContent = 'スポッティング適用モード';
+                modeInfo.style.backgroundColor = '#e8f5e9';
+                sizeControl.classList.add('hidden');
+                createSpottingBtn.disabled = false;
+                cancelBtn.classList.remove('hidden');
+                imageCanvas.style.cursor = 'none';
+            }
+            
+            updateUndoButtonState();
+        }
+
+        // 作成モードに切り替え
+        function switchToCreateMode() {
+            setMode('create');
+        }
+
+        // スポッティングのキャンセル
+        function cancelSpotting() {
+            setMode('create');
+        }
+
+        // 編集を元に戻す
+        function undoEdit() {
+            if (editHistory.length > 1) {
+                // 履歴から最新の状態を削除
+                editHistory.pop();
+                // 1つ前の状態を表示
+                ctx.putImageData(editHistory[editHistory.length - 1], 0, 0);
+                updateUndoButtonState();
+            }
+        }
+
+        // Undoボタンの状態更新
+        function updateUndoButtonState() {
+            undoBtn.disabled = editHistory.length <= 1;
+        }
+
+        // カーソル表示の更新
+        function updateCursor(e) {
+            const rect = imageCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            cursorCtx.clearRect(0, 0, cursorCanvas.width, cursorCanvas.height);
+            
+            if (currentMode === 'create') {
+                // 作成モードの場合は円を表示
+                cursorCtx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+                cursorCtx.lineWidth = 2;
+                cursorCtx.beginPath();
+                cursorCtx.arc(x, y, spottingSize / 2, 0, Math.PI * 2);
+                cursorCtx.stroke();
+                
+                cursorCtx.strokeStyle = 'rgba(0, 0, 0, 0.8)';
+                cursorCtx.lineWidth = 1;
+                cursorCtx.beginPath();
+                cursorCtx.arc(x, y, spottingSize / 2, 0, Math.PI * 2);
+                cursorCtx.stroke();
+            } else if (currentMode === 'apply' && spottingImage) {
+                // 適用モードの場合はスポッティング画像を表示
+                const radius = spottingImage.width / 2;
+                
+                // スポッティング画像の表示
+                cursorCtx.save();
+                cursorCtx.beginPath();
+                cursorCtx.arc(x, y, radius, 0, Math.PI * 2);
+                cursorCtx.clip();
+                cursorCtx.drawImage(spottingImage, x - radius, y - radius);
+                cursorCtx.restore();
+                
+                // 円の枠線表示
+                cursorCtx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+                cursorCtx.lineWidth = 2;
+                cursorCtx.beginPath();
+                cursorCtx.arc(x, y, radius, 0, Math.PI * 2);
+                cursorCtx.stroke();
+                
+                cursorCtx.strokeStyle = 'rgba(0, 0, 0, 0.8)';
+                cursorCtx.lineWidth = 1;
+                cursorCtx.beginPath();
+                cursorCtx.arc(x, y, radius, 0, Math.PI * 2);
+                cursorCtx.stroke();
+            }
+        }
+
+        // キャンバスクリック処理
+        function handleCanvasClick(e) {
+            const rect = imageCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            if (currentMode === 'create') {
+                // スポッティング作成モード
+                const radius = spottingSize / 2;
+                
+                // 画像の端をはみ出さないように調整
+                const safeX = Math.max(radius, Math.min(imageCanvas.width - radius, x));
+                const safeY = Math.max(radius, Math.min(imageCanvas.height - radius, y));
+                
+                // スポッティング画像の作成
+                const imageData = ctx.getImageData(safeX - radius, safeY - radius, spottingSize, spottingSize);
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = spottingSize;
+                tempCanvas.height = spottingSize;
+                const tempCtx = tempCanvas.getContext('2d');
+                tempCtx.putImageData(imageData, 0, 0);
+                
+                // スポッティング画像の保存
+                spottingImage = new Image();
+                spottingImage.src = tempCanvas.toDataURL();
+                spottingImage.width = spottingSize;
+                spottingImage.height = spottingSize;
+                
+                // 適用モードに切り替え
+                setMode('apply');
+            } else if (currentMode === 'apply' && spottingImage) {
+                // スポッティング適用モード
+                const radius = spottingImage.width / 2;
+                
+                // 画像の端をはみ出さないように調整
+                const safeX = Math.max(radius, Math.min(imageCanvas.width - radius, x));
+                const safeY = Math.max(radius, Math.min(imageCanvas.height - radius, y));
+                
+                // 現在の状態を保存
+                const currentState = ctx.getImageData(0, 0, imageCanvas.width, imageCanvas.height);
+                editHistory.push(currentState);
+                
+                // スポッティング画像の適用（枠線なし）
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(safeX, safeY, radius, 0, Math.PI * 2);
+                ctx.clip();
+                ctx.drawImage(spottingImage, safeX - radius, safeY - radius);
+                ctx.restore();
+                
+                updateUndoButtonState();
+            }
+        }
+
+        // 編集画像の保存
+        function saveImage() {
+            const link = document.createElement('a');
+            
+            // ファイル名の作成
+            const originalFilename = originalImage.filename;
+            const dotIndex = originalFilename.lastIndexOf('.');
+            const baseName = dotIndex !== -1 ? originalFilename.substring(0, dotIndex) : originalFilename;
+            const newFilename = `${baseName}-edited.jpg`;
+            
+            link.download = newFilename;
+            link.href = imageCanvas.toDataURL('image/jpeg', 0.9);
+            link.click();
+        }
+
+        // エディタのリセット
+        function resetEditor() {
+            if (confirm('編集内容を破棄して最初からやり直しますか？')) {
+                uploadSection.classList.remove('hidden');
+                editorSection.classList.add('hidden');
+                fileInput.value = '';
+                spottingImage = null;
+                editHistory = [];
+                ctx.clearRect(0, 0, imageCanvas.width, imageCanvas.height);
+                cursorCtx.clearRect(0, 0, cursorCanvas.width, cursorCanvas.height);
+            }
+        }
+    </script>
+</body>
+</html>

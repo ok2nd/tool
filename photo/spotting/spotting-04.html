@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Spotting Tool</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .upload-area {
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 20px;
+            cursor: pointer;
+        }
+        .upload-area.highlight {
+            border-color: #2196F3;
+        }
+        .image-container {
+            position: relative;
+            margin: 20px 0;
+            max-width: 100%;
+            overflow: hidden;
+        }
+        #imageDisplay {
+            max-width: 100%;
+            display: block;
+        }
+        .controls {
+            margin: 20px 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+        .mode-display {
+            font-weight: bold;
+            margin-right: 15px;
+        }
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        button {
+            padding: 8px 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .hidden {
+            display: none;
+        }
+        .tool-size-display {
+            min-width: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Image Spotting Tool</h1>
+            <p>Upload an image, create circular spots, and apply them to modify your image</p>
+        </div>
+        
+        <div id="uploadArea" class="upload-area">
+            <p>Click or drag & drop a JPEG image here</p>
+            <input type="file" id="fileInput" accept=".jpg,.jpeg" style="display: none;">
+        </div>
+        
+        <div id="editorSection" class="hidden">
+            <div class="controls">
+                <div class="mode-display" id="modeDisplay">Mode: Spotting Creation Mode</div>
+                
+                <div id="creationControls">
+                    <div class="slider-container">
+                        <label for="sizeSlider">Spotting Size:</label>
+                        <input type="range" id="sizeSlider" min="1" max="100" value="10">
+                        <span class="tool-size-display" id="sizeValue">10px</span>
+                    </div>
+                </div>
+                
+                <div id="editingControls" class="hidden">
+                    <button id="cancelButton">Cancel Spotting</button>
+                    <button id="undoButton" disabled>Undo Edit</button>
+                    <button id="newSpottingButton">New Spotting</button>
+                </div>
+                
+                <button id="downloadButton" class="hidden">Download Result</button>
+                <button id="resetButton">Upload New Image</button>
+            </div>
+            
+            <div class="image-container">
+                <canvas id="imageDisplay"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let originalImage = null;
+        let workingCanvas = document.getElementById('imageDisplay');
+        let ctx = workingCanvas.getContext('2d');
+        let fileInput = document.getElementById('fileInput');
+        let uploadArea = document.getElementById('uploadArea');
+        let editorSection = document.getElementById('editorSection');
+        let modeDisplay = document.getElementById('modeDisplay');
+        let sizeSlider = document.getElementById('sizeSlider');
+        let sizeValue = document.getElementById('sizeValue');
+        let creationControls = document.getElementById('creationControls');
+        let editingControls = document.getElementById('editingControls');
+        let cancelButton = document.getElementById('cancelButton');
+        let undoButton = document.getElementById('undoButton');
+        let newSpottingButton = document.getElementById('newSpottingButton');
+        let downloadButton = document.getElementById('downloadButton');
+        let resetButton = document.getElementById('resetButton');
+        
+        // Mode constants
+        const MODE_CREATION = 'creation';
+        const MODE_EDITING = 'editing';
+        
+        // App state
+        let currentMode = MODE_CREATION;
+        let spottingSize = 10;
+        let spottingImage = null;
+        let spottingRadius = 0;
+        let imageHistory = [];
+        let currentImageData = null;
+        let originalFileName = '';
+        
+        // Event listeners
+        uploadArea.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', handleFileSelect);
+        uploadArea.addEventListener('dragover', handleDragOver);
+        uploadArea.addEventListener('dragleave', handleDragLeave);
+        uploadArea.addEventListener('drop', handleDrop);
+        sizeSlider.addEventListener('input', updateSpottingSize);
+        cancelButton.addEventListener('click', cancelSpotting);
+        undoButton.addEventListener('click', undoEdit);
+        newSpottingButton.addEventListener('click', startNewSpotting);
+        downloadButton.addEventListener('click', downloadImage);
+        resetButton.addEventListener('click', resetApp);
+        
+        // Initialize the application
+        function init() {
+            workingCanvas.addEventListener('click', handleCanvasClick);
+            workingCanvas.addEventListener('mousemove', handleCanvasMouseMove);
+            
+            // Custom cursor for spotting
+            workingCanvas.style.cursor = 'crosshair';
+            
+            // Initial state
+            setMode(MODE_CREATION);
+        }
+        
+        // Handle file selection
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) {
+                processImageFile(file);
+            }
+        }
+        
+        // Handle drag over
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            uploadArea.classList.add('highlight');
+        }
+        
+        // Handle drag leave
+        function handleDragLeave(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            uploadArea.classList.remove('highlight');
+        }
+        
+        // Handle drop
+        function handleDrop(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            uploadArea.classList.remove('highlight');
+            
+            const dt = e.dataTransfer;
+            const file = dt.files[0];
+            
+            if (file && file.type.match('image/jpeg')) {
+                processImageFile(file);
+            } else {
+                alert('Please drop a JPEG image.');
+            }
+        }
+        
+        // Process uploaded image file
+        function processImageFile(file) {
+            const reader = new FileReader();
+            originalFileName = file.name.replace(/\.[^/.]+$/, "");
+            
+            reader.onload = function(event) {
+                const img = new Image();
+                img.onload = function() {
+                    // Resize image if needed
+                    let width = img.width;
+                    let height = img.height;
+                    
+                    if (width > 1200 || height > 1200) {
+                        if (width > height) {
+                            height = (height / width) * 1200;
+                            width = 1200;
+                        } else {
+                            width = (width / height) * 1200;
+                            height = 1200;
+                        }
+                    }
+                    
+                    // Set canvas dimensions
+                    workingCanvas.width = width;
+                    workingCanvas.height = height;
+                    
+                    // Draw the image on canvas
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    // Store original image
+                    originalImage = img;
+                    
+                    // Save initial state for undo
+                    currentImageData = ctx.getImageData(0, 0, width, height);
+                    imageHistory = [currentImageData];
+                    
+                    // Show editor section
+                    uploadArea.classList.add('hidden');
+                    editorSection.classList.remove('hidden');
+                    downloadButton.classList.remove('hidden');
+                    
+                    // Initialize mode
+                    setMode(MODE_CREATION);
+                };
+                img.src = event.target.result;
+            };
+            
+            reader.readAsDataURL(file);
+        }
+        
+        // Handle canvas click
+        function handleCanvasClick(e) {
+            const rect = workingCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            if (currentMode === MODE_CREATION) {
+                // Create a spotting from the clicked area
+                createSpotting(x, y);
+            } else if (currentMode === MODE_EDITING) {
+                // Apply the spotting to the clicked area
+                applySpotting(x, y);
+            }
+        }
+        
+        // Handle canvas mouse move for cursor preview
+        function handleCanvasMouseMove(e) {
+            if (currentMode === MODE_EDITING && spottingImage) {
+                // Update cursor to show the spotting image
+                const cursorUrl = spottingImage.toDataURL();
+                workingCanvas.style.cursor = `url('${cursorUrl}') ${spottingRadius} ${spottingRadius}, auto`;
+            } else {
+                // Reset cursor to default
+                workingCanvas.style.cursor = 'crosshair';
+            }
+        }
+        
+        // Create a spotting from clicked area
+        function createSpotting(x, y) {
+            const radius = spottingSize / 2;
+            
+            // Create a temporary canvas for the spotting
+            const spotCanvas = document.createElement('canvas');
+            spotCanvas.width = spottingSize;
+            spotCanvas.height = spottingSize;
+            const spotCtx = spotCanvas.getContext('2d');
+            
+            // Draw the circular area
+            spotCtx.beginPath();
+            spotCtx.arc(radius, radius, radius, 0, Math.PI * 2);
+            spotCtx.closePath();
+            spotCtx.clip();
+            
+            // Draw the image section
+            spotCtx.drawImage(
+                workingCanvas, 
+                x - radius, y - radius, spottingSize, spottingSize,
+                0, 0, spottingSize, spottingSize
+            );
+            
+            // Create cursor image with border
+            const cursorCanvas = document.createElement('canvas');
+            cursorCanvas.width = spottingSize;
+            cursorCanvas.height = spottingSize;
+            const cursorCtx = cursorCanvas.getContext('2d');
+            
+            // Draw the spotting image
+            cursorCtx.drawImage(spotCanvas, 0, 0);
+            
+            // Draw border
+            cursorCtx.beginPath();
+            cursorCtx.arc(radius, radius, radius - 1, 0, Math.PI * 2);
+            cursorCtx.closePath();
+            cursorCtx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+            cursorCtx.lineWidth = 2;
+            cursorCtx.stroke();
+            
+            // Store the spotting image and radius
+            spottingImage = spotCanvas;
+            spottingRadius = radius;
+            
+            // Switch to editing mode
+            setMode(MODE_EDITING);
+            
+            // Update cursor with the spotting image
+            const cursorUrl = cursorCanvas.toDataURL();
+            workingCanvas.style.cursor = `url('${cursorUrl}') ${radius} ${radius}, auto`;
+        }
+        
+        // Apply the spotting to clicked area
+        function applySpotting(x, y) {
+            // Save current state for undo
+            saveCurrentState();
+            
+            // Draw the spotting image on the canvas
+            ctx.save();
+            
+            // Create circular clipping path
+            ctx.beginPath();
+            ctx.arc(x, y, spottingRadius, 0, Math.PI * 2);
+            ctx.closePath();
+            ctx.clip();
+            
+            // Draw spotting image (no border)
+            ctx.drawImage(
+                spottingImage,
+                0, 0, spottingSize, spottingSize,
+                x - spottingRadius, y - spottingRadius, spottingSize, spottingSize
+            );
+            
+            ctx.restore();
+            
+            // Enable undo button
+            undoButton.disabled = false;
+        }
+        
+        // Update spotting size
+        function updateSpottingSize() {
+            spottingSize = parseInt(sizeSlider.value);
+            sizeValue.textContent = `${spottingSize}px`;
+        }
+        
+        // Cancel spotting and return to creation mode
+        function cancelSpotting() {
+            spottingImage = null;
+            setMode(MODE_CREATION);
+        }
+        
+        // Start new spotting
+        function startNewSpotting() {
+            spottingImage = null;
+            setMode(MODE_CREATION);
+        }
+        
+        // Undo last edit
+        function undoEdit() {
+            if (imageHistory.length > 1) {
+                // Remove current state
+                imageHistory.pop();
+                
+                // Get previous state
+                const previousImageData = imageHistory[imageHistory.length - 1];
+                
+                // Restore previous state
+                ctx.putImageData(previousImageData, 0, 0);
+                
+                // Disable undo button if no more history
+                if (imageHistory.length <= 1) {
+                    undoButton.disabled = true;
+                }
+            }
+        }
+        
+        // Save current state for undo
+        function saveCurrentState() {
+            const currentState = ctx.getImageData(0, 0, workingCanvas.width, workingCanvas.height);
+            imageHistory.push(currentState);
+        }
+        
+        // Set application mode
+        function setMode(mode) {
+            currentMode = mode;
+            
+            if (mode === MODE_CREATION) {
+                modeDisplay.textContent = 'Mode: Spotting Creation Mode';
+                creationControls.classList.remove('hidden');
+                editingControls.classList.add('hidden');
+                workingCanvas.style.cursor = 'crosshair';
+            } else if (mode === MODE_EDITING) {
+                modeDisplay.textContent = 'Mode: Spotting Editing Mode';
+                creationControls.classList.add('hidden');
+                editingControls.classList.remove('hidden');
+                // Cursor is set in createSpotting
+            }
+        }
+        
+        // Download modified image
+        function downloadImage() {
+            // Create download link
+            const link = document.createElement('a');
+            link.download = `${originalFileName}-edited.jpg`;
+            
+            // Convert canvas to JPEG
+            link.href = workingCanvas.toDataURL('image/jpeg', 0.9);
+            
+            // Trigger download
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        
+        // Reset application
+        function resetApp() {
+            // Clear canvas and history
+            ctx.clearRect(0, 0, workingCanvas.width, workingCanvas.height);
+            imageHistory = [];
+            currentImageData = null;
+            spottingImage = null;
+            
+            // Reset to upload view
+            uploadArea.classList.remove('hidden');
+            editorSection.classList.add('hidden');
+            downloadButton.classList.add('hidden');
+            
+            // Reset file input
+            fileInput.value = '';
+            
+            // Reset mode
+            setMode(MODE_CREATION);
+        }
+        
+        // Initialize
+        init();
+    </script>
+</body>
+</html>

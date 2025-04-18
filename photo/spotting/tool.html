@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>写真スポッティング編集ツール</title>
+    <style>
+        body {
+            font-family: 'Hiragino Sans', 'Meiryo', sans-serif;
+            max-width: 1024px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .upload-area {
+            border: 3px dashed #ccc;
+            padding: 40px;
+            text-align: center;
+            background-color: #fff;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .upload-area:hover {
+            background-color: #f0f0f0;
+        }
+        .upload-area.dragover {
+            background-color: #e0f7fa;
+            border-color: #4fc3f7;
+        }
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 10px;
+            padding: 15px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .controls button {
+            padding: 8px 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .controls button:hover {
+            background-color: #45a049;
+        }
+        .controls button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-grow: 1;
+        }
+        .image-container {
+            position: relative;
+            margin-top: 10px;
+            overflow: hidden;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: none;
+        }
+        #imageCanvas {
+            display: block;
+            max-width: 100%;
+        }
+        .instructions {
+            background-color: #e8f5e9;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .instructions h3 {
+            margin-top: 0;
+            color: #2e7d32;
+        }
+        .instructions ul {
+            margin-bottom: 0;
+        }
+        input[type="file"] {
+            display: none;
+        }
+        #clearButton {
+            background-color: #f44336;
+        }
+        #clearButton:hover {
+            background-color: #d32f2f;
+        }
+        #undoButton {
+            background-color: #2196F3;
+        }
+        #undoButton:hover {
+            background-color: #0b7dda;
+        }
+        #downloadButton {
+            background-color: #9c27b0;
+        }
+        #downloadButton:hover {
+            background-color: #7b1fa2;
+        }
+        .cursor-circle {
+            position: absolute;
+            border: 2px solid #ff5722;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 1000;
+            display: none;
+        }
+        .preview-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #fff;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            display: none;
+        }
+        .preview-container h4 {
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+        #previewCanvas {
+            display: block;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>写真スポッティング編集ツール</h1>
+    
+    <div class="container">
+        <div id="uploadArea" class="upload-area">
+            <p>ここをクリックして画像を選択<br>または画像をドラッグ＆ドロップ</p>
+            <input type="file" id="fileInput" accept=".jpg,.jpeg">
+        </div>
+
+        <div id="controlsArea" class="controls" style="display: none;">
+            <div class="slider-container">
+                <label for="sizeSlider">スポッティングサイズ:</label>
+                <input type="range" id="sizeSlider" min="1" max="100" value="20">
+                <span id="sizeValue">20px</span>
+            </div>
+            <button id="undoButton" disabled>編集を戻す</button>
+            <button id="downloadButton">ダウンロード</button>
+            <button id="clearButton">キャンセル</button>
+        </div>
+
+        <div id="imageContainer" class="image-container">
+            <canvas id="imageCanvas"></canvas>
+            <div id="cursorCircle" class="cursor-circle"></div>
+        </div>
+
+        <div class="instructions">
+            <h3>使い方説明</h3>
+            <ul>
+                <li>画像をアップロードするには、上のエリアをクリックするか、画像をドラッグ＆ドロップしてください。</li>
+                <li><strong>右クリック</strong>：クリックした場所の円形部分を「スポッティング画像」として取得</li>
+                <li><strong>左クリック</strong>：「スポッティング画像」を現在の位置に貼り付け</li>
+                <li>スライダーで「スポッティング画像」のサイズを調整できます（1～100ピクセル）</li>
+                <li>「編集を戻す」ボタンで貼り付け操作を一つずつ元に戻せます</li>
+                <li>「ダウンロード」ボタンで編集した画像を保存できます</li>
+            </ul>
+        </div>
+
+        <div id="previewContainer" class="preview-container">
+            <h4>スポッティング画像</h4>
+            <canvas id="previewCanvas" width="100" height="100"></canvas>
+        </div>
+    </div>
+
+    <script>
+        // DOM要素の取得
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const imageContainer = document.getElementById('imageContainer');
+        const imageCanvas = document.getElementById('imageCanvas');
+        const cursorCircle = document.getElementById('cursorCircle');
+        const controlsArea = document.getElementById('controlsArea');
+        const sizeSlider = document.getElementById('sizeSlider');
+        const sizeValue = document.getElementById('sizeValue');
+        const undoButton = document.getElementById('undoButton');
+        const downloadButton = document.getElementById('downloadButton');
+        const clearButton = document.getElementById('clearButton');
+        const previewContainer = document.getElementById('previewContainer');
+        const previewCanvas = document.getElementById('previewCanvas');
+
+        // キャンバスコンテキスト
+        const ctx = imageCanvas.getContext('2d');
+        const previewCtx = previewCanvas.getContext('2d');
+
+        // 変数の初期化
+        let originalImage = null;        // 元の画像
+        let spottingSize = 20;           // スポッティングのサイズ（初期値20px）
+        let spottingData = null;         // スポッティング画像データ
+        let imageHistory = [];           // 履歴
+        let currentStep = -1;            // 現在の編集ステップ
+        let originalFileName = '';       // 元のファイル名
+        let imageScale = 1;              // 画像のスケール（表示用）
+        let canvasScale = 1;             // キャンバスの表示スケール（ブラウザ表示用）
+
+        // アップロードエリアのイベント
+        uploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        // ファイル選択イベント
+        fileInput.addEventListener('change', handleFileSelect);
+
+        // ドラッグ＆ドロップ関連のイベント
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            if (e.dataTransfer.files.length > 0) {
+                handleFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        // ファイル選択処理
+        function handleFileSelect(e) {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        }
+
+        // ファイル処理
+        function handleFile(file) {
+            // JPEGファイルかどうかチェック
+            if (!file.type.match('image/jpeg')) {
+                alert('JPEGファイルのみアップロードできます。');
+                return;
+            }
+
+            // ファイル名の保存（ダウンロード用）
+            originalFileName = file.name;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                // 画像の読み込み
+                const img = new Image();
+                img.onload = () => {
+                    // 元の画像を保存
+                    originalImage = img;
+
+                    // 履歴をリセット
+                    imageHistory = [];
+                    currentStep = -1;
+                    
+                    // 表示の準備
+                    setupImageDisplay();
+                    
+                    // UIの表示切り替え
+                    uploadArea.style.display = 'none';
+                    imageContainer.style.display = 'block';
+                    controlsArea.style.display = 'flex';
+                    
+                    // 初期状態の保存
+                    saveCurrentState();
+                    
+                    // ウィンドウリサイズイベントを設定
+                    window.addEventListener('resize', updateCanvasScale);
+                    // 初期スケールを計算
+                    updateCanvasScale();
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // キャンバスの表示スケールを更新
+        function updateCanvasScale() {
+            if (!imageCanvas) return;
+            
+            // 現在のキャンバスの表示サイズを取得
+            const displayWidth = imageCanvas.clientWidth;
+            // キャンバスの実際のサイズとの比率を計算
+            canvasScale = displayWidth / imageCanvas.width;
+            
+            // カーソル円のサイズも更新
+            updateCursorCircle();
+        }
+
+        // 画像表示の設定
+        function setupImageDisplay() {
+            // 画像のサイズ計算
+            const maxSize = 1024;
+            let width = originalImage.width;
+            let height = originalImage.height;
+            
+            // 長辺が1024pxを超える場合、縮小表示
+            if (width > maxSize || height > maxSize) {
+                if (width > height) {
+                    imageScale = maxSize / width;
+                    width = maxSize;
+                    height = height * imageScale;
+                } else {
+                    imageScale = maxSize / height;
+                    height = maxSize;
+                    width = width * imageScale;
+                }
+            } else {
+                // 1024px以下の場合は等倍表示
+                imageScale = 1;
+            }
+            
+            // キャンバスのサイズを設定
+            imageCanvas.width = width;
+            imageCanvas.height = height;
+            
+            // 画像の描画
+            ctx.drawImage(originalImage, 0, 0, width, height);
+            
+            // カーソル円のサイズ更新
+            updateCursorCircle();
+        }
+
+        // 現在の状態を保存
+        function saveCurrentState() {
+            // 現在の編集ステップより後の履歴を削除
+            if (currentStep < imageHistory.length - 1) {
+                imageHistory = imageHistory.slice(0, currentStep + 1);
+            }
+            
+            // 現在の状態を保存
+            imageHistory.push(ctx.getImageData(0, 0, imageCanvas.width, imageCanvas.height));
+            currentStep = imageHistory.length - 1;
+            
+            // 「編集を戻す」ボタンの有効化
+            undoButton.disabled = (currentStep <= 0);
+        }
+
+        // 編集を一つ戻す
+        function undoLastAction() {
+            if (currentStep > 0) {
+                currentStep--;
+                ctx.putImageData(imageHistory[currentStep], 0, 0);
+                undoButton.disabled = (currentStep <= 0);
+            }
+        }
+
+        // スポッティングサイズの更新
+        sizeSlider.addEventListener('input', () => {
+            spottingSize = parseInt(sizeSlider.value);
+            sizeValue.textContent = `${spottingSize}px`;
+            updateCursorCircle();
+        });
+
+        // カーソルの円を更新
+        function updateCursorCircle() {
+            // 表示サイズの計算（画像スケールとブラウザ表示スケールを考慮）
+            const displaySize = spottingSize * imageScale * canvasScale;
+            cursorCircle.style.width = `${displaySize * 2}px`;
+            cursorCircle.style.height = `${displaySize * 2}px`;
+            cursorCircle.style.marginLeft = `-${displaySize}px`;
+            cursorCircle.style.marginTop = `-${displaySize}px`;
+        }
+
+        // マウス移動時のカーソル円表示
+        imageCanvas.addEventListener('mousemove', (e) => {
+            const rect = imageCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            cursorCircle.style.left = `${x}px`;
+            cursorCircle.style.top = `${y}px`;
+            cursorCircle.style.display = 'block';
+        });
+
+        // マウスが画像から出たら円を非表示
+        imageCanvas.addEventListener('mouseout', () => {
+            cursorCircle.style.display = 'none';
+        });
+
+        // 右クリック（スポッティング画像の取得）
+        imageCanvas.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            
+            const rect = imageCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            // 実際の画像上の座標に変換（表示スケールを考慮）
+            const realX = (x / canvasScale) / imageScale;
+            const realY = (y / canvasScale) / imageScale;
+            
+            // スポッティング画像の取得
+            captureSpottingImage(realX, realY);
+        });
+
+        // 左クリック（スポッティング画像の貼り付け）
+        imageCanvas.addEventListener('click', (e) => {
+            if (!spottingData) return;
+            
+            const rect = imageCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            // 実際の画像上の座標に変換（表示スケールを考慮）
+            const realX = (x / canvasScale) / imageScale;
+            const realY = (y / canvasScale) / imageScale;
+            
+            // スポッティング画像の貼り付け
+            applySpottingImage(realX, realY);
+            
+            // 履歴に保存
+            saveCurrentState();
+        });
+
+        // スポッティング画像の取得
+        function captureSpottingImage(x, y) {
+            // プレビューキャンバスのサイズ設定
+            const previewSize = spottingSize * 2;
+            previewCanvas.width = previewSize;
+            previewCanvas.height = previewSize;
+            
+            // 実際のサイズで元画像から取得
+            const sourceX = Math.max(0, x - spottingSize);
+            const sourceY = Math.max(0, y - spottingSize);
+            const sourceWidth = Math.min(spottingSize * 2, originalImage.width - sourceX);
+            const sourceHeight = Math.min(spottingSize * 2, originalImage.height - sourceY);
+            
+            // オフセットの計算
+            const offsetX = x - spottingSize - sourceX;
+            const offsetY = y - spottingSize - sourceY;
+            
+            // オリジナル画像から切り取り
+            previewCtx.clearRect(0, 0, previewSize, previewSize);
+            previewCtx.drawImage(
+                originalImage,
+                sourceX, sourceY, sourceWidth, sourceHeight,
+                offsetX, offsetY, sourceWidth, sourceHeight
+            );
+            
+            // 円形にクリップ
+            previewCtx.globalCompositeOperation = 'destination-in';
+            previewCtx.beginPath();
+            previewCtx.arc(previewSize / 2, previewSize / 2, spottingSize, 0, Math.PI * 2);
+            previewCtx.closePath();
+            previewCtx.fill();
+            previewCtx.globalCompositeOperation = 'source-over';
+            
+            // スポッティングデータを保存
+            spottingData = previewCtx.getImageData(0, 0, previewSize, previewSize);
+            
+            // プレビュー表示
+            previewContainer.style.display = 'block';
+        }
+
+        // スポッティング画像の貼り付け
+        function applySpottingImage(x, y) {
+            if (!spottingData) return;
+            
+            // キャンバスに描画（スケール考慮）
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = spottingData.width;
+            tempCanvas.height = spottingData.height;
+            const tempCtx = tempCanvas.getContext('2d');
+            tempCtx.putImageData(spottingData, 0, 0);
+            
+            const drawX = (x - spottingSize) * imageScale;
+            const drawY = (y - spottingSize) * imageScale;
+            const drawSize = spottingSize * 2 * imageScale;
+            
+            ctx.drawImage(tempCanvas, drawX, drawY, drawSize, drawSize);
+        }
+
+        // 編集を戻すボタン
+        undoButton.addEventListener('click', undoLastAction);
+
+        // ダウンロードボタン
+        downloadButton.addEventListener('click', () => {
+            if (!originalImage) return;
+            
+            // 元のサイズでキャンバスを作成
+            const downloadCanvas = document.createElement('canvas');
+            downloadCanvas.width = originalImage.width;
+            downloadCanvas.height = originalImage.height;
+            const downloadCtx = downloadCanvas.getContext('2d');
+            
+            // 元の画像を描画
+            downloadCtx.drawImage(originalImage, 0, 0);
+            
+            // 編集内容を適用（履歴から最新の編集を再現）
+            if (currentStep >= 0) {
+                // 表示用キャンバスから編集内容を取得して元のサイズに変換
+                downloadCtx.drawImage(
+                    imageCanvas, 
+                    0, 0, imageCanvas.width, imageCanvas.height,
+                    0, 0, originalImage.width, originalImage.height
+                );
+            }
+            
+            // ファイル名の作成
+            let fileName = originalFileName;
+            if (fileName.includes('.')) {
+                const nameParts = fileName.split('.');
+                const extension = nameParts.pop();
+                fileName = nameParts.join('.') + '-edited.' + extension;
+            } else {
+                fileName += '-edited.jpg';
+            }
+            
+            // ダウンロード処理
+            try {
+                const link = document.createElement('a');
+                link.download = fileName;
+                link.href = downloadCanvas.toDataURL('image/jpeg', 0.9);
+                link.click();
+            } catch (err) {
+                console.error('画像のダウンロード中にエラーが発生しました:', err);
+                alert('画像のダウンロード中にエラーが発生しました。');
+            }
+        });
+
+        // キャンセルボタン
+        clearButton.addEventListener('click', () => {
+            // 画像データのクリア
+            originalImage = null;
+            spottingData = null;
+            imageHistory = [];
+            currentStep = -1;
+            
+            // ウィンドウリサイズイベントを削除
+            window.removeEventListener('resize', updateCanvasScale);
+            
+            // UI表示の初期化
+            uploadArea.style.display = 'block';
+            imageContainer.style.display = 'none';
+            controlsArea.style.display = 'none';
+            previewContainer.style.display = 'none';
+            
+            // ファイル入力のリセット
+            fileInput.value = '';
+        });
+    </script>
+</body>
+</html>
