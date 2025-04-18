@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>写真スポッティング編集ツール（スクロール対応版）</title>
+<style>
+body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+    background-color: #f5f5f5;
+}
+.container {
+    max-width: 960px;
+    margin: 0 auto;
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+.canvas-container {
+    width: 900px;
+    height: 600px;
+    margin: 20px auto;
+    border: 1px solid #ccc;
+    position: relative;
+    overflow: auto;
+}
+canvas {
+    position: absolute;
+    cursor: crosshair;
+}
+.controls {
+    margin-bottom: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+}
+.controls label {
+    margin-right: 5px;
+}
+.color-picker {
+    width: 40px;
+    height: 30px;
+    cursor: pointer;
+}
+button {
+    padding: 8px 12px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-right: 10px;
+}
+button:hover {
+    background-color: #45a049;
+}
+input[type="file"] {
+    display: none;
+}
+.file-label {
+    padding: 8px 12px;
+    background-color: #2196F3;
+    color: white;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-right: 10px;
+}
+.file-label:hover {
+    background-color: #0b7dda;
+}
+.info {
+    margin-top: 20px;
+    color: #666;
+}
+</style>
+</head>
+<body>
+<div class="container">
+    <h1>写真スポッティング編集ツール（スクロール対応版）</h1>
+    
+    <div class="controls">
+        <label for="fileInput" class="file-label">写真を選択</label>
+        <input type="file" id="fileInput" accept="image/*">
+        
+        <label for="penSize">ペンサイズ:</label>
+        <input type="range" id="penSize" min="1" max="50" value="10">
+        <span id="penSizeValue">10</span>px
+        
+        <label for="penColor">ペン色:</label>
+        <input type="color" id="penColor" value="#ff0000" class="color-picker">
+        
+        <button id="clearBtn">全消去</button>
+        <button id="undoBtn">1つ戻る</button>
+        <button id="saveBtn">保存</button>
+    </div>
+    
+    <div class="canvas-container" id="canvasContainer">
+        <canvas id="imageCanvas"></canvas>
+        <canvas id="drawingCanvas"></canvas>
+    </div>
+    
+    <div class="info">
+        <p>※ 写真をアップしたら、丸で囲みたい部分をドラッグして囲んでください。</p>
+        <p>※ 囲みを間違えたら「1つ戻る」ボタンで最後の操作を取り消せます。</p>
+        <p>※ 「保存」ボタンで編集した画像をダウンロードできます。</p>
+        <p>※ 大きな画像の場合は、枠内でスクロールしながら編集できます。</p>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('fileInput');
+    const imageCanvas = document.getElementById('imageCanvas');
+    const drawingCanvas = document.getElementById('drawingCanvas');
+    const canvasContainer = document.getElementById('canvasContainer');
+    const penSize = document.getElementById('penSize');
+    const penSizeValue = document.getElementById('penSizeValue');
+    const penColor = document.getElementById('penColor');
+    const clearBtn = document.getElementById('clearBtn');
+    const undoBtn = document.getElementById('undoBtn');
+    const saveBtn = document.getElementById('saveBtn');
+    
+    const imgCtx = imageCanvas.getContext('2d');
+    const drawCtx = drawingCanvas.getContext('2d');
+    
+    let isDrawing = false;
+    let lastX = 0;
+    let lastY = 0;
+    let circles = [];
+    let currentImage = null;
+    
+    // ペンサイズスライダーの値を表示
+    penSize.addEventListener('input', function() {
+        penSizeValue.textContent = this.value;
+    });
+    
+    // 画像選択イベント
+    fileInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file && file.type.match('image.*')) {
+            const reader = new FileReader();
+            
+            reader.onload = function(event) {
+                const img = new Image();
+                img.onload = function() {
+                    // 画像サイズに合わせてキャンバスを設定
+                    imageCanvas.width = img.width;
+                    imageCanvas.height = img.height;
+                    drawingCanvas.width = img.width;
+                    drawingCanvas.height = img.height;
+                    
+                    // 画像を描画
+                    imgCtx.clearRect(0, 0, imageCanvas.width, imageCanvas.height);
+                    imgCtx.drawImage(img, 0, 0);
+                    
+                    // 描画キャンバスをクリア
+                    drawCtx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+                    circles = [];
+                    
+                    currentImage = img;
+                };
+                img.src = event.target.result;
+            };
+            
+            reader.readAsDataURL(file);
+        }
+    });
+    
+    // 描画イベント
+    drawingCanvas.addEventListener('mousedown', startDrawing);
+    drawingCanvas.addEventListener('mousemove', draw);
+    drawingCanvas.addEventListener('mouseup', stopDrawing);
+    drawingCanvas.addEventListener('mouseout', stopDrawing);
+    
+    // タッチデバイス対応
+    drawingCanvas.addEventListener('touchstart', function(e) {
+        const touch = e.touches[0];
+        const mouseEvent = new MouseEvent('mousedown', {
+            clientX: touch.clientX,
+            clientY: touch.clientY
+        });
+        drawingCanvas.dispatchEvent(mouseEvent);
+        e.preventDefault();
+    }, false);
+    
+    drawingCanvas.addEventListener('touchmove', function(e) {
+        const touch = e.touches[0];
+        const mouseEvent = new MouseEvent('mousemove', {
+            clientX: touch.clientX,
+            clientY: touch.clientY
+        });
+        drawingCanvas.dispatchEvent(mouseEvent);
+        e.preventDefault();
+    }, false);
+    
+    ['touchend', 'touchcancel'].forEach(function(eventName) {
+        drawingCanvas.addEventListener(eventName, function(e) {
+            const mouseEvent = new MouseEvent('mouseup', {});
+            drawingCanvas.dispatchEvent(mouseEvent);
+            e.preventDefault();
+        }, false);
+    });
+    
+    // 描画関数
+    function startDrawing(e) {
+        if (!currentImage) return;
+        
+        isDrawing = true;
+        
+        const rect = drawingCanvas.getBoundingClientRect();
+        const scrollLeft = canvasContainer.scrollLeft;
+        const scrollTop = canvasContainer.scrollTop;
+        
+        lastX = e.clientX - rect.left + scrollLeft;
+        lastY = e.clientY - rect.top + scrollTop;
+        
+        // 新しい円を開始
+        circles.push({
+            color: penColor.value,
+            size: parseInt(penSize.value),
+            points: [{x: lastX, y: lastY}]
+        });
+    }
+    
+    function draw(e) {
+        if (!isDrawing || !currentImage) return;
+        
+        const rect = drawingCanvas.getBoundingClientRect();
+        const scrollLeft = canvasContainer.scrollLeft;
+        const scrollTop = canvasContainer.scrollTop;
+        
+        const x = e.clientX - rect.left + scrollLeft;
+        const y = e.clientY - rect.top + scrollTop;
+        
+        drawCtx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+        
+        // すべての円を描画
+        circles.forEach((circle, index) => {
+            if (index === circles.length - 1 && isDrawing) {
+                // 現在描いている円の場合、新しいポイントを追加
+                circle.points.push({x: x, y: y});
+            }
+            
+            drawCircle(circle);
+        });
+        
+        lastX = x;
+        lastY = y;
+    }
+    
+    function stopDrawing() {
+        isDrawing = false;
+    }
+    
+    function drawCircle(circle) {
+        if (circle.points.length < 2) return;
+        
+        drawCtx.strokeStyle = circle.color;
+        drawCtx.lineWidth = circle.size;
+        drawCtx.lineCap = 'round';
+        drawCtx.lineJoin = 'round';
+        
+        drawCtx.beginPath();
+        drawCtx.moveTo(circle.points[0].x, circle.points[0].y);
+        
+        for (let i = 1; i < circle.points.length; i++) {
+            drawCtx.lineTo(circle.points[i].x, circle.points[i].y);
+        }
+        
+        // 円を閉じる
+        if (circle.points.length > 2) {
+            drawCtx.lineTo(circle.points[0].x, circle.points[0].y);
+        }
+        
+        drawCtx.stroke();
+    }
+    
+    // クリアボタン
+    clearBtn.addEventListener('click', function() {
+        if (!currentImage) return;
+        
+        drawCtx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+        circles = [];
+    });
+    
+    // 元に戻すボタン
+    undoBtn.addEventListener('click', function() {
+        if (circles.length === 0 || !currentImage) return;
+        
+        circles.pop();
+        drawCtx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+        
+        circles.forEach(circle => {
+            drawCircle(circle);
+        });
+    });
+    
+    // 保存ボタン
+    saveBtn.addEventListener('click', function() {
+        if (!currentImage) return;
+        
+        // 一時的なキャンバスを作成
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = imageCanvas.width;
+        tempCanvas.height = imageCanvas.height;
+        const tempCtx = tempCanvas.getContext('2d');
+        
+        // 画像をコピー
+        tempCtx.drawImage(imageCanvas, 0, 0);
+        // 描画内容をコピー
+        tempCtx.drawImage(drawingCanvas, 0, 0);
+        
+        // ダウンロードリンクを作成
+        const link = document.createElement('a');
+        link.download = 'spotted_image.png';
+        link.href = tempCanvas.toDataURL('image/png');
+        link.click();
+    });
+});
+</script>
+</body>
+</html>
