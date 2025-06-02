@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>難読漢字クイズ</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .quiz-container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 100%;
+            max-width: 500px;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 2em;
+        }
+        .question-box {
+            background-color: #e9ecef;
+            padding: 25px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        .question-box p {
+            font-size: 3em;
+            font-weight: bold;
+            color: #495057;
+            margin: 0;
+            line-height: 1.5;
+        }
+        .options-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        .option-button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 15px 20px;
+            border-radius: 5px;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .option-button:hover {
+            background-color: #0056b3;
+        }
+        .option-button:active {
+            background-color: #004085;
+        }
+        #feedback {
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-top: 20px;
+            min-height: 1.5em; /* フィードバックが表示されないときのレイアウト崩れを防ぐ */
+        }
+        #next-button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 5px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-top: 20px;
+            display: none; /* 初期状態では非表示 */
+        }
+        #next-button:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+    <div class="quiz-container">
+        <h1>難読漢字クイズ</h1>
+        <div class="question-box">
+            <p id="kanji-display">漢字が表示されます</p>
+        </div>
+        <div class="options-container" id="options">
+            </div>
+        <div id="feedback"></div>
+        <button id="next-button">次の問題へ</button>
+    </div>
+
+    <script>
+        const kanjiList = [
+            { kanji: "躊躇", readings: ["ちゅうちょ", "ちゅうちょ", "ちゅうちょ", "たじろぎ"] },
+            { kanji: "贔屓", readings: ["ひいき", "ひいき", "ひいき", "びいき"] },
+            { kanji: "漸く", readings: ["ようやく", "ようやく", "ようやく", "しばらく"] },
+            { kanji: "捏造", readings: ["ねつぞう", "ねつぞう", "ねつぞう", "ねつぞう"] },
+            { kanji: "生憎", readings: ["あいにく", "あいにく", "あいにく", "なまにく"] },
+            { kanji: "凡例", readings: ["はんれい", "はんれい", "はんれい", "ぼんれい"] },
+            { kanji: "貼付", readings: ["ちょうふ", "ちょうふ", "ちょうふ", "はりつけ"] },
+            { kanji: "月極", readings: ["つきぎめ", "つきぎめ", "つきぎめ", "げっきょく"] },
+            { kanji: "続柄", readings: ["つづきがら", "つづきがら", "つづきがら", "ぞくがら"] },
+            { kanji: "訃報", readings: ["ふほう", "ふほう", "ふほう", "とほう"] },
+            { kanji: "時雨", readings: ["しぐれ", "しぐれ", "しぐれ", "ときあめ"] },
+            { kanji: "団栗", readings: ["どんぐり", "どんぐり", "どんぐり", "だんぐり"] },
+            { kanji: "雪崩", readings: ["なだれ", "なだれ", "なだれ", "ゆきくずれ"] },
+            { kanji: "欠伸", readings: ["あくび", "あくび", "あくび", "けっしん"] },
+            { kanji: "海老", readings: ["えび", "えび", "えび", "かいろう"] }
+            // ここに漢字と読みを追加できます
+        ];
+
+        let currentQuestion = null;
+        let answered = false;
+
+        const kanjiDisplay = document.getElementById('kanji-display');
+        const optionsContainer = document.getElementById('options');
+        const feedbackElement = document.getElementById('feedback');
+        const nextButton = document.getElementById('next-button');
+
+        function getRandomQuestion() {
+            const randomIndex = Math.floor(Math.random() * kanjiList.length);
+            return kanjiList[randomIndex];
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function displayQuestion() {
+            currentQuestion = getRandomQuestion();
+            kanjiDisplay.textContent = currentQuestion.kanji;
+            optionsContainer.innerHTML = ''; // 選択肢をクリア
+
+            // 正しい読みを最初の要素として取得
+            const correctReading = currentQuestion.readings[0];
+            // 不正解の選択肢は、正しい読み以外のものから選ぶ
+            const incorrectReadings = currentQuestion.readings.slice(1);
+
+            // 選択肢を3つに絞り、正しい読みとシャッフルされた不正解の読みを組み合わせる
+            let options = [correctReading];
+            const shuffledIncorrect = shuffleArray([...incorrectReadings]);
+            for (let i = 0; i < Math.min(3, shuffledIncorrect.length); i++) {
+                options.push(shuffledIncorrect[i]);
+            }
+            // 選択肢の数が足りない場合は、重複を許容して正しい読みを追加することで4つにする
+            while (options.length < 4) {
+                options.push(correctReading); // 正しい読みを繰り返し追加
+            }
+
+            // 最終的な選択肢をシャッフル
+            options = shuffleArray(options);
+
+            options.forEach(option => {
+                const button = document.createElement('button');
+                button.classList.add('option-button');
+                button.textContent = option;
+                button.onclick = () => checkAnswer(option);
+                optionsContainer.appendChild(button);
+            });
+
+            feedbackElement.textContent = '';
+            nextButton.style.display = 'none';
+            answered = false;
+        }
+
+        function checkAnswer(selectedReading) {
+            if (answered) return; // 既に回答済みの場合は何もしない
+
+            answered = true;
+            const correctReading = currentQuestion.readings[0];
+            const optionButtons = document.querySelectorAll('.option-button');
+
+            if (selectedReading === correctReading) {
+                feedbackElement.textContent = '正解！';
+                feedbackElement.style.color = '#28a745';
+            } else {
+                feedbackElement.textContent = `不正解... 正解は「${correctReading}」です。`;
+                feedbackElement.style.color = '#dc3545';
+            }
+
+            // 全てのボタンを無効化し、正解・不正解の色をつける
+            optionButtons.forEach(button => {
+                button.disabled = true;
+                if (button.textContent === correctReading) {
+                    button.style.backgroundColor = '#28a745'; // 正解のボタンを緑に
+                } else if (button.textContent === selectedReading) {
+                    button.style.backgroundColor = '#dc3545'; // 選択したボタンが不正解なら赤に
+                } else {
+                    button.style.backgroundColor = '#6c757d'; // その他のボタンはグレーに
+                }
+            });
+
+            nextButton.style.display = 'block'; // 次の問題へボタンを表示
+        }
+
+        nextButton.addEventListener('click', displayQuestion);
+
+        // アプリ起動時に最初の問題を表示
+        displayQuestion();
+    </script>
+</body>
+</html>

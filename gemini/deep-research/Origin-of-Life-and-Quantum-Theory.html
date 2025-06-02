@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="ja" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>量子力学と生命の起源：インタラクティブ・ガイド</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Visualization & Content Choices: 
+        1. Classical/Quantum Comparison: Goal=Compare. Viz=Bar Chart (Chart.js). Interaction=Hover tooltips. Justification=Starkly visualizes the efficiency gap between random chance and quantum-assisted processes, a core argument of the report.
+        2. Key Quantum Effects: Goal=Organize/Explain. Viz=HTML/CSS Tabs with abstract Canvas animations. Interaction=Clicking tabs reveals content for Coherence, Tunneling, Entanglement. Justification=Breaks down the most complex part of the report into manageable, interactive modules. The animations provide intuitive, non-textual understanding of abstract concepts.
+        3. RNA World Hypothesis: Goal=Organize/Explain Process. Viz=HTML/CSS interactive flowchart. Interaction=Clicking on steps reveals contextual information. Justification=Visually maps the process of abiogenesis, allowing users to explore how quantum mechanics could have influenced each critical stage, making the connection explicit.
+        This plan supports the designed structure by providing interactive focal points for each major theme. -->
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Sans JP', sans-serif;
+            background-color: #f5f5f4; /* Stone 100 */
+            color: #292524; /* Stone 800 */
+        }
+        .section-title {
+            font-size: 2.25rem;
+            font-weight: 700;
+            line-height: 2.5rem;
+            color: #1c1917; /* Stone 900 */
+        }
+        @media (min-width: 768px) {
+            .section-title {
+                font-size: 3rem;
+                line-height: 1;
+            }
+        }
+        .tab-button {
+            transition: all 0.3s ease;
+        }
+        .tab-button.active {
+            background-color: #0d9488; /* Teal 600 */
+            color: white;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+        .tab-pane {
+            display: none;
+        }
+        .tab-pane.active {
+            display: block;
+        }
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 400px;
+            }
+        }
+        .flowchart-step {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .flowchart-step.active, .flowchart-step:hover {
+            transform: scale(1.05);
+            background-color: #e7e5e4; /* Stone 200 */
+            border-color: #0d9488; /* Teal 600 */
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <header class="bg-stone-50/80 backdrop-blur-md sticky top-0 z-50 shadow-sm">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex-shrink-0">
+                    <h1 class="text-xl font-bold text-teal-700">生命の起源と量子論</h1>
+                </div>
+                <nav class="hidden md:flex space-x-8">
+                    <a href="#problem" class="text-gray-600 hover:text-teal-600 transition">古典物理学の限界</a>
+                    <a href="#quantum" class="text-gray-600 hover:text-teal-600 transition">量子効果の世界</a>
+                    <a href="#origin" class="text-gray-600 hover:text-teal-600 transition">生命の誕生</a>
+                    <a href="#future" class="text-gray-600 hover:text-teal-600 transition">最前線と未来</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="py-20 md:py-32 text-center bg-stone-100">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <h2 class="section-title tracking-tight">生命は、なぜ生まれたのか？</h2>
+                <p class="mt-6 max-w-2xl mx-auto text-lg text-stone-600">
+                    宇宙の物質がただ衝突を繰り返すだけでは、生命の驚異的な複雑性は説明できません。その答えの鍵は、ミクロの世界を支配する「量子力学」にあるのかもしれません。このガイドでは、生命誕生の謎を解く量子論の役割をインタラクティブに探求します。
+                </p>
+                <a href="#problem" class="mt-8 inline-block bg-teal-600 text-white font-semibold px-8 py-3 rounded-lg shadow-md hover:bg-teal-700 transition-transform transform hover:scale-105">
+                    探求を始める
+                </a>
+            </div>
+        </section>
+
+        <section id="problem" class="py-16 md:py-24">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-12">
+                    <h2 class="text-base font-semibold text-teal-600 tracking-wider uppercase">課題</h2>
+                    <p class="section-title mt-2">古典物理学の限界</p>
+                    <p class="mt-4 max-w-2xl mx-auto text-lg text-stone-600">
+                        ニュートン力学に代表される古典物理学は、私たちの日常世界をうまく説明しますが、生命の根源的な問いの前では3つの大きな壁に突き当たります。
+                    </p>
+                </div>
+                <div class="grid md:grid-cols-3 gap-8">
+                    <div class="bg-white p-8 rounded-lg shadow-md border border-stone-200">
+                        <div class="text-3xl text-teal-500">??</div>
+                        <h3 class="mt-4 text-xl font-bold text-stone-800">複雑性の壁</h3>
+                        <p class="mt-2 text-stone-600">単純な物質の衝突から、自己複製するような精巧なシステムが「偶然」生まれる確率は天文学的に低く、古典的な枠組みでは説明が困難です。</p>
+                    </div>
+                    <div class="bg-white p-8 rounded-lg shadow-md border border-stone-200">
+                        <div class="text-3xl text-teal-500">??</div>
+                        <h3 class="mt-4 text-xl font-bold text-stone-800">秩序の壁</h3>
+                        <p class="mt-2 text-stone-600">宇宙全体が無秩序（エントロピー増大）に向かう中で、生命はなぜ秩序を維持し、さらに複雑になれるのか？この矛盾は古典熱力学の課題です。</p>
+                    </div>
+                    <div class="bg-white p-8 rounded-lg shadow-md border border-stone-200">
+                        <div class="text-3xl text-teal-500">??</div>
+                        <h3 class="mt-4 text-xl font-bold text-stone-800">微調整の壁</h3>
+                        <p class="mt-2 text-stone-600">重力定数など宇宙の物理定数が、生命の存在を許す極めて狭い範囲に設定されています。古典物理学は、この「偶然」の理由を説明できません。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="quantum" class="py-16 md:py-24 bg-stone-100">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-12">
+                    <h2 class="text-base font-semibold text-teal-600 tracking-wider uppercase">解決策</h2>
+                    <p class="section-title mt-2">量子効果の世界</p>
+                    <p class="mt-4 max-w-2xl mx-auto text-lg text-stone-600">
+                        生命は、古典物理学では説明のつかない「奇妙な」量子効果を巧みに利用している可能性が示唆されています。主要な3つの効果を探ってみましょう。
+                    </p>
+                </div>
+
+                <div class="flex justify-center mb-8 space-x-2 md:space-x-4">
+                    <button class="tab-button active font-semibold px-4 py-2 md:px-6 md:py-3 rounded-full bg-white border border-stone-300" data-tab="coherence">量子コヒーレンス</button>
+                    <button class="tab-button font-semibold px-4 py-2 md:px-6 md:py-3 rounded-full bg-white border border-stone-300" data-tab="tunneling">量子トンネル効果</button>
+                    <button class="tab-button font-semibold px-4 py-2 md:px-6 md:py-3 rounded-full bg-white border border-stone-300" data-tab="entanglement">量子もつれ</button>
+                </div>
+
+                <div class="bg-white p-8 rounded-lg shadow-lg border border-stone-200">
+                    <div id="coherence" class="tab-pane active">
+                        <div class="grid md:grid-cols-2 gap-8 items-center">
+                            <div>
+                                <h3 class="text-2xl font-bold text-stone-800">量子コヒーレンス：究極の並列処理</h3>
+                                <p class="mt-4 text-stone-600">粒子が確定した一つの状態ではなく、複数の可能性を同時に持つ「重ね合わせ」の状態。これにより、生命は無数の選択肢から最適な経路を瞬時に見つけ出します。</p>
+                                <p class="mt-4 font-semibold text-stone-700">代表例：光合成</p>
+                                <p class="text-stone-600">植物が光エネルギーをほぼ100%の効率で伝達できるのは、電子が重ね合わせ状態で全ての伝達経路を同時に「試し」、最短ルートを選んでいるためだと考えられています。</p>
+                            </div>
+                            <div class="h-64 md:h-80 w-full bg-gray-900 rounded-lg overflow-hidden">
+                                <canvas id="coherence-canvas"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="tunneling" class="tab-pane">
+                        <div class="grid md:grid-cols-2 gap-8 items-center">
+                            <div>
+                                <h3 class="text-2xl font-bold text-stone-800">量子トンネル効果：壁をすり抜ける力</h3>
+                                <p class="mt-4 text-stone-600">粒子が、古典物理学では乗り越えられないエネルギーの壁を、まるでトンネルを掘るようにすり抜ける現象。化学反応を劇的に加速させます。</p>
+                                <p class="mt-4 font-semibold text-stone-700">代表例：酵素反応とDNA変異</p>
+                                <p class="text-stone-600">多くの酵素反応は、この効果によって効率化されています。また、DNAのプロトンがトンネル効果で位置を変えることが、遺伝子変異、すなわち進化の原動力の一つである可能性も指摘されています。</p>
+                            </div>
+                           <div class="h-64 md:h-80 w-full bg-gray-900 rounded-lg overflow-hidden">
+                                <canvas id="tunneling-canvas"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="entanglement" class="tab-pane">
+                        <div class="grid md:grid-cols-2 gap-8 items-center">
+                            <div>
+                                <h3 class="text-2xl font-bold text-stone-800">量子もつれ：時空を超えた繋がり</h3>
+                                <p class="mt-4 text-stone-600">2つ以上の粒子がペアになり、一方の状態が決まると、どれだけ離れていても瞬時にもう一方の状態が決まる不思議な相関関係です。</p>
+                                <p class="mt-4 font-semibold text-stone-700">代表例：渡り鳥の磁気コンパス</p>
+                                <p class="text-stone-600">渡り鳥が地球の微弱な磁場を検知できるのは、網膜の分子内で発生した電子ペアの「もつれ」状態が地磁気によって変化し、それを「見る」ことで方角を知る、という説が有力です。</p>
+                            </div>
+                            <div class="h-64 md:h-80 w-full bg-gray-900 rounded-lg overflow-hidden">
+                                <canvas id="entanglement-canvas"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="origin" class="py-16 md:py-24">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-12">
+                    <h2 class="text-base font-semibold text-teal-600 tracking-wider uppercase">応用</h2>
+                    <p class="section-title mt-2">生命誕生のプロセス</p>
+                    <p class="mt-4 max-w-2xl mx-auto text-lg text-stone-600">
+                        では、これらの量子効果は、最初の生命が生まれる「アビオジェネシス」にどう貢献したのでしょうか？有力なRNAワールド仮説を例に、量子論がどのように「偶然」を「必然」に近づけたかを見てみましょう。
+                    </p>
+                </div>
+                
+                <div class="grid lg:grid-cols-5 gap-8">
+                    <div class="lg:col-span-3">
+                        <div id="flowchart-container" class="space-y-4">
+                            <div class="flowchart-step p-4 border border-stone-300 rounded-lg bg-white shadow-sm" data-info="info1">
+                                <h4 class="font-bold text-stone-800">1. 有機分子の形成</h4>
+                                <p class="text-sm text-stone-600">原始の海（有機的スープ）でアミノ酸や核酸塩基が生成される。</p>
+                            </div>
+                            <div class="text-center text-2xl text-stone-400">↓</div>
+                            <div class="flowchart-step p-4 border border-stone-300 rounded-lg bg-white shadow-sm" data-info="info2">
+                                <h4 class="font-bold text-stone-800">2. 自己複製分子の探索</h4>
+                                <p class="text-sm text-stone-600">分子がランダムに結合し、自己複製能力を持つRNAのような分子を探す。</p>
+                            </div>
+                            <div class="text-center text-2xl text-stone-400">↓</div>
+                            <div class="flowchart-step p-4 border border-stone-300 rounded-lg bg-white shadow-sm" data-info="info3">
+                                <h4 class="font-bold text-stone-800">3. RNAワールドの成立</h4>
+                                <p class="text-sm text-stone-600">自己複製するRNAが情報を保持し、触媒としても機能する世界。</p>
+                            </div>
+                             <div class="text-center text-2xl text-stone-400">↓</div>
+                            <div class="flowchart-step p-4 border border-stone-300 rounded-lg bg-white shadow-sm" data-info="info4">
+                                <h4 class="font-bold text-stone-800">4. 原始細胞の誕生</h4>
+                                <p class="text-sm text-stone-600">RNAが脂質の膜に包まれ、内外を区別する最初の細胞が生まれる。</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="lg:col-span-2 bg-stone-100 p-6 rounded-lg border border-stone-200 h-full">
+                        <h4 class="font-bold text-xl text-stone-800 mb-4">量子論の役割</h4>
+                        <div id="flowchart-info">
+                            <p class="text-stone-700">上のステップをクリックして、量子効果がどのように生命誕生を助けたかを確認してください。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-20 text-center">
+                    <h3 class="text-2xl font-bold text-stone-800">量子による効率化のインパクト</h3>
+                    <p class="mt-3 max-w-xl mx-auto text-stone-600">量子効果は、生命誕生に必要な反応の「確率」と「効率」を劇的に向上させた可能性があります。これは単なる偶然の積み重ねとは一線を画します。</p>
+                    <div class="mt-8 chart-container">
+                        <canvas id="efficiency-chart"></canvas>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <section id="future" class="py-16 md:py-24 bg-stone-100">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-12">
+                    <h2 class="text-base font-semibold text-teal-600 tracking-wider uppercase">展望</h2>
+                    <p class="section-title mt-2">最前線と未来</p>
+                    <p class="mt-4 max-w-2xl mx-auto text-lg text-stone-600">
+                        量子生物学は、基礎科学の探求に留まらず、私たちの未来を大きく変える可能性を秘めた技術革新のフロンティアです。
+                    </p>
+                </div>
+                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div class="bg-white p-8 rounded-lg shadow-md border border-stone-200">
+                        <h3 class="text-xl font-bold text-stone-800">高効率エネルギー</h3>
+                        <p class="mt-2 text-stone-600">光合成の量子効率を模倣することで、現在の技術を遥かに超える高効率な太陽電池や人工光合成技術の開発が期待されます。</p>
+                    </div>
+                    <div class="bg-white p-8 rounded-lg shadow-md border border-stone-200">
+                        <h3 class="text-xl font-bold text-stone-800">革新的医療</h3>
+                        <p class="mt-2 text-stone-600">量子センサーによる超高感度な病気の早期診断、酵素反応の理解に基づく新薬開発など、医療分野への応用が進んでいます。</p>
+                    </div>
+                    <div class="bg-white p-8 rounded-lg shadow-md border border-stone-200">
+                        <h3 class="text-xl font-bold text-stone-800">量子コンピューティング</h3>
+                        <p class="mt-2 text-stone-600">生命の持つ情報処理能力の解明は、創薬シミュレーションや複雑なタンパク質の構造解析を行う量子コンピュータの開発に繋がります。</p>
+                    </div>
+                     <div class="bg-white p-8 rounded-lg shadow-md border border-stone-200">
+                        <h3 class="text-xl font-bold text-stone-800">生命の根源の理解</h3>
+                        <p class="mt-2 text-stone-600">研究が進むことで、生命とは何か、意識とは何か、という根源的な問いに対する科学的な答えが見つかるかもしれません。</p>
+                    </div>
+                     <div class="bg-white p-8 rounded-lg shadow-md border border-stone-200">
+                        <h3 class="text-xl font-bold text-stone-800">合成生命</h3>
+                        <p class="mt-2 text-stone-600">生命の動作原理を量子レベルで理解することで、いつの日か、新たな機能を持つ人工的な生命を設計・創造できる可能性があります。</p>
+                    </div>
+                     <div class="bg-white p-8 rounded-lg shadow-md border border-stone-200">
+                        <h3 class="text-xl font-bold text-stone-800">課題と議論</h3>
+                        <p class="mt-2 text-stone-600">一方で、生命の温かくノイズの多い環境で、壊れやすい量子状態がどう維持されるのかなど、未解明な点も多く、活発な議論が続いています。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-stone-800 text-stone-300 py-8">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <p>このインタラクティブ・ガイドは、量子力学が生命の起源に与える影響についての理解を深めるために作成されました。</p>
+            <p class="text-sm mt-2 text-stone-400">A web application exploring the intersection of quantum mechanics and the origin of life.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // Tab functionality
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const tabPanes = document.querySelectorAll('.tab-pane');
+
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+
+                    tabPanes.forEach(pane => {
+                        pane.classList.remove('active');
+                        if (pane.id === button.dataset.tab) {
+                            pane.classList.add('active');
+                        }
+                    });
+                });
+            });
+
+            // Flowchart functionality
+            const flowchartSteps = document.querySelectorAll('.flowchart-step');
+            const infoPanel = document.getElementById('flowchart-info');
+            const infoData = {
+                info1: {
+                    title: "量子トンネル効果の寄与",
+                    text: "古典的には起こりにくい化学反応が、量子トンネル効果によって効率的に進行し、生命の材料となる複雑な有機分子の生成を促進した可能性があります。"
+                },
+                info2: {
+                    title: "量子コヒーレンスの寄与",
+                    text: "自己複製可能な分子構造は無数に存在します。量子コヒーレンスにより、分子は膨大な数の構成を同時に「探索」でき、機能的な構造を発見する確率を劇的に高めたと考えられます。これは、古典的なランダムな試行錯誤よりも遥かに効率的です。"
+                },
+                info3: {
+                    title: "量子最適化の寄与",
+                    text: "自己複製システムは、環境からエネルギーを効率的に取り込み、情報を安定して保持する必要があります。量子効果は、これらのプロセスを最適化し、より安定で効率的な自己複製サイクルを可能にした可能性があります。"
+                },
+                info4: {
+                    title: "自己組織化と量子効果",
+                    text: "分子間の微弱な相互作用（水素結合など）は本質的に量子的です。これらの相互作用が脂質分子を自己組織化させ、内部環境を守る膜構造を形成する上で重要な役割を果たしたと考えられます。"
+                }
+            };
+            
+            flowchartSteps.forEach(step => {
+                step.addEventListener('click', () => {
+                    flowchartSteps.forEach(s => s.classList.remove('active'));
+                    step.classList.add('active');
+
+                    const infoKey = step.dataset.info;
+                    infoPanel.innerHTML = `
+                        <h4 class="font-bold text-lg text-teal-700 mb-2">${infoData[infoKey].title}</h4>
+                        <p class="text-stone-700">${infoData[infoKey].text}</p>
+                    `;
+                });
+            });
+            // Set initial state for flowchart
+            document.querySelector('.flowchart-step').click();
+
+
+            // Efficiency Chart
+            const ctx = document.getElementById('efficiency-chart').getContext('2d');
+            const efficiencyChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['古典的なランダム試行', '量子効果によるアシスト'],
+                    datasets: [{
+                        label: '生命誕生の効率（概念図）',
+                        data: [5, 95],
+                        backgroundColor: [
+                            'rgba(107, 114, 128, 0.6)', // Gray
+                            'rgba(20, 184, 166, 0.6)'  // Teal
+                        ],
+                        borderColor: [
+                            'rgb(107, 114, 128)',
+                            'rgb(20, 184, 166)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%'
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.x !== null) {
+                                        if (context.label === '古典的なランダム試行') {
+                                            label = '天文学的に低い確率';
+                                        } else {
+                                            label = '探索と反応が大幅に効率化';
+                                        }
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Canvas Animations
+            // Coherence Animation
+            const coherenceCanvas = document.getElementById('coherence-canvas');
+            const cohCtx = coherenceCanvas.getContext('2d');
+            let cohParticles = [];
+            
+            function setupCoherence() {
+                coherenceCanvas.width = coherenceCanvas.clientWidth;
+                coherenceCanvas.height = coherenceCanvas.clientHeight;
+                cohParticles = [];
+                for(let i=0; i<3; i++) {
+                    cohParticles.push({
+                        x: coherenceCanvas.width / 2,
+                        y: coherenceCanvas.height,
+                        targetY: coherenceCanvas.height * 0.1,
+                        size: 3,
+                        speed: 0.5 + Math.random() * 1,
+                        angle: (Math.PI / 4) + (Math.random() - 0.5) * (Math.PI / 2),
+                        wave: Math.random() * Math.PI * 2,
+                        amp: coherenceCanvas.width / 4,
+                        split: false
+                    });
+                }
+            }
+            
+            function drawCoherence() {
+                cohCtx.clearRect(0, 0, coherenceCanvas.width, coherenceCanvas.height);
+                
+                cohParticles.forEach(p => {
+                    // Draw target
+                    cohCtx.beginPath();
+                    cohCtx.arc(coherenceCanvas.width / 2, p.targetY, 10, 0, Math.PI * 2);
+                    cohCtx.fillStyle = 'rgba(20, 184, 166, 0.5)';
+                    cohCtx.fill();
+                    
+                    if (!p.split && p.y < coherenceCanvas.height * 0.7) {
+                        p.split = true;
+                    }
+                    
+                    p.y -= p.speed;
+                    p.wave += 0.05;
+
+                    if (p.y < p.targetY) {
+                         p.y = coherenceCanvas.height;
+                         p.split = false;
+                    }
+
+                    if (p.split) {
+                        // Draw multiple paths
+                        for (let i = -1; i <= 1; i += 2) {
+                            const pathX = p.x + Math.sin(p.wave) * p.amp * 0.5 * i;
+                            const pathY = p.y;
+                            cohCtx.beginPath();
+                            cohCtx.arc(pathX, pathY, p.size, 0, Math.PI * 2);
+                            cohCtx.fillStyle = `rgba(59, 130, 246, ${1 - (p.y / coherenceCanvas.height)})`;
+                            cohCtx.fill();
+                        }
+                    } else {
+                        cohCtx.beginPath();
+                        cohCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                        cohCtx.fillStyle = '#3b82f6';
+                        cohCtx.fill();
+                    }
+                });
+                requestAnimationFrame(drawCoherence);
+            }
+
+            // Tunneling Animation
+            const tunnelingCanvas = document.getElementById('tunneling-canvas');
+            const tunCtx = tunnelingCanvas.getContext('2d');
+            let tunParticles = [];
+
+            function setupTunneling() {
+                tunnelingCanvas.width = tunnelingCanvas.clientWidth;
+                tunnelingCanvas.height = tunnelingCanvas.clientHeight;
+                tunParticles = [];
+                for(let i = 0; i < 50; i++) {
+                     tunParticles.push({
+                        x: Math.random() * tunnelingCanvas.width * 0.4,
+                        y: Math.random() * tunnelingCanvas.height,
+                        vx: 1 + Math.random() * 1,
+                        size: 2,
+                        color: '#3b82f6'
+                    });
+                }
+            }
+
+            function drawTunneling() {
+                tunCtx.clearRect(0, 0, tunnelingCanvas.width, tunnelingCanvas.height);
+                const barrierX = tunnelingCanvas.width * 0.5;
+                const barrierWidth = 10;
+                
+                // Draw barrier
+                tunCtx.fillStyle = 'rgba(20, 184, 166, 0.8)';
+                tunCtx.fillRect(barrierX, 0, barrierWidth, tunnelingCanvas.height);
+
+                tunParticles.forEach(p => {
+                    p.x += p.vx;
+                    
+                    if (p.x > barrierX - p.size && p.x < barrierX) {
+                        if (Math.random() < 0.01) { // Tunneling probability
+                            p.x = barrierX + barrierWidth + p.size;
+                            p.color = '#f59e0b'; // Change color after tunneling
+                        } else {
+                            p.vx *= -1;
+                        }
+                    }
+                    
+                    if (p.x < 0 || p.x > tunnelingCanvas.width) {
+                        p.x = Math.random() * tunnelingCanvas.width * 0.4;
+                        p.vx = 1 + Math.random() * 1;
+                        p.color = '#3b82f6';
+                    }
+
+                    tunCtx.beginPath();
+                    tunCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    tunCtx.fillStyle = p.color;
+                    tunCtx.fill();
+                });
+
+                requestAnimationFrame(drawTunneling);
+            }
+
+            // Entanglement Animation
+            const entanglementCanvas = document.getElementById('entanglement-canvas');
+            const entCtx = entanglementCanvas.getContext('2d');
+            let entParticles;
+            
+            function setupEntanglement() {
+                entanglementCanvas.width = entanglementCanvas.clientWidth;
+                entanglementCanvas.height = entanglementCanvas.clientHeight;
+                entParticles = {
+                    p1: { x: entanglementCanvas.width * 0.25, y: entanglementCanvas.height / 2, spin: 1 },
+                    p2: { x: entanglementCanvas.width * 0.75, y: entanglementCanvas.height / 2, spin: -1 },
+                    angle: 0
+                };
+            }
+
+            let lastSwitch = 0;
+            function drawEntanglement() {
+                const now = Date.now();
+                entCtx.clearRect(0, 0, entanglementCanvas.width, entanglementCanvas.height);
+                const { p1, p2 } = entParticles;
+                
+                // Switch spin periodically
+                if (now - lastSwitch > 2000) {
+                    p1.spin *= -1;
+                    p2.spin *= -1;
+                    lastSwitch = now;
+                }
+
+                entParticles.angle += 0.02;
+
+                // Draw connecting line
+                entCtx.beginPath();
+                entCtx.moveTo(p1.x, p1.y);
+                entCtx.lineTo(p2.x, p2.y);
+                entCtx.strokeStyle = 'rgba(20, 184, 166, 0.3)';
+                entCtx.stroke();
+
+                // Draw particles
+                [p1, p2].forEach(p => {
+                    entCtx.beginPath();
+                    entCtx.arc(p.x, p.y, 15, 0, Math.PI * 2);
+                    entCtx.fillStyle = '#3b82f6';
+                    entCtx.fill();
+                    entCtx.save();
+                    entCtx.translate(p.x, p.y);
+                    entCtx.rotate(entParticles.angle * p.spin);
+                    entCtx.fillStyle = 'white';
+                    entCtx.font = 'bold 16px sans-serif';
+                    entCtx.textAlign = 'center';
+                    entCtx.textBaseline = 'middle';
+                    entCtx.fillText(p.spin > 0 ? '↑' : '↓', 0, 0);
+                    entCtx.restore();
+                });
+
+                requestAnimationFrame(drawEntanglement);
+            }
+
+            // Initial setup and drawing
+            setupCoherence();
+            drawCoherence();
+            setupTunneling();
+            drawTunneling();
+            setupEntanglement();
+            drawEntanglement();
+
+            // Redraw on resize
+            window.addEventListener('resize', () => {
+                setupCoherence();
+                setupTunneling();
+                setupEntanglement();
+            });
+        });
+    </script>
+</body>
+</html>
