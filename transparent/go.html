@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>画像透過アプリケーション</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 1.8em;
+            margin-bottom: 5px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 0.95em;
+        }
+
+        .main-content {
+            display: flex;
+            min-height: 550px;
+        }
+
+        .control-panel {
+            width: 320px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-right: 2px solid #e9ecef;
+        }
+
+        .drop-zone {
+            border: 3px dashed #007bff;
+            border-radius: 15px;
+            padding: 25px 15px;
+            text-align: center;
+            background: linear-gradient(45deg, #e3f2fd, #f3e5f5);
+            margin-bottom: 18px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .drop-zone::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transform: rotate(45deg);
+            transition: all 0.5s ease;
+            opacity: 0;
+        }
+
+        .drop-zone:hover::before {
+            animation: shimmer 1.5s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); opacity: 0; }
+        }
+
+        .drop-zone.dragover {
+            border-color: #28a745;
+            background: linear-gradient(45deg, #d4edda, #d1ecf1);
+            transform: scale(1.02);
+        }
+
+        .drop-zone-text {
+            font-size: 1.1em;
+            color: #495057;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .file-info {
+            font-size: 0.85em;
+            color: #6c757d;
+            position: relative;
+            z-index: 1;
+        }
+
+        .control-group {
+            margin-bottom: 18px;
+            padding: 15px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+        }
+
+        .control-title {
+            font-size: 1em;
+            font-weight: bold;
+            color: #495057;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+        }
+
+        .control-title::before {
+            content: '';
+            width: 4px;
+            height: 16px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            margin-right: 8px;
+            border-radius: 2px;
+        }
+
+        .slider-group {
+            margin-bottom: 12px;
+        }
+
+        .slider-label {
+            display: block;
+            margin-bottom: 6px;
+            color: #6c757d;
+            font-weight: 500;
+            font-size: 0.9em;
+        }
+
+        .slider {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: #e9ecef;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .slider::-webkit-slider-thumb {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .radio-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .radio-option {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .radio-option:hover {
+            background: #f8f9fa;
+            transform: translateX(5px);
+        }
+
+        .radio-option.selected {
+            background: linear-gradient(45deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+            border-color: #667eea;
+        }
+
+        .radio-option input[type="radio"] {
+            margin-right: 10px;
+            transform: scale(1.2);
+        }
+
+        .color-preview {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-left: auto;
+            border: 2px solid #dee2e6;
+        }
+
+        .yellow { background-color: #fff3cd; }
+        .blue { background-color: #cce5ff; }
+        .pink { background-color: #f8d7da; }
+
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: all 0.5s ease;
+        }
+
+        .btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #007bff, #0056b3);
+            color: white;
+            box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 123, 255, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(45deg, #28a745, #1e7e34);
+            color: white;
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4);
+        }
+
+        .btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn span {
+            position: relative;
+            z-index: 1;
+        }
+
+        .image-area {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        }
+
+        .image-container {
+            max-width: 100%;
+            max-height: 100%;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            background: white;
+        }
+
+        .preview-image {
+            max-width: 100%;
+            max-height: 500px;
+            display: block;
+        }
+
+        .placeholder {
+            text-align: center;
+            color: #6c757d;
+            font-size: 1.5em;
+            padding: 100px 50px;
+        }
+
+        .placeholder-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .control-panel {
+                width: 100%;
+            }
+            
+            .container {
+                margin: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+
+        .loading {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>画像透過アプリ</h1>
+        </div>
+        
+        <div class="main-content">
+            <div class="control-panel">
+                <div class="drop-zone" id="dropZone">
+                    <div class="drop-zone-text">
+                        画像ファイルをドロップ
+                    </div>
+                    <div class="file-info">
+                        または クリックして選択<br>
+                        (JPEG・PNG対応)
+                    </div>
+                </div>
+                
+                <input type="file" id="fileInput" accept="image/*" style="display: none;">
+                
+                <div class="control-group">
+                    <div class="control-title">透過設定</div>
+                    
+                    <div class="slider-group">
+                        <label class="slider-label">透過範囲（下限）: <span id="minValue">240</span></label>
+                        <input type="range" class="slider" id="transparencyMin" min="200" max="255" value="240">
+                    </div>
+                    
+                    <div class="slider-group">
+                        <label class="slider-label">透過範囲（上限）: <span id="maxValue">255</span></label>
+                        <input type="range" class="slider" id="transparencyMax" min="200" max="255" value="255">
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <div class="control-title">背景色</div>
+                    
+                    <div class="radio-group">
+                        <label class="radio-option selected" data-color="yellow">
+                            <input type="radio" name="backgroundColor" value="yellow" checked>
+                            薄い黄色
+                            <div class="color-preview yellow"></div>
+                        </label>
+                        
+                        <label class="radio-option" data-color="blue">
+                            <input type="radio" name="backgroundColor" value="blue">
+                            薄い青
+                            <div class="color-preview blue"></div>
+                        </label>
+                        
+                        <label class="radio-option" data-color="pink">
+                            <input type="radio" name="backgroundColor" value="pink">
+                            薄いピンク
+                            <div class="color-preview pink"></div>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="button-group">
+                    <button class="btn btn-primary" id="selectFileBtn">
+                        <span>ファイル選択</span>
+                    </button>
+                    
+                    <button class="btn btn-success" id="downloadBtn" disabled>
+                        <span>ダウンロード</span>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="image-area">
+                <div class="placeholder" id="placeholder">
+                    <div class="placeholder-icon"></div>
+                    <div>画像がここに表示されます</div>
+                </div>
+                
+                <div class="image-container" id="imageContainer" style="display: none;">
+                    <canvas id="canvas"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+    </div>
+
+    <script>
+        class ImageTransparencyApp {
+            constructor() {
+                this.originalImage = null;
+                this.processedImage = null;
+                this.fileName = '';
+                this.canvas = document.getElementById('canvas');
+                this.ctx = this.canvas.getContext('2d');
+                
+                this.backgroundColors = {
+                    yellow: [255, 255, 205],
+                    blue: [204, 229, 255],
+                    pink: [248, 215, 218]
+                };
+                
+                this.initializeElements();
+                this.setupEventListeners();
+            }
+            
+            initializeElements() {
+                this.dropZone = document.getElementById('dropZone');
+                this.fileInput = document.getElementById('fileInput');
+                this.transparencyMin = document.getElementById('transparencyMin');
+                this.transparencyMax = document.getElementById('transparencyMax');
+                this.minValue = document.getElementById('minValue');
+                this.maxValue = document.getElementById('maxValue');
+                this.selectFileBtn = document.getElementById('selectFileBtn');
+                this.downloadBtn = document.getElementById('downloadBtn');
+                this.placeholder = document.getElementById('placeholder');
+                this.imageContainer = document.getElementById('imageContainer');
+                this.loading = document.getElementById('loading');
+            }
+            
+            setupEventListeners() {
+                // ドラッグ&ドロップ
+                this.dropZone.addEventListener('dragover', this.handleDragOver.bind(this));
+                this.dropZone.addEventListener('dragleave', this.handleDragLeave.bind(this));
+                this.dropZone.addEventListener('drop', this.handleDrop.bind(this));
+                this.dropZone.addEventListener('click', () => this.fileInput.click());
+                
+                // ファイル選択
+                this.fileInput.addEventListener('change', this.handleFileSelect.bind(this));
+                this.selectFileBtn.addEventListener('click', () => this.fileInput.click());
+                
+                // スライダー
+                this.transparencyMin.addEventListener('input', this.updateSliderValues.bind(this));
+                this.transparencyMax.addEventListener('input', this.updateSliderValues.bind(this));
+                
+                // 背景色選択
+                document.querySelectorAll('input[name="backgroundColor"]').forEach(radio => {
+                    radio.addEventListener('change', this.updateBackgroundColor.bind(this));
+                });
+                
+                document.querySelectorAll('.radio-option').forEach(option => {
+                    option.addEventListener('click', (e) => {
+                        if (e.target.tagName !== 'INPUT') {
+                            const radio = option.querySelector('input[type="radio"]');
+                            radio.checked = true;
+                            this.updateBackgroundColor();
+                        }
+                    });
+                });
+                
+                // ダウンロード
+                this.downloadBtn.addEventListener('click', this.downloadImage.bind(this));
+            }
+            
+            handleDragOver(e) {
+                e.preventDefault();
+                this.dropZone.classList.add('dragover');
+            }
+            
+            handleDragLeave(e) {
+                e.preventDefault();
+                this.dropZone.classList.remove('dragover');
+            }
+            
+            handleDrop(e) {
+                e.preventDefault();
+                this.dropZone.classList.remove('dragover');
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    this.loadImage(files[0]);
+                }
+            }
+            
+            handleFileSelect(e) {
+                const files = e.target.files;
+                if (files.length > 0) {
+                    this.loadImage(files[0]);
+                }
+            }
+            
+            loadImage(file) {
+                if (!file.type.startsWith('image/')) {
+                    alert('画像ファイルを選択してください。');
+                    return;
+                }
+                
+                this.showLoading(true);
+                this.fileName = file.name;
+                
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        this.originalImage = img;
+                        this.updateDropZoneText();
+                        this.processImage();
+                        this.downloadBtn.disabled = false;
+                        this.showLoading(false);
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+            
+            updateDropZoneText() {
+                this.dropZone.innerHTML = `
+                    <div class="drop-zone-text">? 読み込み完了</div>
+                    <div class="file-info">${this.fileName}</div>
+                `;
+            }
+            
+            updateSliderValues() {
+                const minVal = parseInt(this.transparencyMin.value);
+                const maxVal = parseInt(this.transparencyMax.value);
+                
+                // 範囲チェック
+                if (minVal > maxVal) {
+                    this.transparencyMax.value = minVal;
+                }
+                
+                this.minValue.textContent = this.transparencyMin.value;
+                this.maxValue.textContent = this.transparencyMax.value;
+                
+                if (this.originalImage) {
+                    this.processImage();
+                }
+            }
+            
+            updateBackgroundColor() {
+                // ラジオボタンの視覚的状態を更新
+                document.querySelectorAll('.radio-option').forEach(option => {
+                    option.classList.remove('selected');
+                });
+                
+                const checkedRadio = document.querySelector('input[name="backgroundColor"]:checked');
+                if (checkedRadio) {
+                    checkedRadio.closest('.radio-option').classList.add('selected');
+                }
+                
+                if (this.originalImage) {
+                    this.processImage();
+                }
+            }
+            
+            processImage() {
+                if (!this.originalImage) return;
+                
+                // キャンバスサイズを画像に合わせて設定
+                this.canvas.width = this.originalImage.width;
+                this.canvas.height = this.originalImage.height;
+                
+                // 画像を描画
+                this.ctx.drawImage(this.originalImage, 0, 0);
+                
+                // 画像データを取得
+                const imageData = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
+                const data = imageData.data;
+                
+                // 透過範囲を取得
+                const minVal = parseInt(this.transparencyMin.value);
+                const maxVal = parseInt(this.transparencyMax.value);
+                
+                // 背景色を取得
+                const selectedColor = document.querySelector('input[name="backgroundColor"]:checked').value;
+                const bgColor = this.backgroundColors[selectedColor];
+                
+                // ピクセルごとに処理
+                for (let i = 0; i < data.length; i += 4) {
+                    const r = data[i];
+                    const g = data[i + 1];
+                    const b = data[i + 2];
+                    
+                    // グレースケール値を計算
+                    const gray = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
+                    
+                    // 透過範囲内かチェック
+                    if (gray >= minVal && gray <= maxVal) {
+                        // 透過にする
+                        data[i + 3] = 0;
+                    } else {
+                        // 不透明のまま
+                        data[i + 3] = 255;
+                    }
+                }
+                
+                // 背景色キャンバスを作成
+                const bgCanvas = document.createElement('canvas');
+                bgCanvas.width = this.canvas.width;
+                bgCanvas.height = this.canvas.height;
+                const bgCtx = bgCanvas.getContext('2d');
+                
+                // 背景色を塗りつぶし
+                bgCtx.fillStyle = `rgb(${bgColor[0]}, ${bgColor[1]}, ${bgColor[2]})`;
+                bgCtx.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
+                
+                // 表示用キャンバスに背景色を描画
+                this.ctx.putImageData(imageData, 0, 0);
+                this.ctx.globalCompositeOperation = 'destination-over';
+                this.ctx.drawImage(bgCanvas, 0, 0);
+                this.ctx.globalCompositeOperation = 'source-over';
+                
+                // 透過画像データを保存（背景なし）
+                const transparentCanvas = document.createElement('canvas');
+                transparentCanvas.width = this.canvas.width;
+                transparentCanvas.height = this.canvas.height;
+                const transparentCtx = transparentCanvas.getContext('2d');
+                transparentCtx.putImageData(imageData, 0, 0);
+                this.processedImage = transparentCanvas;
+                
+                // 表示を更新
+                this.updateDisplay();
+            }
+            
+            updateDisplay() {
+                this.placeholder.style.display = 'none';
+                this.imageContainer.style.display = 'block';
+                
+                // キャンバスのスタイルを調整（レスポンシブ表示）
+                const maxWidth = this.imageContainer.parentElement.clientWidth - 60;
+                const maxHeight = 500;
+                
+                const scale = Math.min(
+                    maxWidth / this.canvas.width,
+                    maxHeight / this.canvas.height,
+                    1
+                );
+                
+                this.canvas.style.width = (this.canvas.width * scale) + 'px';
+                this.canvas.style.height = (this.canvas.height * scale) + 'px';
+            }
+            
+            downloadImage() {
+                if (!this.processedImage) {
+                    alert('処理された画像がありません。');
+                    return;
+                }
+                
+                // ファイル名を生成
+                const baseName = this.fileName.replace(/\.[^/.]+$/, '');
+                let fileName = `${baseName}-transparent.png`;
+                
+                // ファイル名をユーザーに確認
+                const userFileName = prompt('保存するファイル名を入力してください:', fileName);
+                if (userFileName === null) return; // キャンセルされた場合
+                
+                fileName = userFileName || fileName;
+                if (!fileName.toLowerCase().endsWith('.png')) {
+                    fileName += '.png';
+                }
+                
+                // ダウンロード実行
+                this.processedImage.toBlob((blob) => {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = fileName;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                }, 'image/png');
+            }
+            
+            showLoading(show) {
+                this.loading.style.display = show ? 'flex' : 'none';
+            }
+        }
+        
+        // アプリケーション初期化
+        document.addEventListener('DOMContentLoaded', () => {
+            new ImageTransparencyApp();
+        });
+    </script>
+</body>
+</html>
