@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>日本市区町村人口比較ゲーム</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: white;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+
+        h1 {
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .level-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .level-btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 25px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .level-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .level-btn.active {
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .game-message {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+        }
+
+        .comparison-area {
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .city-option {
+            flex: 1;
+            min-width: 250px;
+            max-width: 300px;
+        }
+
+        .city-btn {
+            width: 100%;
+            padding: 20px;
+            border: none;
+            border-radius: 15px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 18px;
+            font-weight: bold;
+            line-height: 1.4;
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .city-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+            background: linear-gradient(135deg, #7c8ef0, #8a5bb8);
+        }
+
+        .city-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .population-display {
+            margin-top: 15px;
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.9);
+            background: rgba(0, 0, 0, 0.2);
+            padding: 10px;
+            border-radius: 10px;
+        }
+
+        .map-link {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 8px 16px;
+            background: linear-gradient(45deg, #4ecdc4, #44a08d);
+            color: white;
+            text-decoration: none;
+            border-radius: 20px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .map-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .result {
+            font-size: 2em;
+            font-weight: bold;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 15px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .result.correct {
+            background: linear-gradient(45deg, #56ab2f, #a8e6cf);
+            color: white;
+        }
+
+        .result.incorrect {
+            background: linear-gradient(45deg, #ff6b6b, #ffa8a8);
+            color: white;
+        }
+
+        .next-btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 25px;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            color: white;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+
+        .next-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .loading {
+            font-size: 1.2em;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        @media (max-width: 600px) {
+            .comparison-area {
+                flex-direction: column;
+                gap: 20px;
+            }
+            
+            .city-option {
+                min-width: auto;
+                max-width: none;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>日本市区町村人口比較ゲーム</h1>
+        
+        <div class="level-buttons">
+            <button class="level-btn active" onclick="setLevel(1)">レベル1</button>
+            <button class="level-btn" onclick="setLevel(2)">レベル2</button>
+            <button class="level-btn" onclick="setLevel(3)">レベル3</button>
+            <button class="level-btn" onclick="setLevel(4)">レベル4</button>
+            <button class="level-btn" onclick="setLevel(5)">レベル5</button>
+        </div>
+
+        <div id="gameArea">
+            <div class="loading">データを読み込み中...</div>
+        </div>
+    </div>
+
+    <script>
+        let populationData = [];
+        let currentLevel = 1;
+        let currentPair = null;
+        let gameActive = false;
+
+        // CSVデータの読み込み
+        async function loadPopulationData() {
+            console.log('データ読み込み開始');
+            
+            try {
+                console.log('data.csvを読み込み中...');
+                const response = await fetch('data.csv');
+                
+                console.log('Response status:', response.status);
+                console.log('Response ok:', response.ok);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const csvText = await response.text();
+                console.log('CSVテキスト長:', csvText.length);
+                console.log('CSVの最初の100文字:', csvText.substring(0, 100));
+                
+                if (!csvText || csvText.trim().length === 0) {
+                    throw new Error('CSVファイルが空です');
+                }
+                
+                const lines = csvText.trim().split('\n');
+                console.log('行数:', lines.length);
+                console.log('最初の5行:', lines.slice(0, 5));
+                
+                if (lines.length < 2) {
+                    throw new Error('CSVにデータが不足しています');
+                }
+                
+                // 区切り文字の自動判定
+                const firstLine = lines[0];
+                let delimiter = ',';
+                if (firstLine.includes('\t')) {
+                    delimiter = '\t';
+                    console.log('タブ区切りを検出');
+                } else if (firstLine.includes(';')) {
+                    delimiter = ';';
+                    console.log('セミコロン区切りを検出');
+                }
+                
+                const headers = firstLine.split(delimiter);
+                console.log('区切り文字:', delimiter);
+                console.log('ヘッダー:', headers);
+                console.log('ヘッダー数:', headers.length);
+                
+                // 全データを詳しくチェック
+                const allData = lines.slice(1).map((line, index) => {
+                    const values = line.split(delimiter);
+                    
+                    // 引用符を除去する関数
+                    const cleanValue = (value) => {
+                        if (!value) return '';
+                        return value.trim().replace(/^["']|["']$/g, '');
+                    };
+                    
+                    const cleanedValues = values.map(cleanValue);
+                    
+                    const item = {
+                        prefecture: cleanedValues[2] || '', // 3列目が都道府県
+                        city: cleanedValues[3] || '',       // 4列目が市区町村
+                        population: parseInt(cleanedValues[4]?.replace(/,/g, '')) || 0, // 5列目が人口
+                        originalLine: line,
+                        values: values,
+                        cleanedValues: cleanedValues
+                    };
+                    
+                    // 最初の10行をログ出力
+                    if (index < 10) {
+                        console.log(`行${index + 2}:`, {
+                            originalLine: line,
+                            splitValues: values,
+                            cleanedValues: cleanedValues,
+                            parsed: {
+                                prefecture: item.prefecture,
+                                city: item.city,
+                                population: item.population
+                            }
+                        });
+                    }
+                    
+                    return item;
+                });
+                
+                console.log('全データ件数:', allData.length);
+                
+                // フィルタリング前後の比較
+                const validData = allData.filter(item => {
+                    const isValid = item.prefecture && item.city && item.population > 0;
+                    if (!isValid && allData.indexOf(item) < 5) {
+                        console.log('無効データ:', item, {
+                            prefecture: !!item.prefecture,
+                            city: !!item.city,
+                            population: item.population
+                        });
+                    }
+                    return isValid;
+                });
+                
+                console.log('有効データ件数:', validData.length);
+                populationData = validData;
+                
+                console.log('フィルタ後のデータ件数:', populationData.length);
+                
+                if (populationData.length === 0) {
+                    throw new Error('有効なデータがありません');
+                }
+                
+                // レベル別データ確認
+                for (let level = 1; level <= 5; level++) {
+                    const levelData = getDataForLevel(level);
+                    console.log(`レベル${level}データ件数:`, levelData.length);
+                }
+                
+                console.log('データ読み込み完了');
+                startNewGame();
+                
+            } catch (error) {
+                console.error('データ読み込みエラー:', error);
+                document.getElementById('gameArea').innerHTML = 
+                    `<div class="loading">
+                        データの読み込みに失敗しました。<br>
+                        エラー: ${error.message}<br>
+                        <small>開発者ツールのコンソールを確認してください。</small><br>
+                        <button onclick="loadPopulationData()" style="margin-top:10px; padding:10px 20px; background:#4ecdc4; color:white; border:none; border-radius:10px; cursor:pointer;">再試行</button>
+                    </div>`;
+            }
+        }
+
+        // レベル設定
+        function setLevel(level) {
+            currentLevel = level;
+            document.querySelectorAll('.level-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            startNewGame();
+        }
+
+        // レベル別データフィルタリング
+        function getDataForLevel(level) {
+            switch(level) {
+                case 1: return populationData.filter(item => item.population >= 200000);
+                case 2: return populationData.filter(item => item.population < 200000 && item.population >= 50000);
+                case 3: return populationData.filter(item => item.population < 50000 && item.population >= 20000);
+                case 4: return populationData.filter(item => item.population < 20000 && item.population >= 10000);
+                case 5: return populationData.filter(item => item.population < 10000);
+                default: return populationData;
+            }
+        }
+
+        // 新しいゲームを開始
+        function startNewGame() {
+            if (populationData.length === 0) return;
+            
+            const levelData = getDataForLevel(currentLevel);
+            
+            if (levelData.length < 2) {
+                document.getElementById('gameArea').innerHTML = 
+                    '<div class="loading">このレベルのデータが不足しています。</div>';
+                return;
+            }
+
+            // ランダムに2つ選択
+            const shuffled = [...levelData].sort(() => Math.random() - 0.5);
+            currentPair = [shuffled[0], shuffled[1]];
+            gameActive = true;
+
+            displayGame();
+        }
+
+        // ゲーム画面表示
+        function displayGame() {
+            const gameArea = document.getElementById('gameArea');
+            
+            gameArea.innerHTML = `
+                <div class="game-message">人口の多い方を押して</div>
+                
+                <div class="comparison-area">
+                    <div class="city-option">
+                        <button class="city-btn" onclick="makeChoice(0)">
+                            ${currentPair[0].prefecture}<br>${currentPair[0].city}
+                        </button>
+                        <div id="population0" class="population-display" style="display: none;">
+                            人口: ${currentPair[0].population.toLocaleString()}人
+                        </div>
+                        <a href="https://www.google.com/maps/search/${encodeURIComponent(currentPair[0].prefecture + currentPair[0].city)}" 
+                           target="_blank" class="map-link">地図</a>
+                    </div>
+                    
+                    <div class="city-option">
+                        <button class="city-btn" onclick="makeChoice(1)">
+                            ${currentPair[1].prefecture}<br>${currentPair[1].city}
+                        </button>
+                        <div id="population1" class="population-display" style="display: none;">
+                            人口: ${currentPair[1].population.toLocaleString()}人
+                        </div>
+                        <a href="https://www.google.com/maps/search/${encodeURIComponent(currentPair[1].prefecture + currentPair[1].city)}" 
+                           target="_blank" class="map-link">地図</a>
+                    </div>
+                </div>
+                
+                <div id="result"></div>
+            `;
+        }
+
+        // 選択処理
+        function makeChoice(choice) {
+            if (!gameActive) return;
+            
+            gameActive = false;
+            
+            // ボタンを無効化
+            document.querySelectorAll('.city-btn').forEach(btn => btn.disabled = true);
+            
+            // 人口を表示
+            document.getElementById('population0').style.display = 'block';
+            document.getElementById('population1').style.display = 'block';
+            
+            // 正解判定
+            const isCorrect = currentPair[choice].population > currentPair[1-choice].population;
+            
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = `result ${isCorrect ? 'correct' : 'incorrect'}`;
+            resultDiv.innerHTML = `
+                <div>${isCorrect ? '当たり！' : 'はずれ'}</div>
+                <button class="next-btn" onclick="startNewGame()">次の問題</button>
+            `;
+        }
+
+        // 初期化
+        window.addEventListener('load', loadPopulationData);
+    </script>
+</body>
+</html>
