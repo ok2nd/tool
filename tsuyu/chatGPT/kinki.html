@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>近畿地方の梅雨入りと梅雨明け一覧</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      max-width: 960px;
+    }
+    th, td {
+      border: 1px solid #aaa;
+      padding: 6px 10px;
+      text-align: center;
+    }
+    th {
+      background-color: #eee;
+    }
+    .bar {
+      position: relative;
+      height: 1em;
+      background: #f5f5f5;
+    }
+    .bar::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      background-color: #87cefa;
+    }
+  </style>
+</head>
+<body>
+
+<h1>近畿地方の梅雨入りと梅雨明け（1951年?2025年）</h1>
+<table>
+  <thead>
+    <tr>
+      <th>年</th>
+      <th>梅雨入り</th>
+      <th>梅雨明け</th>
+      <th>期間バー</th>
+    </tr>
+  </thead>
+  <tbody>
+    <!-- 例として数年分だけ挿入。全データも同様の形式で追加可 -->
+    <tr>
+      <td>2025年</td>
+      <td>6月9日</td>
+      <td>6月27日</td>
+      <td><div class="bar" style="--len: 18;"><div style="width: 18ch;"></div></div></td>
+    </tr>
+    <tr>
+      <td>2024年</td>
+      <td>6月17日</td>
+      <td>7月18日</td>
+      <td><div class="bar"><div style="width: 31ch; background-color: #87cefa; height: 1em;"></div></div></td>
+    </tr>
+    <tr>
+      <td>2023年</td>
+      <td>5月29日</td>
+      <td>7月16日</td>
+      <td><div class="bar"><div style="width: 48ch; background-color: #87cefa; height: 1em;"></div></div></td>
+    </tr>
+    <tr>
+      <td>1993年</td>
+      <td>5月30日</td>
+      <td>---</td>
+      <td><div class="bar"><div style="width: 0;"></div></div></td>
+    </tr>
+    <tr>
+      <td>1963年</td>
+      <td>---</td>
+      <td>7月13日</td>
+      <td><div class="bar"><div style="width: 0;"></div></div></td>
+    </tr>
+    <!-- 以下、同様に全データを挿入可能 -->
+  </tbody>
+</table>
+
+<p>※「期間バー」は梅雨入りから梅雨明けまでの日数を横幅（ch単位）で表したものです。1日 ≒ 1chとして簡易表示しています。</p>
+
+</body>
+</html>

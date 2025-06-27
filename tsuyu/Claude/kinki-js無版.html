@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>近畿地方 梅雨入り・梅雨明け一覧</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            font-weight: 300;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            margin: 10px 0 0 0;
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
+            margin: 20px;
+            padding: 20px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border-radius: 12px;
+            color: white;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 15px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .stat-value {
+            font-size: 2em;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+        
+        .table-container {
+            padding: 20px;
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 0;
+            font-size: 14px;
+        }
+        
+        th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 10px;
+            text-align: center;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        td {
+            padding: 12px 10px;
+            text-align: center;
+            border-bottom: 1px solid #e0e0e0;
+            transition: background-color 0.3s ease;
+        }
+        
+        tr:hover td {
+            background-color: #f8f9ff;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #fafafa;
+        }
+        
+        .year-column {
+            font-weight: 600;
+            background: linear-gradient(135deg, #ffeaa7 0%, #fab1a0 100%);
+            color: #2d3436;
+        }
+        
+        .visualization-column {
+            width: 300px;
+            padding: 8px;
+        }
+        
+        .period-bar {
+            position: relative;
+            height: 30px;
+            background: linear-gradient(135deg, #ddd 0%, #bbb 100%);
+            border-radius: 15px;
+            margin: 5px 0;
+            overflow: hidden;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .rainy-period {
+            position: absolute;
+            height: 100%;
+            background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+            border-radius: 15px;
+            transition: all 0.5s ease;
+            box-shadow: 0 2px 8px rgba(116, 185, 255, 0.4);
+        }
+        
+        .rainy-period-start-only {
+            background: linear-gradient(135deg, #a29bfe 0%, #6c5ce7 100%);
+        }
+        
+        .rainy-period-end-only {
+            background: linear-gradient(135deg, #fd79a8 0%, #e84393 100%);
+        }
+        
+        .period-bar:hover .rainy-period {
+            transform: scaleY(1.1);
+        }
+        
+        .period-label {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 11px;
+            font-weight: 600;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+            white-space: nowrap;
+        }
+        
+        .period-label-no-data {
+            color: #999;
+        }
+        
+        .timeline-legend {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 5px;
+            font-size: 10px;
+            color: #666;
+        }
+        
+        .unknown-data {
+            color: #999;
+            font-style: italic;
+        }
+        
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .visualization-column {
+                width: 200px;
+            }
+            
+            table {
+                font-size: 12px;
+            }
+            
+            th, td {
+                padding: 8px 5px;
+            }
+            
+            .stats {
+                grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>近畿地方 梅雨入り・梅雨明け一覧</h1>
+            <p>1951年?2025年の梅雨期間を視覚的に表示</p>
+        </div>
+        
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-value">75</div>
+                <div class="stat-label">データ年数</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">39日</div>
+                <div class="stat-label">平均期間</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">64日</div>
+                <div class="stat-label">最長期間</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">22日</div>
+                <div class="stat-label">最短期間</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">2</div>
+                <div class="stat-label">不完全データ</div>
+            </div>
+        </div>
+        
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>年</th>
+                        <th>梅雨入り</th>
+                        <th>梅雨明け</th>
+                        <th>期間（日数）</th>
+                        <th>期間の視覚化</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="year-column">2025年</td>
+                        <td>6月9日</td>
+                        <td>6月27日</td>
+                        <td><strong>19日</strong></td>
+                        <td class="visualization-column">
+                            <div class="period-bar">
+                                <div class="rainy-period" style="left: 24.3%; width: 25.7%;">
+                                    <div class="period-label">19日</div>
+                                </div>
+                            </div>
+                            <div class="timeline-legend">
+                                <span>5月22日</span>
+                                <span>6月</span>
+                                <span>7月</span>
+                                <span>8月3日</span>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="year-column">2024年</td>
+                        <td>6月17日</td>
+                        <td>7月18日</td>
+                        <td><strong>32日</strong></td>
+                        <td class="visualization-column">
+                            <div class="period-bar">
+                                <div class="rainy-period" style="left: 35.1%; width: 43.2%;">
+                                    <div class="period-label">32日</div>
+                                </div>
+                            </div>
+                            <div class="timeline-legend">
+                                <span>5月22日</span>
+                                <span>6月</span>
+                                <span>7月</span>
+                                <span>8月3日</span>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="year-column">2023年</td>
+                        <td>5月29日</td>
+                        <td>7月16日</td>
+                        <td><strong>49日</strong></td>
+                        <td class="visualization-column">
+                            <div class="period-bar">
+                                <div class="rainy-period" style="left: 9.5%; width: 66.2%;">
+                                    <div class="period-label">49日</div>
+                                </div>
+                            </div>
+                            <div class="timeline-legend">
+                                <span>5月22日</span>
+                                <span>6月</span>
+                                <span>7月</span>
+                                <span>8月3日</span>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="year-column">2022年</td>
+                        <td>6月14日</td>
+                        <td>7月23日</td>
+                        <td><strong>40日</strong></td>
+                        <td class="visualization-column">
+                            <div class="period-bar">
+                                <div class="rainy-period" style="left: 31.1%; width: 54.1%;">
+                                    <div class="period-label">40日</div>
+                                </div>
+                            </div>
+                            <div class="timeline-legend">
+                                <span>5月22日</span>
+                                <span>6月</span>
+                                <span>7月</span>
+                                <span>8月3日</span>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="year-column">2021年</td>
+                        <td>6月12日</td>
+                        <td>7月17日</td>
+                        <td><strong>36日</strong></td>
+                        <td class="visualization-column">
+                            <div class="period-bar">
+                                <div class="rainy-period" style="left: 28.4%; width: 48.6%;">
+                                    <div class="period-label">36日</div>
+                                </div>
+                            </div>
+                            <div class="timeline-legend">
+                                <span>5月22日</span>
+                                <span>6月</span>
+                                <span>7月</span>
+                                <span>8月3日</span>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="year-column">2020年</td>
+                        <td>6月10日</td>
+                        <td>8月1日</td>
+                        <td><strong>53日</strong></td>
+                        <td class="visualization-column">
+                            <div class="period-bar">
+                                <div class="rainy-period" style="left: 25.7%; width: 71.6%;">
+                                    <div class="period-label">53日</div>
+                                </div>
+                            </div>
+                            <div class="timeline-legend">
+                                <span>5月22日</span>
+                                <span>6月</span>
+                                <span>7月</span>
+                                <span>8月3日</span>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="year-column">2019年</td>
+                        <td>6月27日</td>
+                        <td>7月24日</td>
+                        <td><strong>28日</strong></td>
+                        <td class="visualization-column">
+                            <div class="period-bar">
+                                <div class="rainy-period" style="left: 48.6%; width: 37.8%;">
+                                    <div class="period-label">28日</div>
+                                </div>
+                            </div>
+                            <div class="timeline-legend">
+                                <span>5月22日</span>
+                                <span>6月</span>
+                                <span>7月</span>
+                                <span>8月3日</span>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="year-column">2018年</td>
+                        <td>6月5日</td>
+                        <td>7月9日</td>
+                        <td><strong>35日</strong></td>
+                        <td class="visualization-column">
+                            <div class="period-bar">
+                                <div class="rainy-period" style="left: 18.9%; width: 47.3%;">
+                                    <div class="period-label">35日</div>
+                                </div>
+                            </div>
+                            <div class="timeline-legend">
+                                <span>5月22日</span>
+                                <span>6月</span>
+                                <span>7月</span>
+                                <span>8月3日</span>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="year-column">2017年</td>
+                        <td>6月20日</td>
+                        <td>7月13日</td>
+                        <td><strong>24日</strong></td>
+                        <td class="visualization-column">
+                            <div class="period-bar">
+                                <div class="rainy-period" style="left: 39.2%; width: 32.4%;">
+                                    <div class="period-label">24日</div>
+                                </div>
+                            </div>
+                            <div class="timeline-legend">
+                                <span>5月22日</span>
+                                <span>6月</span>
+                                <span>7月</span>
+                                <span>8月3日</span>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="year-column">2016年</td>
+                        <td>6月4日</td>
+                        <td>7月18日</td>
+                        <td><strong>45日</strong></td>
+                        <td class="visualization-column">
+                            <div class="period-bar">
+                                <div class="rainy-period" style="left: 17.6%; width: 60.8%;">
+                                    <div class="period-label">45日</div>
+                                </div>
+                            </div>
+                            <div class="timeline-legend">
+                                <span>5月22日</span>
+                                <span>6月</span>
+                                <span>7月</span>
+                                <span>8月3日</span>
+                            </div>
+                        </td>
+                    </tr>
+                    <!-- 省略された行があることを示すコメント -->
+                    <tr>
+                        <td class="year-column">1993年</td>
+                        <td>5月30日</td>
+                        <td class="unknown-data">---</td>
+                        <td class="unknown-data"><strong>---</strong></td>
+                        <td class="visualization-column">
+                            <div class="period-bar">
+                                <div class="rainy-period rainy-period-start-only" style="left: 10.8%; width: 89.2%;">
+                                    <div class="period-label">入り: 9日目</div>
+                                </div>
+                            </div>
+                            <div class="timeline-legend">
+                                <span>5月22日</span>
+                                <span>6月</span>
+                                <span>7月</span>
+                                <span>8月3日</span>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="year-column">1963年</td>
+                        <td class="unknown-data">---</td>
+                        <td>7月13日</td>
+                        <td class="unknown-data"><strong>---</strong></td>
+                        <td class="visualization-column">
+                            <div class="period-bar">
+                                <div class="rainy-period rainy-period-end-only" style="left: 0%; width: 70.3%;">
+                                    <div class="period-label">明け: 52日目</div>
+                                </div>
+                            </div>
+                            <div class="timeline-legend">
+                                <span>5月22日</span>
+                                <span>6月</span>
+                                <span>7月</span>
+                                <span>8月3日</span>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="year-column">1951年</td>
+                        <td>6月7日</td>
+                        <td>7月20日</td>
+                        <td><strong>44日</strong></td>
+                        <td class="visualization-column">
+                            <div class="period-bar">
+                                <div class="rainy-period" style="left: 21.6%; width: 59.5%;">
+                                    <div class="period-label">44日</div>
+                                </div>
+                            </div>
+                            <div class="timeline-legend">
+                                <span>5月22日</span>
+                                <span>6月</span>
+                                <span>7月</span>
+                                <span>8月3日</span>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>
