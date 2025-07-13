@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>&lt;table&gt; 属性除去</title>
+<style>
+body {
+	font-family: Arial, sans-serif;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	padding: 0;
+	background-color: #E0FFFF;
+}
+textarea {
+	width: 50%;
+	height: 200px;
+	margin: 10px;
+}
+.input-container {
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	width: 100%;
+	max-width: 1000px;
+}
+.options-box {
+	margin: 10px 0;
+}
+.clear-box {
+	margin-left: 10px;
+}
+.text-box {
+	display: flex;
+}
+table {
+	border-collapse: collapse;
+}
+th, td {
+	text-align: center;
+	padding: 2px;
+	border: 1px solid #444;
+	background-color: #fff;
+}
+th {
+	background-color: #eee;
+}
+#tablePreview {
+	font-size: 0.8em;
+}
+#footer {
+	margin: 20px 0 0 0;
+}
+</style>
+</head>
+<body>
+<h1>&lt;table&gt; 属性除去</h1>
+<div class="input-container">
+	<div class="clear-box">
+		<button onclick="clearInput()">クリア</button>
+	</div>
+	<div class="text-box">
+		<textarea id="tableInput" placeholder="TABLEデータをここに貼り付けて！"></textarea>
+		<textarea id="tableOutput" placeholder="除去後データがここに表示されます。" readonly></textarea>
+	</div>
+</div>
+<div class="options-box">
+	<button onclick="convertToTable()">変換</button>
+</div>
+<h3>プレビュー</h3>
+<div id="tablePreview"></div>
+<div id="footer"><a href="https://2ndart.hatenablog.com/entry/2025/01/29/130631" target="_blank">晴歩雨描ブログ記事</a></div>
+<script>
+function clearInput() {
+	document.getElementById('tableInput').value = '';
+	document.getElementById('tableOutput').value = '';
+	document.getElementById('tablePreview').innerHTML = '';
+}
+
+function convertToTable() {
+	const input = document.getElementById('tableInput').value;
+	
+	if (!input.trim()) {
+		alert('テーブルデータを入力してください。');
+		return;
+	}
+	
+	// 一時的なDOMパーサー用のdivを作成
+	const tempDiv = document.createElement('div');
+	
+	// HTMLコメントを除去してから設定
+	const cleanedInput = removeComments(input);
+	tempDiv.innerHTML = cleanedInput;
+	
+	// テーブル要素を取得
+	const table = tempDiv.querySelector('table');
+	
+	if (!table) {
+		alert('有効なテーブルデータが見つかりません。');
+		return;
+	}
+	
+	// HTMLコメントを除去する関数
+	function removeComments(htmlString) {
+		return htmlString.replace(/<!--[\s\S]*?-->/g, '');
+	}
+	
+	// 属性を除去し、不要なタグを削除する関数
+	function cleanAttributes(element) {
+		// 保持すべきタグのリスト
+		const allowedTags = ['table', 'thead', 'tbody', 'tr', 'th', 'td', 'p'];
+		
+		// 現在の要素のすべての属性を除去
+		if (element.attributes) {
+			const attributes = element.attributes;
+			for (let i = attributes.length - 1; i >= 0; i--) {
+				element.removeAttribute(attributes[i].name);
+			}
+		}
+		
+		// 子ノードを処理（テキストノードも含む）
+		const childNodes = Array.from(element.childNodes);
+		for (let child of childNodes) {
+			if (child.nodeType === 1) { // Element node
+				const tagName = child.tagName.toLowerCase();
+				// 許可されていないタグは内容だけを残して削除
+				if (!allowedTags.includes(tagName)) {
+					// 先に子要素を再帰的に処理
+					cleanAttributes(child);
+					// 子要素の内容を親要素に移動
+					while (child.firstChild) {
+						element.insertBefore(child.firstChild, child);
+					}
+					// 不要なタグを削除
+					element.removeChild(child);
+				} else {
+					// 許可されたタグは再帰的に処理
+					cleanAttributes(child);
+				}
+			}
+			// テキストノードやその他のノードはそのまま保持
+		}
+	}
+	
+	// テーブルをクリーンアップ（複数回実行して確実に除去）
+	for (let i = 0; i < 3; i++) {
+		cleanAttributes(table);
+	}
+	
+	// 結果を文字列として取得
+	const cleanedHTML = table.outerHTML;
+	
+	// 結果をtextareaに設定
+	document.getElementById('tableOutput').value = cleanedHTML;
+	
+	// プレビューを更新
+	document.getElementById('tablePreview').innerHTML = cleanedHTML;
+}
+
+// Enterキーでの変換をサポート
+document.getElementById('tableInput').addEventListener('keydown', function(e) {
+	if (e.ctrlKey && e.key === 'Enter') {
+		convertToTable();
+	}
+});
+</script>
+</body>
+</html>
