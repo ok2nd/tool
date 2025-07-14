@@ -70,7 +70,7 @@ th {
 </div>
 <h3>プレビュー</h3>
 <div id="tablePreview"></div>
-<div id="footer"><a href="https://2ndart.hatenablog.com/entry/2025/01/29/130631" target="_blank">晴歩雨描ブログ記事</a></div>
+<div id="footer"><a href="https://2ndart.hatenablog.com/entry/2025/07/13/131819" target="_blank">晴歩雨描ブログ記事</a></div>
 <script>
 function clearInput() {
 	document.getElementById('tableInput').value = '';
@@ -104,15 +104,6 @@ function convertToTable() {
 	// HTMLコメントを除去する関数
 	function removeComments(htmlString) {
 		return htmlString.replace(/<!--[\s\S]*?-->/g, '');
-	}
-	
-	// 余分な空白文字を整理する関数
-	function cleanWhitespace(htmlString) {
-		return htmlString
-			.replace(/\t/g, '') // タブコードを除去
-			.replace(/(\r\n|\r|\n){2,}/g, '\n') // 2つ以上の連続する改行を1つに
-			.replace(/\n\s*\n/g, '\n') // 空白のみの行を含む連続改行を整理
-			.trim(); // 前後の空白を除去
 	}
 	
 	// 属性を除去し、不要なタグを削除する関数
@@ -158,10 +149,7 @@ function convertToTable() {
 	}
 	
 	// 結果を文字列として取得
-	let cleanedHTML = table.outerHTML;
-	
-	// 余分な空白文字を整理
-	cleanedHTML = cleanWhitespace(cleanedHTML);
+	const cleanedHTML = table.outerHTML;
 	
 	// 結果をtextareaに設定
 	document.getElementById('tableOutput').value = cleanedHTML;
