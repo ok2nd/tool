@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>モノトーンWebページビューア</title>
+<style>
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+}
+
+body {
+	font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+	background: #f5f5f5;
+	min-height: 100vh;
+	padding: 10px;
+}
+
+.container {
+	max-width: 1200px;
+	margin: 0 auto;
+	background: white;
+	border-radius: 8px;
+	box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+	overflow: hidden;
+}
+
+.header {
+	background: #4a4a4a;
+	color: white;
+	padding: 10px;
+	text-align: center;
+}
+
+.header h1 {
+	font-size: 1.8em;
+	margin-bottom: 5px;
+	text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+}
+
+.header p {
+	font-size: 0.9em;
+	opacity: 0.9;
+}
+
+.controls {
+	padding: 15px;
+	background: #f8f9fa;
+	border-bottom: 1px solid #e9ecef;
+}
+
+.input-group {
+	display: flex;
+	gap: 10px;
+	margin-bottom: 15px;
+	flex-wrap: wrap;
+}
+
+.url-input {
+	flex: 1;
+	min-width: 300px;
+	padding: 10px 15px;
+	border: 2px solid #ddd;
+	border-radius: 6px;
+	font-size: 14px;
+	transition: all 0.3s ease;
+}
+
+.url-input:focus {
+	outline: none;
+	border-color: #666;
+	box-shadow: 0 0 0 2px rgba(102, 102, 102, 0.1);
+}
+
+.btn {
+	padding: 10px 20px;
+	background: #666;
+	color: white;
+	border: none;
+	border-radius: 6px;
+	font-size: 14px;
+	font-weight: 500;
+	cursor: pointer;
+	transition: all 0.3s ease;
+}
+
+.btn:hover {
+	background: #555;
+	transform: translateY(-1px);
+}
+
+.btn:active {
+	transform: translateY(0);
+}
+
+.btn:disabled {
+	background: #ccc;
+	cursor: not-allowed;
+	transform: none;
+	box-shadow: none;
+}
+
+.status {
+	padding: 10px;
+	border-radius: 6px;
+	margin-top: 10px;
+	font-weight: 500;
+	display: none;
+}
+
+.status.loading {
+	background: #e3f2fd;
+	color: #1976d2;
+	display: block;
+}
+
+.status.error {
+	background: #ffebee;
+	color: #c62828;
+	display: block;
+}
+
+.status.success {
+	background: #e8f5e8;
+	color: #2e7d32;
+	display: block;
+}
+
+.viewer-container {
+	position: relative;
+	min-height: 500px;
+	background: #f5f5f5;
+}
+
+.iframe-container {
+	position: relative;
+	width: 100%;
+	height: 75vh;
+	border: none;
+	background: white;
+}
+
+.viewer-frame {
+	width: 100%;
+	height: 100%;
+	border: none;
+	filter: grayscale(100%) contrast(1.2);
+	transition: filter 0.5s ease;
+}
+
+.loading-spinner {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	display: none;
+}
+
+.spinner {
+	width: 40px;
+	height: 40px;
+	border: 4px solid #f3f3f3;
+	border-top: 4px solid #666;
+	border-radius: 50%;
+	animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+	0% { transform: rotate(0deg); }
+	100% { transform: rotate(360deg); }
+}
+
+.placeholder {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	height: 100%;
+	color: #666;
+	text-align: center;
+	padding: 30px;
+}
+
+.placeholder-icon {
+	font-size: 3em;
+	margin-bottom: 15px;
+	opacity: 0.5;
+}
+
+.placeholder h3 {
+	font-size: 1.3em;
+	margin-bottom: 8px;
+	color: #333;
+}
+
+.placeholder p {
+	font-size: 0.95em;
+	max-width: 600px;
+	line-height: 1.5;
+}
+
+.toggle-controls {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+	margin-top: 10px;
+}
+
+.toggle-btn {
+	padding: 6px 12px;
+	background: #f8f9fa;
+	border: 1px solid #ddd;
+	border-radius: 4px;
+	cursor: pointer;
+	transition: all 0.3s ease;
+	font-size: 13px;
+}
+
+.toggle-btn:hover {
+	background: #e9ecef;
+}
+
+.toggle-btn.active {
+	background: #666;
+	color: white;
+	border-color: #666;
+}
+
+@media (max-width: 768px) {
+	.input-group {
+		flex-direction: column;
+	}
+	
+	.url-input {
+		min-width: 100%;
+	}
+	
+	.header h1 {
+		font-size: 2em;
+	}
+	
+	.iframe-container {
+		height: 60vh;
+	}
+}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="header">
+	<h1>モノトーンWebビューア</h1>
+<!--	<p>任意のWebページを白黒で表示できます</p>	-->
+</div>
+<div class="controls">
+	<div class="input-group">
+		<input type="url" id="urlInput" class="url-input" placeholder="https://example.com のようにURLを入力してください" />
+		<button id="loadBtn" class="btn">モノトーン表示</button>
+	</div>
+	
+	<div class="toggle-controls">
+		<span>表示モード:</span>
+		<button id="monoBtn" class="toggle-btn active">モノトーン</button>
+		<button id="colorBtn" class="toggle-btn">カラー</button>
+	</div>
+	
+	<div id="status" class="status"></div>
+</div>
+
+<div class="viewer-container">
+	<div class="iframe-container">
+		<div class="loading-spinner" id="loadingSpinner">
+			<div class="spinner"></div>
+		</div>
+		<div class="placeholder" id="placeholder">
+<!--			<h3>Webページを表示する準備ができています</h3>-->
+			<p>上記のフォームにURLを入力して「モノトーン表示」ボタンを押してください。<br>ページが白黒で表示されます。</p>
+		</div>
+		<iframe id="viewerFrame" class="viewer-frame" style="display: none;"></iframe>
+	</div>
+</div>
+</div>
+<script>
+class MonochromeViewer {
+	constructor() {
+		this.urlInput = document.getElementById('urlInput');
+		this.loadBtn = document.getElementById('loadBtn');
+		this.status = document.getElementById('status');
+		this.viewerFrame = document.getElementById('viewerFrame');
+		this.placeholder = document.getElementById('placeholder');
+		this.loadingSpinner = document.getElementById('loadingSpinner');
+		this.monoBtn = document.getElementById('monoBtn');
+		this.colorBtn = document.getElementById('colorBtn');
+		
+		this.isMonochrome = true;
+		this.currentUrl = '';
+		
+		this.initEventListeners();
+	}
+	
+	initEventListeners() {
+		this.loadBtn.addEventListener('click', () => this.loadPage());
+		this.urlInput.addEventListener('keypress', (e) => {
+			if (e.key === 'Enter') {
+				this.loadPage();
+			}
+		});
+		
+		this.monoBtn.addEventListener('click', () => this.setMonochromeMode(true));
+		this.colorBtn.addEventListener('click', () => this.setMonochromeMode(false));
+		
+		this.viewerFrame.addEventListener('load', () => this.onFrameLoad());
+		this.viewerFrame.addEventListener('error', () => this.onFrameError());
+	}
+	
+	setMonochromeMode(isMonochrome) {
+		this.isMonochrome = isMonochrome;
+		
+		if (isMonochrome) {
+			this.monoBtn.classList.add('active');
+			this.colorBtn.classList.remove('active');
+			this.viewerFrame.style.filter = 'grayscale(100%) contrast(1.2)';
+		} else {
+			this.monoBtn.classList.remove('active');
+			this.colorBtn.classList.add('active');
+			this.viewerFrame.style.filter = 'none';
+		}
+	}
+	
+	validateUrl(url) {
+		if (!url) {
+			return { valid: false, message: 'URLを入力してください' };
+		}
+		
+		if (!url.startsWith('http://') && !url.startsWith('https://')) {
+			url = 'https://' + url;
+		}
+		
+		try {
+			new URL(url);
+			return { valid: true, url: url };
+		} catch (e) {
+			return { valid: false, message: '正しいURLを入力してください' };
+		}
+	}
+	
+	showStatus(message, type) {
+		this.status.textContent = message;
+		this.status.className = `status ${type}`;
+	}
+	
+	hideStatus() {
+		this.status.style.display = 'none';
+	}
+	
+	showLoading() {
+		this.loadingSpinner.style.display = 'block';
+		this.placeholder.style.display = 'none';
+		this.loadBtn.disabled = true;
+		this.showStatus('ページを読み込み中...', 'loading');
+	}
+	
+	hideLoading() {
+		this.loadingSpinner.style.display = 'none';
+		this.loadBtn.disabled = false;
+	}
+	
+	loadPage() {
+		const url = this.urlInput.value.trim();
+		const validation = this.validateUrl(url);
+		
+		if (!validation.valid) {
+			this.showStatus(validation.message, 'error');
+			return;
+		}
+		
+		this.currentUrl = validation.url;
+		this.urlInput.value = this.currentUrl;
+		
+		this.showLoading();
+		
+		try {
+			this.viewerFrame.src = this.currentUrl;
+		} catch (error) {
+			this.onFrameError();
+		}
+	}
+	
+	onFrameLoad() {
+		this.hideLoading();
+		this.placeholder.style.display = 'none';
+		this.viewerFrame.style.display = 'block';
+		this.showStatus('ページが正常に読み込まれました', 'success');
+		
+		// Set the appropriate filter based on current mode
+		this.setMonochromeMode(this.isMonochrome);
+		
+		// Auto-hide success message after 3 seconds
+		setTimeout(() => {
+			this.hideStatus();
+		}, 3000);
+	}
+	
+	onFrameError() {
+		this.hideLoading();
+		this.viewerFrame.style.display = 'none';
+		this.placeholder.style.display = 'flex';
+		this.showStatus('ページの読み込みに失敗しました。URLを確認してください。', 'error');
+	}
+}
+
+// Initialize the application
+document.addEventListener('DOMContentLoaded', () => {
+	new MonochromeViewer();
+});
+</script>
+</body>
+</html>
