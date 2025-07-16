@@ -28,12 +28,6 @@ textarea {
 .options-box {
 	margin: 10px 0;
 }
-.options-box label {
-	margin-right: 15px;
-	display: inline-flex;
-	align-items: center;
-	gap: 5px;
-}
 .clear-box {
 	margin-left: 10px;
 }
@@ -72,9 +66,6 @@ th {
 	</div>
 </div>
 <div class="options-box">
-	<label>
-		<input type="checkbox" id="formatCheckbox" checked> 整形する
-	</label>
 	<button onclick="convertToTable()">変換</button>
 </div>
 <h3>プレビュー</h3>
@@ -121,14 +112,6 @@ function convertToTable() {
 			.replace(/\t/g, '') // タブコードを除去
 			.replace(/(\r\n|\r|\n){2,}/g, '\n') // 2つ以上の連続する改行を1つに
 			.replace(/\n\s*\n/g, '\n') // 空白のみの行を含む連続改行を整理
-			.trim(); // 前後の空白を除去
-	}
-	
-	// HTMLを整形する関数
-	function formatHTML(htmlString) {
-		return htmlString
-			.replace(/<(td|th|tr|thead|tbody)>/g, '\n<$1>') // 開始タグ前に改行
-			.replace(/\n\s*\n/g, '\n') // 重複する改行を整理
 			.trim(); // 前後の空白を除去
 	}
 	
@@ -179,12 +162,6 @@ function convertToTable() {
 	
 	// 余分な空白文字を整理
 	cleanedHTML = cleanWhitespace(cleanedHTML);
-	
-	// 整形チェックボックスがオンの場合、HTMLを整形
-	const formatCheckbox = document.getElementById('formatCheckbox');
-	if (formatCheckbox.checked) {
-		cleanedHTML = formatHTML(cleanedHTML);
-	}
 	
 	// 結果をtextareaに設定
 	document.getElementById('tableOutput').value = cleanedHTML;
