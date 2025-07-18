@@ -77,7 +77,6 @@ h1 {
 .paper-size {
 	position: absolute;
 	border: 2px solid #888;
-	background-color: rgba(200, 200, 200, 0.1);
 	box-sizing: border-box;
 	top: 20px;
 	left: 20px;
@@ -85,7 +84,7 @@ h1 {
 .paper-size.custom {
 	border-color: #dc3545;
 	background-color: rgba(220, 53, 69, 0.1);
-	z-index: 10;
+	z-index: 50; /* 赤枠は灰色の枠より前面 */
 }
 .paper-label {
 	position: absolute;
@@ -96,10 +95,12 @@ h1 {
 	bottom: 2px;
 	right: 2px;
 	border-radius: 3px;
+	z-index: 1; /* 各枠の説明文字は枠より前面 */
 }
 .paper-size.custom .paper-label {
 	background-color: rgba(220, 53, 69, 0.9);
 	color: white;
+	z-index: 51; /* 赤枠の説明文字は赤枠より前面 */
 }
 .size-table {
 	max-width: 400px;
@@ -108,12 +109,12 @@ h1 {
 .size-table table {
 	width: 100%;
 	border-collapse: collapse;
-	margin-top: 10px;
+	margin-top: 0;
 }
 .size-table th,
 .size-table td {
 	border: 1px solid #ddd;
-	padding: 6px;
+	padding: 2px;
 	text-align: center;
 }
 .size-table th {
@@ -131,14 +132,31 @@ h1 {
 .size-table td:first-child:hover {
 	background-color: #e6f3ff;
 }
-.paper-size.highlighted {
-	border-color: #0000ff;
-	background-color: rgba(135, 206, 235, 0.3);	/* 青色 */
-/*
-	border-color: #fd7e14;
-	background-color: rgba(253, 126, 20, 0.1);	/* オレンジ */
-*/
+
+/* 新しく追加する青枠とラベルのスタイル */
+.highlight-overlay {
+	position: absolute;
+	border: 2px solid #0000ff; /* 青い枠線 */
+	background-color: rgba(135, 206, 235, 0.3); /* 半透明の青い背景 */
+	box-sizing: border-box;
+	top: 20px; /* paper-sizeと同じ初期位置 */
+	left: 20px; /* paper-sizeと同じ初期位置 */
+	z-index: 200; /* 最前面に表示 */
 }
+
+.highlight-label {
+	position: absolute;
+	background-color: rgba(135, 206, 235, 0.9); /* 青色の背景 */
+	color: blue; /* 青色の文字 */
+	padding: 2px 6px;
+	font-size: 12px;
+	font-weight: bold;
+	bottom: 2px;
+	right: 2px;
+	border-radius: 3px;
+	z-index: 201; /* さらに最前面に表示 */
+}
+
 .clear-button {
 	margin-left: 10px;
 	padding: 8px 16px;
@@ -169,116 +187,133 @@ h1 {
 </div>
 <div class="main-content">
 	<div class="display-area" id="displayArea">
-		<!-- 用紙サイズの枠がここに表示されます -->
-	</div>
+		</div>
 	<div class="size-table">
-		<!--	<h3>用紙サイズ一覧</h3>	-->
-		<table>
-			<thead>
-				<tr>
-					<th>サイズ</th>
-					<th>縦(mm)</th>
-					<th>横(mm)</th>
-				</tr>
-			</thead>
-			<tbody>
-				<tr><td onclick="highlightSize('A3')">A3</td><td>420</td><td>297</td></tr>
-				<tr><td onclick="highlightSize('A4')">A4</td><td>297</td><td>210</td></tr>
-				<tr><td onclick="highlightSize('A5')">A5</td><td>210</td><td>148</td></tr>
-				<tr><td onclick="highlightSize('A6')">A6</td><td>148</td><td>105</td></tr>
-				<tr><td onclick="highlightSize('半切')">半切</td><td>432</td><td>356</td></tr>
-				<tr><td onclick="highlightSize('ワイド四切')">ワイド四切</td><td>356</td><td>254</td></tr>
-				<tr><td onclick="highlightSize('四切')">四切</td><td>305</td><td>254</td></tr>
-				<tr><td onclick="highlightSize('ワイド六切')">ワイド六切</td><td>305</td><td>203</td></tr>
-				<tr><td onclick="highlightSize('六切')">六切</td><td>254</td><td>203</td></tr>
-				<tr><td onclick="highlightSize('2L判')">2L判</td><td>178</td><td>127</td></tr>
-				<tr><td onclick="highlightSize('L判')">L判</td><td>127</td><td>89</td></tr>
-			</tbody>
-		</table>
+	<table>
+	<thead>
+		<tr>
+		<th>サイズ</th>
+		<th>縦(mm)</th>
+		<th>横(mm)</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr><td onclick="highlightSize('半切')">半切</td><td>432</td><td>356</td></tr>
+		<tr><td onclick="highlightSize('A3')">A3</td><td>420</td><td>297</td></tr>
+		<tr><td onclick="highlightSize('ワイド四切')">ワイド四切</td><td>356</td><td>254</td></tr>
+		<tr><td onclick="highlightSize('四切')">四切</td><td>305</td><td>254</td></tr>
+		<tr><td onclick="highlightSize('ワイド六切')">ワイド六切</td><td>305</td><td>203</td></tr>
+		<tr><td onclick="highlightSize('A4')">A4</td><td>297</td><td>210</td></tr>
+		<tr><td onclick="highlightSize('六切')">六切</td><td>254</td><td>203</td></tr>
+		<tr><td onclick="highlightSize('八切')">八切</td><td>216</td><td>165</td></tr>
+		<tr><td onclick="highlightSize('A5')">A5</td><td>210</td><td>148</td></tr>
+		<tr><td onclick="highlightSize('大キャビネ')">大キャビネ</td><td>180</td><td>130</td></tr>
+		<tr><td onclick="highlightSize('2L判')">2L判</td><td>178</td><td>127</td></tr>
+		<tr><td onclick="highlightSize('キャビネ')">キャビネ</td><td>165</td><td>120</td></tr>
+		<tr><td onclick="highlightSize('KG判')">KG判</td><td>152</td><td>102</td></tr>
+		<tr><td onclick="highlightSize('A6')">A6</td><td>148</td><td>105</td></tr>
+		<tr><td onclick="highlightSize('郵便はがき')">郵便はがき</td><td>148</td><td>100</td></tr>
+		<tr><td onclick="highlightSize('L判')">L判</td><td>127</td><td>89</td></tr>
+	</tbody>
+	</table>
 	</div>
 </div>
 </div>
 <script>
 // 用紙サイズのデータ
 const paperSizes = [
-	{ name: 'A3', height: 420, width: 297 },
-	{ name: 'A4', height: 297, width: 210 },
-	{ name: 'A5', height: 210, width: 148 },
-	{ name: 'A6', height: 148, width: 105 },
 	{ name: '半切', height: 432, width: 356 },
+	{ name: 'A3', height: 420, width: 297 },
 	{ name: 'ワイド四切', height: 356, width: 254 },
 	{ name: '四切', height: 305, width: 254 },
 	{ name: 'ワイド六切', height: 305, width: 203 },
+	{ name: 'A4', height: 297, width: 210 },
 	{ name: '六切', height: 254, width: 203 },
+	{ name: '八切', height: 216, width: 165 },
+	{ name: 'A5', height: 210, width: 148 },
+	{ name: '大キャビネ', height: 180, width: 130 },
 	{ name: '2L判', height: 178, width: 127 },
-	{ name: 'L判', height: 127, width: 89 }
+	{ name: 'キャビネ', height: 165, width: 120 },
+	{ name: 'KG判', height: 152, width: 102 },
+	{ name: 'A6', height: 148, width: 105 },
+	{ name: '郵便はがき', height: 148, width: 100 },
+	{ name: 'L判', height: 127, width: 89 },
 ];
 // 用紙サイズの枠を表示（実寸、重ね合わせ）
 function displayPaperSizes() {
 	const displayArea = document.getElementById('displayArea');
 	displayArea.innerHTML = ''; // 既存の内容をクリア
-	
 	paperSizes.forEach((size, index) => {
 		const paperDiv = document.createElement('div');
 		paperDiv.className = 'paper-size';
 		paperDiv.id = `paper-${size.name}`;
 		paperDiv.style.width = size.width + 'px';
 		paperDiv.style.height = size.height + 'px';
-		paperDiv.style.zIndex = paperSizes.length - index; // 小さいサイズが上に来るように
-		
+		// 灰色の枠のz-indexは、小さいサイズが上に来るように設定しつつ、
+		// highlightされた枠やカスタムサイズよりも下になるようにする。
+		paperDiv.style.zIndex = index + 1;
 		const label = document.createElement('div');
 		label.className = 'paper-label';
 		label.textContent = `${size.name} (${size.height}×${size.width})`;
-		
 		paperDiv.appendChild(label);
 		displayArea.appendChild(paperDiv);
 	});
 }
-// 用紙サイズをオレンジ色でハイライト
+// 用紙サイズを青色でハイライト
 function highlightSize(sizeName) {
-	// 既存のハイライトを削除
+	// 既存のハイライトオーバーレイを削除
 	clearHighlight();
-	
-	// 指定されたサイズをハイライト
-	const paperElement = document.getElementById(`paper-${sizeName}`);
-	if (paperElement) {
-		paperElement.classList.add('highlighted');
+
+	// 選択された用紙サイズを取得
+	const selectedSize = paperSizes.find(size => size.name === sizeName);
+
+	if (selectedSize) {
+		const displayArea = document.getElementById('displayArea');
+
+		// 新しい青枠の要素を作成
+		const highlightDiv = document.createElement('div');
+		highlightDiv.className = 'highlight-overlay';
+		highlightDiv.id = 'highlightOverlay'; // クリア時に識別するためのID
+		highlightDiv.style.width = selectedSize.width + 'px';
+		highlightDiv.style.height = selectedSize.height + 'px';
+
+		// 新しい青文字ラベルの要素を作成
+		const highlightLabel = document.createElement('div');
+		highlightLabel.className = 'highlight-label';
+		highlightLabel.textContent = `${selectedSize.name} (${selectedSize.height}×${selectedSize.width})`;
+		
+		highlightDiv.appendChild(highlightLabel);
+		displayArea.appendChild(highlightDiv);
 	}
 }
-// ハイライトをクリア
+// ハイライトオーバーレイをクリア
 function clearHighlight() {
-	const highlightedElements = document.querySelectorAll('.paper-size.highlighted');
-	highlightedElements.forEach(element => {
-		element.classList.remove('highlighted');
-	});
+	const highlightOverlay = document.getElementById('highlightOverlay');
+	if (highlightOverlay) {
+		highlightOverlay.remove();
+	}
 }
 // カスタムサイズを表示（実寸、重ね合わせ）
 function showCustomSize() {
 	const heightInput = document.getElementById('height');
 	const widthInput = document.getElementById('width');
-	
 	const height = parseInt(heightInput.value);
 	const width = parseInt(widthInput.value);
-	
 	if (isNaN(height) || isNaN(width) || height <= 0 || width <= 0) {
 		alert('有効な縦と横のサイズを入力してください。');
 		return;
 	}
-	
 	// 既存のカスタムサイズを削除
 	clearCustomSize();
-	
 	const displayArea = document.getElementById('displayArea');
 	const customDiv = document.createElement('div');
 	customDiv.className = 'paper-size custom';
 	customDiv.id = 'customSize';
 	customDiv.style.width = width + 'px';
 	customDiv.style.height = height + 'px';
-	
 	const label = document.createElement('div');
 	label.className = 'paper-label';
-	label.textContent = `カスタム (${height}×${width})`;
-	
+//	label.textContent = `カスタム (${height}×${width})`; // カスタムサイズのラベルも表示
 	customDiv.appendChild(label);
 	displayArea.appendChild(customDiv);
 }
@@ -288,8 +323,7 @@ function clearCustomSize() {
 	if (customSize) {
 		customSize.remove();
 	}
-	// ハイライトもクリア
-	clearHighlight();
+	// ハイライトはクリアしない
 }
 // Enterキーでサイズ確認
 document.addEventListener('keypress', function(e) {
