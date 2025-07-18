@@ -18,9 +18,9 @@ body {
 	border-radius: 8px;
 	box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
-h1 {
+h2 {
 	color: #333;
-	margin-bottom: 20px;
+	margin: 0;
 }
 .input-section {
 	margin-bottom: 20px;
@@ -80,13 +80,13 @@ h1 {
 	box-sizing: border-box;
 	top: 20px;
 	left: 20px;
-    cursor: pointer; /* クリック可能であることを示すカーソル */
+	cursor: pointer; /* クリック可能であることを示すカーソル */
 }
 .paper-size.custom {
 	border-color: #dc3545;
 	background-color: rgba(220, 53, 69, 0.1);
-	z-index: 50; /* 赤枠は灰色の枠より前面 */
-    pointer-events: none; /* 赤枠もクリックイベントを透過 */
+	z-index: 250; /* 赤枠は青枠よりも前面に表示 */
+	pointer-events: none; /* 赤枠もクリックイベントを透過 */
 }
 .paper-label {
 	position: absolute;
@@ -102,8 +102,8 @@ h1 {
 .paper-size.custom .paper-label {
 	background-color: rgba(220, 53, 69, 0.9);
 	color: white;
-	z-index: 51; /* 赤枠の説明文字は赤枠より前面 */
-    pointer-events: none; /* 赤枠のラベルもクリックイベントを透過 */
+	z-index: 251; /* 赤枠の説明文字は赤枠より前面 */
+	pointer-events: none; /* 赤枠のラベルもクリックイベントを透過 */
 }
 .size-table {
 	max-width: 400px;
@@ -135,7 +135,6 @@ h1 {
 .size-table td:first-child:hover {
 	background-color: #e6f3ff;
 }
-
 /* 新しく追加する青枠とラベルのスタイル */
 .highlight-overlay {
 	position: absolute;
@@ -144,10 +143,9 @@ h1 {
 	box-sizing: border-box;
 	top: 20px; /* paper-sizeと同じ初期位置 */
 	left: 20px; /* paper-sizeと同じ初期位置 */
-	z-index: 200; /* 最前面に表示 */
+	z-index: 200; /* 赤枠より下、灰色の枠より前面 */
 	pointer-events: none; /* この要素のマウスイベントを透過させる */
 }
-
 .highlight-label {
 	position: absolute;
 	background-color: rgba(135, 206, 235, 0.9); /* 青色の背景 */
@@ -158,10 +156,9 @@ h1 {
 	bottom: 2px;
 	right: 2px;
 	border-radius: 3px;
-	z-index: 201; /* さらに最前面に表示 */
+	z-index: 201; /* さらに前面に表示 */
 	pointer-events: none; /* この要素のマウスイベントを透過させる */
 }
-
 .clear-button {
 	margin-left: 10px;
 	padding: 8px 16px;
@@ -187,7 +184,8 @@ h1 {
 		<label for="width">横(mm):</label>
 		<input type="number" id="width" min="1" max="1000">
 		<button onclick="showCustomSize()">サイズ確認</button>
-		<button class="clear-button" onclick="clearCustomSize()">クリア</button>
+		<button class="clear-button" onclick="clearCustomSize()">赤枠クリア</button>
+		<button class="clear-button" onclick="clearHighlight()">青枠クリア</button>
 	</div>
 </div>
 <div class="main-content">
@@ -257,14 +255,12 @@ function displayPaperSizes() {
 		// 灰色の枠のz-indexは、小さいサイズが上に来るように設定しつつ、
 		// highlightされた枠やカスタムサイズよりも下になるようにする。
 		paperDiv.style.zIndex = index + 1;
-
-        // 灰色の枠をクリックしたときのイベントリスナーを追加
-        paperDiv.addEventListener('click', (e) => {
-            // イベントの伝播を停止し、親の枠へのクリックを防ぐ
-            e.stopPropagation(); 
-            highlightSize(size.name);
-        });
-
+		// 灰色の枠をクリックしたときのイベントリスナーを追加
+		paperDiv.addEventListener('click', (e) => {
+			// イベントの伝播を停止し、親の枠へのクリックを防ぐ
+			e.stopPropagation();
+			highlightSize(size.name);
+		});
 		const label = document.createElement('div');
 		label.className = 'paper-label';
 		label.textContent = `${size.name} (${size.height}×${size.width})`;
@@ -276,25 +272,20 @@ function displayPaperSizes() {
 function highlightSize(sizeName) {
 	// 既存のハイライトオーバーレイを削除
 	clearHighlight();
-
 	// 選択された用紙サイズを取得
 	const selectedSize = paperSizes.find(size => size.name === sizeName);
-
 	if (selectedSize) {
 		const displayArea = document.getElementById('displayArea');
-
 		// 新しい青枠の要素を作成
 		const highlightDiv = document.createElement('div');
 		highlightDiv.className = 'highlight-overlay';
 		highlightDiv.id = 'highlightOverlay'; // クリア時に識別するためのID
 		highlightDiv.style.width = selectedSize.width + 'px';
 		highlightDiv.style.height = selectedSize.height + 'px';
-
 		// 新しい青文字ラベルの要素を作成
 		const highlightLabel = document.createElement('div');
 		highlightLabel.className = 'highlight-label';
 		highlightLabel.textContent = `${selectedSize.name} (${selectedSize.height}×${selectedSize.width})`;
-		
 		highlightDiv.appendChild(highlightLabel);
 		displayArea.appendChild(highlightDiv);
 	}
@@ -324,6 +315,7 @@ function showCustomSize() {
 	customDiv.id = 'customSize';
 	customDiv.style.width = width + 'px';
 	customDiv.style.height = height + 'px';
+	// ラベルを更新してサイズ情報を含める
 	const label = document.createElement('div');
 	label.className = 'paper-label';
 //	label.textContent = `カスタム (${height}×${width})`; // カスタムサイズのラベルも表示
@@ -336,7 +328,6 @@ function clearCustomSize() {
 	if (customSize) {
 		customSize.remove();
 	}
-	// ハイライトはクリアしない
 }
 // Enterキーでサイズ確認
 document.addEventListener('keypress', function(e) {
