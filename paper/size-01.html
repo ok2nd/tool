@@ -80,13 +80,11 @@ h1 {
 	box-sizing: border-box;
 	top: 20px;
 	left: 20px;
-    cursor: pointer; /* クリック可能であることを示すカーソル */
 }
 .paper-size.custom {
 	border-color: #dc3545;
 	background-color: rgba(220, 53, 69, 0.1);
 	z-index: 50; /* 赤枠は灰色の枠より前面 */
-    pointer-events: none; /* 赤枠もクリックイベントを透過 */
 }
 .paper-label {
 	position: absolute;
@@ -103,7 +101,6 @@ h1 {
 	background-color: rgba(220, 53, 69, 0.9);
 	color: white;
 	z-index: 51; /* 赤枠の説明文字は赤枠より前面 */
-    pointer-events: none; /* 赤枠のラベルもクリックイベントを透過 */
 }
 .size-table {
 	max-width: 400px;
@@ -145,7 +142,6 @@ h1 {
 	top: 20px; /* paper-sizeと同じ初期位置 */
 	left: 20px; /* paper-sizeと同じ初期位置 */
 	z-index: 200; /* 最前面に表示 */
-	pointer-events: none; /* この要素のマウスイベントを透過させる */
 }
 
 .highlight-label {
@@ -159,7 +155,6 @@ h1 {
 	right: 2px;
 	border-radius: 3px;
 	z-index: 201; /* さらに最前面に表示 */
-	pointer-events: none; /* この要素のマウスイベントを透過させる */
 }
 
 .clear-button {
@@ -257,14 +252,6 @@ function displayPaperSizes() {
 		// 灰色の枠のz-indexは、小さいサイズが上に来るように設定しつつ、
 		// highlightされた枠やカスタムサイズよりも下になるようにする。
 		paperDiv.style.zIndex = index + 1;
-
-        // 灰色の枠をクリックしたときのイベントリスナーを追加
-        paperDiv.addEventListener('click', (e) => {
-            // イベントの伝播を停止し、親の枠へのクリックを防ぐ
-            e.stopPropagation(); 
-            highlightSize(size.name);
-        });
-
 		const label = document.createElement('div');
 		label.className = 'paper-label';
 		label.textContent = `${size.name} (${size.height}×${size.width})`;
