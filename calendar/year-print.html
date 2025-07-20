@@ -168,11 +168,11 @@ function generateCalendar(year, month, holidays) {
 }
 fetchHolidays().then(holidays => {
 	generateCalendar(startYear, startMonth, holidays);
-	const newParagraph = document.createElement('p');
-	newParagraph.id = 'comment';
-	newParagraph.className = 'no-print';
-	newParagraph.textContent = '印刷で余白を小さくする場合：Chromeの印刷詳細設定で、余白を「なし」にして印刷。プリンターの設定で「フチなし」を設定。';
-	document.body.appendChild(newParagraph);
+	const comment = document.createElement('p');
+	comment.id = 'comment';
+	comment.className = 'no-print';
+	comment.innerHTML = 'css非推奨のzoomを使用。<br>印刷で余白を小さくする場合：Chromeの印刷詳細設定で、余白を「なし」にして印刷。プリンターの設定で「フチなし」を設定。';
+	document.body.appendChild(comment);
 });
 </script>
 <div id="comment" class="no-print">
