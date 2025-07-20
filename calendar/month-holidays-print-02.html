@@ -103,7 +103,7 @@ async function fetchHolidays() {
 }
 function createCalendar(year, month) {
 	return fetchHolidays().then(holidays => {
-		document.title = 'カレンダー印刷用：' + year + '年' + (month+1) + '月'
+		document.title = 'カレンダー：' + year + '年' + (month+1) + '月'
 		const calendarDiv = document.getElementById('calendar');
 		calendarDiv.innerHTML = ''; // Clear previous calendar
 		const header = document.createElement('h2');
@@ -182,7 +182,6 @@ function createCalendar(year, month) {
 		calendarDiv.appendChild(table);
 		const cells = document.querySelectorAll('td');
 //alert(rowcnt);
-/*
 		if (rowcnt == 7) {
 			cells.forEach(cell => {
 				cell.style.height = '86px';
@@ -194,20 +193,6 @@ function createCalendar(year, month) {
 		} else {
 			cells.forEach(cell => {
 				cell.style.height = '105px';
-			});
-		}
-*/
-		if (rowcnt == 7) {
-			cells.forEach(cell => {
-				cell.style.height = '93px';
-			});
-		} else if (rowcnt == 5) {
-			cells.forEach(cell => {
-				cell.style.height = '146px';
-			});
-		} else {
-			cells.forEach(cell => {
-				cell.style.height = '114px';
 			});
 		}
 	});
@@ -228,9 +213,6 @@ function init() {
 }
 document.addEventListener('DOMContentLoaded', init);
 </script>
-<p id="comment" class="no-print">
-祝日は今年の前後合わせて3年分しか表示されません。<br>
-印刷で余白を小さくする場合の推奨：カスタムにして、上4mm、左右2.5mm、下1mm。
-</p>
+<p id="comment" class="no-print">祝日は今年の前後合わせて3年分しか表示されません。</p>
 </body>
 </html>
