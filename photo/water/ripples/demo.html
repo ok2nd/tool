@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="description" content="by https://github.com/sirxemic/jquery.ripples/">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>≪jquery.ripples≫サンプル</title>
+<style>
+* {
+	margin: 0;
+	padding: 0;
+}
+html {
+	height: 100%;
+}
+body {
+	background-image: url(../img/demo.jpg);
+	background-size: cover;
+	background-position: 50% 0;
+	height: 100%;
+}
+</style>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+<script src="js/jquery.ripples.js"></script>
+<script>
+$(document).ready(function() {
+	var mode = 1; // default
+	// URLパラメーターを取得し配列に格納しておく by https://qiita.com/tonkatu_tanaka/items/99d167ded9330dbc4019
+	var arg = new Object;
+	var pair=location.search.substring(1).split('&');
+	for(var i=0;pair[i];i++) {
+		var kv = pair[i].split('=');
+		arg[kv[0]]=kv[1];
+	}
+	if (arg.m) {
+		mode = arg.m;
+	}
+	if (mode == 1) {
+		var resolution = 500;
+		var dropRadius = 10;
+		var perturbance = 0.08;
+	} else if (mode == 2) {
+		var resolution = 500;
+		var dropRadius = 1;
+		var perturbance = 0.8;
+	} else if (mode == 3) {
+		var resolution = 100;
+		var dropRadius = 10;
+		var perturbance = 0.08;
+	} else if (mode == 4) {
+		var resolution = 500;
+		var dropRadius = 10;
+		var perturbance = 0.8;
+	} else if (mode == 5) {
+		var resolution = 2500;
+		var dropRadius = 10;
+		var perturbance = 0.8;
+	} else if (mode == 6) {
+		var resolution = 500;
+		var dropRadius = 100;
+		var perturbance = 0.1;
+	} else if (mode == 7) {
+		var resolution = 50;
+		var dropRadius = 10;
+		var perturbance = 1.2;
+	} else if (mode == 8) {
+		var resolution = 500;
+		var dropRadius = 20;
+		var perturbance = 0.5;
+	} else if (mode == 9) {
+		var resolution = 500;
+		var dropRadius = 2;
+		var perturbance = 0.8;
+	}
+	$('body').ripples({
+		resolution: resolution,
+		dropRadius: dropRadius,
+		perturbance: perturbance
+	});
+});
+document.onkeydown = function (event) {
+	if (event.keyCode >= 49 && event.keyCode <=58) {	// キーボード 1～9
+		var key = event.keyCode - 48;
+		location.href = '?m='+key;
+//		console.log(key);
+	}
+}
+</script>
+</head>
+<body>
+</body>
+</html>
