@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>水滴（rainyday.js）アップロード版</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body { margin: 0; overflow: hidden; }
+#fileInput { position: absolute; top: 10px; left: 10px; z-index: 10; }
+img { display: none; }
+#canvasContainer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+canvas { position: absolute; top: 0; left: 0; }
+</style>
+<script src="js/rainyday.js"></script>
+</head>
+<body>
+<input type="file" id="fileInput" accept="image/*">
+<img id="background" alt="background image">
+<div id="canvasContainer"></div>
+<script>
+const fileInput = document.getElementById('fileInput');
+const backgroundImage = document.getElementById('background');
+const canvasContainer = document.getElementById('canvasContainer');
+let currentPreset = 2;
+let imageLoaded = false;
+let latestImageDataURL = null;
+function img_size(id) {
+	const element = document.getElementById(id);
+	const width = element.naturalWidth;
+	const height = element.naturalHeight;
+	const magnifiWidth = width / window.innerWidth;
+	const magnifiHeight = height / window.innerHeight;
+	if (magnifiWidth > magnifiHeight) {
+		return {
+			width: Math.floor(width / magnifiHeight),
+			height: window.innerHeight
+		};
+	} else {
+		return {
+			width: window.innerWidth,
+			height: Math.floor(height / magnifiWidth)
+		};
+	}
+}
+function createFreshCanvas(width, height) {
+	while (canvasContainer.firstChild) {
+		canvasContainer.removeChild(canvasContainer.firstChild);
+	}
+	const canvas = document.createElement('canvas');
+	canvas.id = 'canvas';
+	canvas.width = width;
+	canvas.height = height;
+	canvasContainer.appendChild(canvas);
+	return canvas;
+}
+function startRain() {
+	const size = img_size('background');
+	const canvas = createFreshCanvas(size.width, size.height);
+	const ctx = canvas.getContext('2d');
+	ctx.drawImage(backgroundImage, 0, 0, size.width, size.height);
+	const engine = new RainyDay('canvas', 'background', size.width, size.height);
+	engine.gravity = engine.GRAVITY_NON_LINEAR;
+	engine.trail = (currentPreset % 3 === 0) ? engine.TRAIL_SMUDGE : engine.TRAIL_DROPS;
+	if (currentPreset <= 3) {
+		engine.rain([engine.preset(0, 2, 0.5), engine.preset(4, 4, 1)], 50);
+	} else if (currentPreset <= 6) {
+		engine.VARIABLE_GRAVITY_ANGLE = Math.PI / 8;
+		engine.rain([engine.preset(0, 2, 0.5), engine.preset(8, 8, 1)], 50);
+	} else {
+		engine.rain([engine.preset(6, 6, 0.88), engine.preset(12, 12, 0.9), engine.preset(9, 4, 1)], 100);
+	}
+}
+fileInput.addEventListener('change', function () {
+	const file = this.files[0];
+	if (!file) return;
+	const reader = new FileReader();
+	reader.onload = function (e) {
+		latestImageDataURL = e.target.result; // 保持しておく
+		backgroundImage.onload = function () {
+			imageLoaded = true;
+			startRain();
+		};
+		backgroundImage.src = latestImageDataURL;
+	};
+	reader.readAsDataURL(file);
+});
+document.onkeydown = function (event) {
+	if (event.keyCode >= 49 && event.keyCode <= 57) {
+		const key = event.keyCode - 48;
+		currentPreset = key;
+		if (imageLoaded) {
+			startRain();
+		}
+	}
+};
+// 画面サイズ変更で再描画
+window.addEventListener('resize', function () {
+	if (imageLoaded && latestImageDataURL) {
+		backgroundImage.onload = function () {
+			startRain();
+		};
+		backgroundImage.src = latestImageDataURL; // これで再トリガ
+	}
+});
+</script>
+</body>
+</html>
