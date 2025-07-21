@@ -26,15 +26,15 @@ body {
 /* ripplesプラグインが生成するcanvas要素に透過性を適用 */
 /* これにより、bodyの背景画像がcanvasの下に透けて見える */
 canvas {
-	opacity: 1; /* 初期は完全に不透明 */
-	transition: opacity 0.3s ease-in-out; /* フェードイン/アウトのアニメーション */
-	/* canvasがbodyいっぱいに広がるように設定 */
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	z-index: 1; /* controlsよりは下、bodyの背景よりは上 */
+    opacity: 1; /* 初期は完全に不透明 */
+    transition: opacity 0.3s ease-in-out; /* フェードイン/アウトのアニメーション */
+    /* canvasがbodyいっぱいに広がるように設定 */
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1; /* controlsよりは下、bodyの背景よりは上 */
 }
 .controls {
 	position: fixed;
@@ -97,8 +97,9 @@ $(document).ready(function() {
 	var mode = 1; // default
 	var uploadedImageUrl = null;
 	var currentRipples = null;
-	var rippleInterval = null; // 波紋の自動ドロップ用インターバルID
-	var clearRippleInterval = null; // 波紋クリア用インターバルID
+    var rippleInterval = null; // 波紋の自動ドロップ用インターバルID
+    var clearRippleInterval = null; // 波紋クリア用インターバルID
+
 	// モード設定の配列
 	var modeSettings = {
 		1: { resolution: 500, dropRadius: 10, perturbance: 0.08, name: "デフォルト" },
@@ -111,6 +112,7 @@ $(document).ready(function() {
 		8: { resolution: 500, dropRadius: 20, perturbance: 0.5, name: "中程度の波紋" },
 		9: { resolution: 500, dropRadius: 2, perturbance: 0.8, name: "極小波紋・強い" }
 	};
+
 	// モード情報を更新
 	function updateModeInfo() {
 		var setting = modeSettings[mode];
@@ -120,51 +122,54 @@ $(document).ready(function() {
 			解像度: ${setting.resolution}, 波紋半径: ${setting.dropRadius}, 強度: ${setting.perturbance}
 		`);
 	}
-	// 波紋の自動ドロップを開始/停止する関数
-	function toggleRippleDrops(start) {
-		if (start) {
-			if (!rippleInterval) {
-				rippleInterval = setInterval(function() {
-					if (currentRipples) {
-						var setting = modeSettings[mode];
-						var randomX = getRandomCoordinate($(window).width());
-						var randomY = getRandomCoordinate($(window).height());
-						$('body').ripples('drop', randomX, randomY, setting.dropRadius, setting.perturbance);
-					}
-				}, 2000 + Math.random() * 1000); // 2秒～3秒の間隔
-			}
-			if (!clearRippleInterval) {
-				 clearRippleInterval = setInterval(function() {
-					if (currentRipples) {
-						$('canvas').css('opacity', 0); // 波紋キャンバスを透明にする
-						setTimeout(function() {
-							$('body').ripples('destroy'); // 透明になった後、破棄
-							currentRipples = false;
-							initRipples(); // すぐに再初期化
-						}, 300); // フェードアウト時間に合わせて待機
-					}
-				}, 60000); // 1分
-			}
-		} else {
-			clearInterval(rippleInterval);
-			rippleInterval = null;
-			clearInterval(clearRippleInterval);
-			clearRippleInterval = null;
-		}
-	}
+
+    // 波紋の自動ドロップを開始/停止する関数
+    function toggleRippleDrops(start) {
+        if (start) {
+            if (!rippleInterval) {
+                rippleInterval = setInterval(function() {
+                    if (currentRipples) {
+                        var setting = modeSettings[mode];
+                        var randomX = getRandomCoordinate($(window).width());
+                        var randomY = getRandomCoordinate($(window).height());
+                        $('body').ripples('drop', randomX, randomY, setting.dropRadius, setting.perturbance);
+                    }
+                }, 2000 + Math.random() * 1000); // 2秒～3秒の間隔
+            }
+            if (!clearRippleInterval) {
+                 clearRippleInterval = setInterval(function() {
+                    if (currentRipples) {
+                        $('canvas').css('opacity', 0); // 波紋キャンバスを透明にする
+                        setTimeout(function() {
+                            $('body').ripples('destroy'); // 透明になった後、破棄
+                            currentRipples = false;
+                            initRipples(); // すぐに再初期化
+                        }, 300); // フェードアウト時間に合わせて待機
+                    }
+                }, 60000); // 1分
+            }
+        } else {
+            clearInterval(rippleInterval);
+            rippleInterval = null;
+            clearInterval(clearRippleInterval);
+            clearRippleInterval = null;
+        }
+    }
+
 	// ripplesを初期化
 	// この関数は、bodyの背景画像がある前提で、その上に波紋キャンバスを生成する
 	function initRipples() {
-		// アップロードされた画像がない場合は波紋を初期化しない
-		if (!uploadedImageUrl) {
-			console.log("画像がアップロードされていません。波紋は初期化されません。");
-			toggleRippleDrops(false); // 波紋の自動ドロップを停止
-			if (currentRipples) {
-				$('body').ripples('destroy'); // 既存の波紋があれば強制的に破棄
-				currentRipples = null;
-			}
-			return; 
-		}
+        // アップロードされた画像がない場合は波紋を初期化しない
+        if (!uploadedImageUrl) {
+            console.log("画像がアップロードされていません。波紋は初期化されません。");
+            toggleRippleDrops(false); // 波紋の自動ドロップを停止
+            if (currentRipples) {
+                $('body').ripples('destroy'); // 既存の波紋があれば強制的に破棄
+                currentRipples = null;
+            }
+            return; 
+        }
+
 		// 既存のripplesがあれば破棄
 		if (currentRipples) {
 			try {
@@ -177,7 +182,9 @@ $(document).ready(function() {
 				// エラーを無視
 			}
 		}
+
 		var setting = modeSettings[mode];
+		
 		// ripplesプラグインを初期化する際、imageUrlは渡さない
 		// ripplesは、imageUrlが指定されないと背景が透明なキャンバスを生成する
 		// destroyが完了するのを少し待ってから新しいripplesを初期化
@@ -189,23 +196,29 @@ $(document).ready(function() {
 				imageUrl: null // ここが重要: ripplesに画像を扱わせない
 			});
 			currentRipples = true;
+
 			// マウスとタッチによるイベントリスナーを削除して、手動でのドロップのみにする
 			$('body').off('mousemove touchmove');
+			
 			// ripplesが適用されたcanvasのopacityを1にする（表示）
 			// ripplesは非同期でcanvasを生成するため、少し待つ
 			setTimeout(function() {
 				$('canvas').css('opacity', 1);
 			}, 50); // canvasがDOMに追加されるのを待つ
+
 			// 最初の水紋を生成
 			setTimeout(function() {
 				var initialX = getRandomCoordinate($(window).width());
 				var initialY = getRandomCoordinate($(window).height());
 				$('body').ripples('drop', initialX, initialY, setting.dropRadius, setting.perturbance);
 			}, 100);
-			// 波紋の自動ドロップを開始
-			toggleRippleDrops(true);
+
+            // 波紋の自動ドロップを開始
+            toggleRippleDrops(true);
+
 		}, currentRipples ? 350 : 0); // currentRipplesがtrueならdestroyの時間を考慮、そうでなければ即時
 	}
+
 	// 画像アップロード処理
 	$('#imageUpload').on('change', function(e) {
 		var file = e.target.files[0];
@@ -221,10 +234,12 @@ $(document).ready(function() {
 			reader.readAsDataURL(file);
 		}
 	});
+
 	// 指定された最大値までのランダムな座標を生成するヘルパー関数
 	function getRandomCoordinate(max) {
 		return Math.random() * max;
 	}
+
 	// モードを変更
 	function changeMode(newMode) {
 		if (modeSettings[newMode]) {
@@ -234,6 +249,7 @@ $(document).ready(function() {
 			initRipples();
 		}
 	}
+
 	// 全画面表示機能
 	function toggleFullscreen() {
 		if (!document.fullscreenElement) {
@@ -254,8 +270,10 @@ $(document).ready(function() {
 			});
 		}
 	}
+
 	// 全画面ボタンのイベント
 	$('#fullscreenBtn').on('click', toggleFullscreen);
+
 	// 全画面状態の変更を監視
 	document.addEventListener('fullscreenchange', function() {
 		if (!document.fullscreenElement) {
@@ -263,10 +281,12 @@ $(document).ready(function() {
 			$('.controls').removeClass('hidden');
 		}
 	});
+
 	// 初期化処理
 	updateModeInfo();
 	// ページロード時は波紋を初期化しない
 	// 波紋は画像のアップロード後に initRipples() が呼び出されて初めて開始される
+
 	// キーボードイベント（数字キー1-9でモード切り替え）
 	document.addEventListener('keydown', function(event) {
 		if (event.keyCode >= 49 && event.keyCode <= 57) { // キーボード 1～9
@@ -297,14 +317,14 @@ $(document).ready(function() {
 <body>
 <div class="controls" id="controls">
 <div>
-	<label for="imageUpload">画像をアップロード:</label><br>
-	<input type="file" id="imageUpload" class="file-input" accept="image/*">
-</div>
-<div class="mode-info" id="modeInfo">
-</div>
-<div>
-	<strong>操作方法:</strong><br>
-	数字キー 1-9: エフェクトモード切り替え
+		<label for="imageUpload">画像をアップロード:</label><br>
+		<input type="file" id="imageUpload" class="file-input" accept="image/*">
+	</div>
+	<div class="mode-info" id="modeInfo">
+		</div>
+	<div>
+		<strong>操作方法:</strong><br>
+		数字キー 1-9: エフェクトモード切り替え
 </div>
 	<button id="fullscreenBtn" class="fullscreen-btn">全画面表示</button>
 </div>
