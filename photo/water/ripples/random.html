@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="description" content="by https://github.com/sirxemic/jquery.ripples/">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>≪jquery.ripples≫サンプル・ランダム版</title>
+<style>
+* {
+	margin: 0;
+	padding: 0;
+}
+html {
+	height: 100%;
+}
+body {
+	background-image: url(../img/demo.jpg); /* あなたの画像のパスに置き換えてください */
+	background-size: cover;
+	background-position: 50% 0;
+	height: 100%;
+}
+</style>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+<script src="js/jquery.ripples.js"></script>
+<script>
+$(document).ready(function() {
+	var mode = 1; // default
+	// URLパラメーターを取得し配列に格納しておく by https://qiita.com/tonkatu_tanaka/items/99d167ded9330dbc4019
+	var arg = new Object;
+	var pair=location.search.substring(1).split('&');
+	for(var i=0;pair[i];i++) {
+		var kv = pair[i].split('=');
+		arg[kv[0]]=kv[1];
+	}
+	if (arg.m) {
+		mode = arg.m;
+	}
+	var resolution = 500;
+	var dropRadius = 10;
+	var perturbance = 0.08;
+	if (mode == 1) {
+		resolution = 500;
+		dropRadius = 10;
+		perturbance = 0.08;
+	} else if (mode == 2) {
+		resolution = 500;
+		dropRadius = 1;
+		perturbance = 0.8;
+	} else if (mode == 3) {
+		resolution = 100;
+		dropRadius = 10;
+		perturbance = 0.08;
+	} else if (mode == 4) {
+		resolution = 500;
+		dropRadius = 10;
+		perturbance = 0.8;
+	} else if (mode == 5) {
+		resolution = 2500;
+		dropRadius = 10;
+		perturbance = 0.8;
+	} else if (mode == 6) {
+		resolution = 500;
+		dropRadius = 100;
+		perturbance = 0.1;
+	} else if (mode == 7) {
+		resolution = 50;
+		dropRadius = 10;
+		perturbance = 1.2;
+	} else if (mode == 8) {
+		resolution = 500;
+		dropRadius = 20;
+		perturbance = 0.5;
+	} else if (mode == 9) {
+		resolution = 500;
+		dropRadius = 2;
+		perturbance = 0.8;
+	}
+	// ripplesプラグインを初期化
+	$('body').ripples({
+		resolution: resolution,
+		dropRadius: dropRadius,
+		perturbance: perturbance
+	});
+	// マウスとタッチによるイベントリスナーを削除して、手動でのドロップのみにする
+	$('body').off('mousemove touchmove');
+	// 指定された最大値までのランダムな座標を生成するヘルパー関数
+	function getRandomCoordinate(max) {
+		return Math.random() * max;
+	}
+	// ページ読み込み後、すぐに最初の水紋を生成
+	(function() {
+		var initialX = getRandomCoordinate($(window).width());
+		var initialY = getRandomCoordinate($(window).height());
+		$('body').ripples('drop', initialX, initialY, dropRadius, perturbance);
+	})();
+	// 2～3秒おきにランダムな位置に水紋をドロップ
+	setInterval(function() {
+		var randomX = getRandomCoordinate($(window).width());
+		var randomY = getRandomCoordinate($(window).height());
+		// ランダムな位置で水紋をドロップ
+		$('body').ripples('drop', randomX, randomY, dropRadius, perturbance);
+	}, 2000 + Math.random() * 1000); // 2000ms (2秒) から 3000ms (3秒) の間でランダムに間隔を設定
+});
+document.onkeydown = function (event) {
+	if (event.keyCode >= 49 && event.keyCode <=58) {	// キーボード 1～9
+		var key = event.keyCode - 48;
+		location.href = '?m='+key;
+	}
+}
+</script>
+</head>
+<body>
+</body>
+</html>

@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="description" content="by https://github.com/sirxemic/jquery.ripples/">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>波紋（水紋）≪jquery.ripples≫ アップロード版</title>
+<style>
+* {
+	margin: 0;
+	padding: 0;
+}
+html {
+	height: 100%;
+}
+body {
+	background-size: cover;
+	background-position: 50% 50%;
+	height: 100%;
+	position: relative;
+}
+.controls {
+	position: fixed;
+	top: 10px;
+	left: 10px;
+	z-index: 1000;
+	background: rgba(255, 255, 255, 0.9);
+	padding: 15px;
+	border-radius: 8px;
+	box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+.controls h3 {
+	margin-bottom: 10px;
+	font-family: Arial, sans-serif;
+	color: #333;
+}
+.file-input {
+	margin-bottom: 10px;
+	padding: 5px;
+	border: 1px solid #ccc;
+	border-radius: 4px;
+}
+.mode-info {
+	margin: 10px 0;
+	padding: 8px;
+	background: rgba(0, 0, 0, 0.1);
+	border-radius: 4px;
+	font-family: Arial, sans-serif;
+	font-size: 12px;
+	color: #333;
+}
+.fullscreen-btn {
+	background: #007bff;
+	color: white;
+	border: none;
+	padding: 8px 16px;
+	border-radius: 4px;
+	cursor: pointer;
+	font-size: 14px;
+	margin-top: 5px;
+}
+.fullscreen-btn:hover {
+	background: #0056b3;
+}
+.hidden {
+	display: none !important;
+}
+/* 全画面時のスタイル */
+body.fullscreen-mode {
+	cursor: none;
+}
+body.fullscreen-mode .controls {
+	display: none;
+}
+</style>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+<script src="js/jquery.ripples.js"></script>
+<script>
+$(document).ready(function() {
+	var mode = 1; // default
+	var uploadedImageUrl = null;
+	var currentRipples = null;
+	// モード設定の配列
+	var modeSettings = {
+		1: { resolution: 500, dropRadius: 10, perturbance: 0.08, name: "デフォルト" },
+		2: { resolution: 500, dropRadius: 1, perturbance: 0.8, name: "小さな波紋・強い" },
+		3: { resolution: 100, dropRadius: 10, perturbance: 0.08, name: "低解像度" },
+		4: { resolution: 500, dropRadius: 10, perturbance: 0.8, name: "強い波紋" },
+		5: { resolution: 2500, dropRadius: 10, perturbance: 0.8, name: "高解像度・強い" },
+		6: { resolution: 500, dropRadius: 100, perturbance: 0.1, name: "大きな波紋・弱い" },
+		7: { resolution: 50, dropRadius: 10, perturbance: 1.2, name: "超低解像度・超強い" },
+		8: { resolution: 500, dropRadius: 20, perturbance: 0.5, name: "中程度の波紋" },
+		9: { resolution: 500, dropRadius: 2, perturbance: 0.8, name: "極小波紋・強い" }
+	};
+	// モード情報を更新
+	function updateModeInfo() {
+		var setting = modeSettings[mode];
+		$('#modeInfo').html(`
+			<strong>現在のモード: ${mode}</strong><br>
+			${setting.name}<br>
+			解像度: ${setting.resolution}, 波紋半径: ${setting.dropRadius}, 強度: ${setting.perturbance}
+		`);
+	}
+	// ripplesを初期化
+	function initRipples() {
+		// 既存のripplesがあれば破棄
+		if (currentRipples) {
+			try {
+				$('body').ripples('destroy');
+			} catch(e) {
+				// エラーを無視
+			}
+		}
+		var setting = modeSettings[mode];
+		// ripplesプラグインを初期化
+		$('body').ripples({
+			resolution: setting.resolution,
+			dropRadius: setting.dropRadius,
+			perturbance: setting.perturbance,
+			imageUrl: uploadedImageUrl
+		});
+		currentRipples = true;
+		// マウスとタッチによるイベントリスナーを削除して、手動でのドロップのみにする
+		$('body').off('mousemove touchmove');
+		// ページ読み込み後、すぐに最初の水紋を生成
+		setTimeout(function() {
+			var initialX = getRandomCoordinate($(window).width());
+			var initialY = getRandomCoordinate($(window).height());
+			$('body').ripples('drop', initialX, initialY, setting.dropRadius, setting.perturbance);
+		}, 100);
+	}
+	// 画像アップロード処理
+	$('#imageUpload').on('change', function(e) {
+		var file = e.target.files[0];
+		if (file && file.type.match('image.*')) {
+			var reader = new FileReader();
+			reader.onload = function(e) {
+				uploadedImageUrl = e.target.result;
+				// 背景画像を設定
+				$('body').css('background-image', `url(${uploadedImageUrl})`);
+				// ripplesを再初期化
+				initRipples();
+			};
+			reader.readAsDataURL(file);
+		}
+	});
+	// 指定された最大値までのランダムな座標を生成するヘルパー関数
+	function getRandomCoordinate(max) {
+		return Math.random() * max;
+	}
+	// モードを変更
+	function changeMode(newMode) {
+		if (modeSettings[newMode]) {
+			mode = newMode;
+			updateModeInfo();
+			initRipples();
+		}
+	}
+	// 全画面表示機能
+	function toggleFullscreen() {
+		if (!document.fullscreenElement) {
+			// 全画面にする
+			document.documentElement.requestFullscreen().then(() => {
+				$('body').addClass('fullscreen-mode');
+				$('.controls').addClass('hidden');
+			}).catch(err => {
+				console.log('全画面表示に失敗しました:', err);
+			});
+		} else {
+			// 全画面を終了
+			document.exitFullscreen().then(() => {
+				$('body').removeClass('fullscreen-mode');
+				$('.controls').removeClass('hidden');
+			}).catch(err => {
+				console.log('全画面終了に失敗しました:', err);
+			});
+		}
+	}
+	// 全画面ボタンのイベント
+	$('#fullscreenBtn').on('click', toggleFullscreen);
+	// 全画面状態の変更を監視
+	document.addEventListener('fullscreenchange', function() {
+		if (!document.fullscreenElement) {
+			$('body').removeClass('fullscreen-mode');
+			$('.controls').removeClass('hidden');
+		}
+	});
+	// 初期化
+	updateModeInfo();
+	initRipples();
+	// 2～3秒おきにランダムな位置に水紋をドロップ
+	setInterval(function() {
+		if (currentRipples) {
+			var setting = modeSettings[mode];
+			var randomX = getRandomCoordinate($(window).width());
+			var randomY = getRandomCoordinate($(window).height());
+			// ランダムな位置で水紋をドロップ
+			$('body').ripples('drop', randomX, randomY, setting.dropRadius, setting.perturbance);
+		}
+	}, 2000 + Math.random() * 1000); // 2000ms (2秒) から 3000ms (3秒) の間でランダムに間隔を設定
+	// キーボードイベント（数字キー1-9でモード切り替え）
+	// documentとwindowの両方にイベントリスナーを設定
+	document.addEventListener('keydown', function(event) {
+		if (event.keyCode >= 49 && event.keyCode <= 57) { // キーボード 1～9
+			var key = event.keyCode - 48;
+			event.preventDefault();
+			changeMode(key);
+		} else if (event.keyCode === 70) { // Fキーでも全画面切り替え可能
+			event.preventDefault();
+			toggleFullscreen();
+		}
+	});
+	// 追加でwindowにもイベントリスナーを設定
+	window.addEventListener('keydown', function(event) {
+		if (event.keyCode >= 49 && event.keyCode <= 57) { // キーボード 1～9
+			var key = event.keyCode - 48;
+			event.preventDefault();
+			changeMode(key);
+		} else if (event.keyCode === 70) { // Fキーでも全画面切り替え可能
+			event.preventDefault();
+			toggleFullscreen();
+		}
+	});
+	// bodyにフォーカスを設定してキーイベントを確実に受け取る
+	$('body').attr('tabindex', '0').focus();
+});
+</script>
+</head>
+<body>
+<div class="controls" id="controls">
+<!--	<h3>Ripples Effect Controller</h3>	-->
+	<div>
+		<label for="imageUpload">画像をアップロード:</label><br>
+		<input type="file" id="imageUpload" class="file-input" accept="image/*">
+	</div>
+	<div class="mode-info" id="modeInfo">
+		<!-- モード情報がここに表示される -->
+	</div>
+	<div>
+		<strong>操作方法:</strong><br>
+		数字キー 1-9: エフェクトモード切り替え
+<!--		<br>Fキー: 全画面表示切り替え	-->
+	</div>
+	<button id="fullscreenBtn" class="fullscreen-btn">全画面表示</button>
+</div>
+</body>
+</html>
