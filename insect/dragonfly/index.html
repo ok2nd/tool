@@ -1,0 +1,268 @@
+
+<!doctype html>
+<html lang="ja">
+<head>
+<!--
+	Github:	.php → .html
+-->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=0.9, minimum-scale=0.9, maximum-scale=3.0, user-scalable=yes">
+<meta property="og:title" content="My トンボ図鑑">
+<title>My トンボ図鑑</title>
+<link href="https://fonts.googleapis.com/css?family=Sawarabi+Mincho" rel="stylesheet">
+<link href="css/thumbnail-v2.css?20250522" rel="stylesheet">
+<style>
+body {
+	color: #666;
+	font-family: 'Sawarabi Mincho', Helvetica, Arial, sans-serif;
+}
+@media screen {
+	body {
+		background: #f8f8f4;
+		padding: 10px 5px 60px 5px;
+	}
+}
+@media print {
+	body {
+		background: #fff;
+		padding: 5px 5px 0 20px;
+	}
+}
+.contents {
+	margin: 0 auto;
+	display: flex;
+/*	justify-content: center;
+	align-items: center;	*/
+}
+.gallery {
+	/*	↓ これがあると、page-break-after が効かない
+		display: flex;
+		flex-wrap: wrap;
+	*/
+/*	align-items: center;	*/
+/*	width: 1116px; 横幅 写真3つまで */
+}
+h1 {
+	font-weight: normal;
+	text-align: center;
+	font-size: 16px;
+	margin: 0 0 4px 0;
+	padding: 0;
+}
+h3 {
+	font-size: 14px;
+}
+.shurui {
+	padding-left: 12px;
+	color: #1E90FF;
+}
+p {
+	text-align: center;
+}
+#goukei {
+	font-size: 12px;
+	font-weight: bold;
+}
+.description {
+	font-size: 12px;
+}
+#footer {
+	clear: both;
+}
+.break {
+	page-break-after: always;
+}
+@media print {
+	.title {display: none;}
+	.description {display: none;}
+	.search1 {display: none;}
+	.search2 {display: none;}
+	#footer {display: none;}
+	h3 {display: none;}
+	.shurui-num {display: none;}
+}
+@media screen {
+	.page-top {display: none;}
+}
+.page-top {
+	color: #f8f8f4;
+	font-size: 16px;
+}
+/* 画像をポップアップ */
+#modal-container {
+	display: none;
+	position: fixed;
+	background: rgba(0, 0, 0, 0.6);
+	top: 0;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	z-index: 99;
+}
+#modal-container > div {
+	display: flex;
+	height: 100vh;
+	justify-content: center;
+	align-items: center;
+}
+#modal-container > div > img {
+	max-width: calc(100vw - 60px);
+	max-height: calc(100vh - 60px);
+	padding: 10px;
+	background-color: #fff;
+	box-shadow: 0 3px 18px -4px rgba(0, 0, 0, 0.8);
+	border-radius: 10px;
+}
+img.popup {
+	cursor: pointer;
+}
+</style>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+</head>
+<body>
+<h1 class="title">My『トンボ』図鑑【 <span id="birds_total"></span>種 】（<a href="../butterfly">→ 蝶</a>）</h1>
+<p class="description"><a href="#index">Index</a></p>
+<p class="description">「画像」：Google画像検索。「動画」：YouTubeトンボ。「Blog」：撮影時ブログ記事。<span style="color:Orangered">印刷は53%、余白なしで。</span></p>
+<p class="page-top">.....</p>
+<div class="contents">
+	<div class="gallery">
+<div class="box-frame" id="イトトンボ"><div class="in-box"><p class="name">イトトンボ	<a class="search2" target="_blank" href="https://www.google.com/search?tbm=isch&q=トンボ+イトトンボ+">画像</a>
+	<a class="search2" target="_blank" href="https://www.youtube.com/results?search_query=トンボ+イトトンボ+">動画</a>
+	<a class="search2" target="_blank" href="https://2ndart.hatenablog.com/entry/2024/05/18/164425">Blog</a></p>
+	<img class="popup" src="photo/320/itotonbo.jpg">
+	<p class="place">清里高原　2024.5</p>
+</div></div>
+<div class="box-frame" id="ウスバキトンボ"><div class="in-box"><p class="name">ウスバキトンボ	<a class="search2" target="_blank" href="https://www.google.com/search?tbm=isch&q=トンボ+ウスバキトンボ+">画像</a>
+	<a class="search2" target="_blank" href="https://www.youtube.com/results?search_query=トンボ+ウスバキトンボ+">動画</a>
+	<a class="search2" target="_blank" href="https://2ndart.hatenablog.com/entry/2024/08/08/141629">Blog</a></p>
+	<img class="popup" src="photo/320/usubakitonbo.jpg">
+	<p class="place">瀬戸川河口　2024.8</p>
+</div></div>
+<div class="box-frame" id="オニヤンマ"><div class="in-box"><p class="name">オニヤンマ	<a class="search2" target="_blank" href="https://www.google.com/search?tbm=isch&q=トンボ+オニヤンマ+">画像</a>
+	<a class="search2" target="_blank" href="https://www.youtube.com/results?search_query=トンボ+オニヤンマ+">動画</a>
+	<a class="search2" target="_blank" href="https://2ndart.hatenablog.com/entry/2024/06/19/220352">Blog</a></p>
+	<img class="popup" src="photo/320/oniyanma.jpg">
+	<p class="place">有馬富士公園　2024.6</p>
+</div></div>
+<div class="box-frame" id="キイトトンボ"><div class="in-box"><p class="name">キイトトンボ	<a class="search2" target="_blank" href="https://www.google.com/search?tbm=isch&q=トンボ+キイトトンボ+">画像</a>
+	<a class="search2" target="_blank" href="https://www.youtube.com/results?search_query=トンボ+キイトトンボ+">動画</a>
+	<a class="search2" target="_blank" href="https://2ndart.hatenablog.com/entry/2025/07/23/145239">Blog</a></p>
+	<img class="popup" src="photo/320/kiitotonbo.jpg">
+	<p class="place">明石公園　2025.7</p>
+</div></div>
+<div class="box-frame" id="コシアキトンボ"><div class="in-box"><p class="name">コシアキトンボ	<a class="search2" target="_blank" href="https://www.google.com/search?tbm=isch&q=トンボ+コシアキトンボ+">画像</a>
+	<a class="search2" target="_blank" href="https://www.youtube.com/results?search_query=トンボ+コシアキトンボ+">動画</a>
+	<a class="search2" target="_blank" href="https://2ndart.hatenablog.com/entry/2023/07/20/230341">Blog</a></p>
+	<img class="popup" src="photo/320/koshiakitonbo.jpg">
+	<p class="place">有馬富士公園　2023.7</p>
+</div></div>
+<div class="box-frame" id="シオカラトンボ"><div class="in-box"><p class="name">シオカラトンボ<span style="font-size:12px;">(オス)</span>
+	<a class="search2" target="_blank" href="https://www.google.com/search?tbm=isch&q=トンボ+シオカラトンボ+オス">画像</a>
+	<a class="search2" target="_blank" href="https://www.youtube.com/results?search_query=トンボ+シオカラトンボ+オス">動画</a>
+	<a class="search2" target="_blank" href="https://2ndart.hatenablog.com/entry/2021/09/19/163838">Blog</a></p>
+	<img class="popup" src="photo/320/shiokaratonbo.jpg">
+	<p class="place">あいな里山公園　2021.9</p>
+</div></div>
+<div class="box-frame" id="シオカラトンボ"><div class="in-box"><p class="name">シオカラトンボ<span style="font-size:12px;">(メス)</span>
+	<a class="search2" target="_blank" href="https://www.google.com/search?tbm=isch&q=トンボ+シオカラトンボ+メス">画像</a>
+	<a class="search2" target="_blank" href="https://www.youtube.com/results?search_query=トンボ+シオカラトンボ+メス">動画</a>
+	<a class="search2" target="_blank" href="https://2ndart.hatenablog.com/entry/2023/07/20/230341">Blog</a></p>
+	<img class="popup" src="photo/320/shiokaratonbo-f.jpg">
+	<p class="place">有馬富士公園　2023.7</p>
+</div></div>
+<div class="box-frame" id="ショウジョウトンボ"><div class="in-box"><p class="name">ショウジョウトンボ	<a class="search2" target="_blank" href="https://www.google.com/search?tbm=isch&q=トンボ+ショウジョウトンボ+">画像</a>
+	<a class="search2" target="_blank" href="https://www.youtube.com/results?search_query=トンボ+ショウジョウトンボ+">動画</a>
+	<a class="search2" target="_blank" href="https://2ndart.hatenablog.com/entry/2018/06/09/230623">Blog</a></p>
+	<img class="popup" src="photo/320/shojotonbo.jpg">
+	<p class="place">京都宝ヶ池公園　2018.6</p>
+</div></div>
+<div class="box-frame" id="チョウトンボ"><div class="in-box"><p class="name">チョウトンボ	<a class="search2" target="_blank" href="https://www.google.com/search?tbm=isch&q=トンボ+チョウトンボ+">画像</a>
+	<a class="search2" target="_blank" href="https://www.youtube.com/results?search_query=トンボ+チョウトンボ+">動画</a>
+	<a class="search2" target="_blank" href="https://2ndart.hatenablog.com/entry/2023/07/17/215719">Blog</a></p>
+	<img class="popup" src="photo/320/chotonbo.jpg">
+	<p class="place">奥須磨公園　2023.7</p>
+</div></div>
+<div class="box-frame" id="ナツアカネ"><div class="in-box"><p class="name">ナツアカネ<span style="font-size:12px;">(オス)</span>
+	<a class="search2" target="_blank" href="https://www.google.com/search?tbm=isch&q=トンボ+ナツアカネ+オス">画像</a>
+	<a class="search2" target="_blank" href="https://www.youtube.com/results?search_query=トンボ+ナツアカネ+オス">動画</a>
+	<a class="search2" target="_blank" href="https://2ndart.hatenablog.com/entry/2024/10/01/212429">Blog</a></p>
+	<img class="popup" src="photo/320/natsuakane.jpg">
+	<p class="place">有馬富士公園　2024.10</p>
+</div></div>
+<div class="box-frame" id="ナツアカネ"><div class="in-box"><p class="name">ナツアカネ<span style="font-size:12px;">(メス)</span>
+	<a class="search2" target="_blank" href="https://www.google.com/search?tbm=isch&q=トンボ+ナツアカネ+メス">画像</a>
+	<a class="search2" target="_blank" href="https://www.youtube.com/results?search_query=トンボ+ナツアカネ+メス">動画</a>
+	<a class="search2" target="_blank" href="https://2ndart.hatenablog.com/entry/2024/10/01/212429">Blog</a></p>
+	<img class="popup" src="photo/320/natsuakane-f.jpg">
+	<p class="place">有馬富士公園　2024.10</p>
+</div></div>
+<div class="box-frame" id="ハグロトンボ"><div class="in-box"><p class="name">ハグロトンボ	<a class="search2" target="_blank" href="https://www.google.com/search?tbm=isch&q=トンボ+ハグロトンボ+">画像</a>
+	<a class="search2" target="_blank" href="https://www.youtube.com/results?search_query=トンボ+ハグロトンボ+">動画</a>
+	<a class="search2" target="_blank" href="https://2ndart.hatenablog.com/entry/2023/08/26/220055">Blog</a></p>
+	<img class="popup" src="photo/320/hagurotonbo.jpg">
+	<p class="place">有馬富士公園　2023.8</p>
+</div></div>
+<div class="box-frame" id="ハラビロトンボ"><div class="in-box"><p class="name">ハラビロトンボ	<a class="search2" target="_blank" href="https://www.google.com/search?tbm=isch&q=トンボ+ハラビロトンボ+">画像</a>
+	<a class="search2" target="_blank" href="https://www.youtube.com/results?search_query=トンボ+ハラビロトンボ+">動画</a>
+	<a class="search2" target="_blank" href="https://2ndart.hatenablog.com/entry/2018/06/09/230623">Blog</a></p>
+	<img class="popup" src="photo/320/harabirotonbo.jpg">
+	<p class="place">京都宝ヶ池公園　2018.6</p>
+</div></div>
+<div class="box-frame" id="マユタテアカネ"><div class="in-box"><p class="name">マユタテアカネ	<a class="search2" target="_blank" href="https://www.google.com/search?tbm=isch&q=トンボ+マユタテアカネ+">画像</a>
+	<a class="search2" target="_blank" href="https://www.youtube.com/results?search_query=トンボ+マユタテアカネ+">動画</a>
+	<a class="search2" target="_blank" href="https://2ndart.hatenablog.com/entry/2021/10/28/170410">Blog</a></p>
+	<img class="popup" src="photo/320/mayutateakane.jpg">
+	<p class="place">神戸森林植物園　2021.10</p>
+</div></div>
+<div class="box-frame" id="リスアカネ"><div class="in-box"><p class="name">リスアカネ	<a class="search2" target="_blank" href="https://www.google.com/search?tbm=isch&q=トンボ+リスアカネ+">画像</a>
+	<a class="search2" target="_blank" href="https://www.youtube.com/results?search_query=トンボ+リスアカネ+">動画</a>
+	<a class="search2" target="_blank" href="https://2ndart.hatenablog.com/entry/2024/09/24/212730">Blog</a></p>
+	<img class="popup" src="photo/320/risuakane.jpg">
+	<p class="place">神戸森林植物園　2024.9</p>
+</div></div>
+	</div>
+</div>
+<div id="footer">
+<p id="goukei">【13 種】【オス・メス別 15 種】</p>
+<div style="clear:both;padding:10px 0 0 0;text-align:center;">
+<p><a href="../dragonfly">→ トンボ</a></p>
+<a href="https://ok2nd.github.io/sitemap/hatena-sitemap-table.html?search=トンボ" target="_blank">ブログ記事一覧「トンボ」</a>
+</div>
+<hr id="index">
+<p class="description"><a href="#">トップに戻る</a></p>
+	[1] <a href="#イトトンボ">イトトンボ</a><br>
+	[2] <a href="#ウスバキトンボ">ウスバキトンボ</a><br>
+	[3] <a href="#オニヤンマ">オニヤンマ</a><br>
+	[4] <a href="#キイトトンボ">キイトトンボ</a><br>
+	[5] <a href="#コシアキトンボ">コシアキトンボ</a><br>
+	[6] <a href="#シオカラトンボ">シオカラトンボ</a><br>
+	[7] <a href="#ショウジョウトンボ">ショウジョウトンボ</a><br>
+	[8] <a href="#チョウトンボ">チョウトンボ</a><br>
+	[9] <a href="#ナツアカネ">ナツアカネ</a><br>
+	[10] <a href="#ハグロトンボ">ハグロトンボ</a><br>
+	[11] <a href="#ハラビロトンボ">ハラビロトンボ</a><br>
+	[12] <a href="#マユタテアカネ">マユタテアカネ</a><br>
+	[13] <a href="#リスアカネ">リスアカネ</a><br>
+</div>
+<div id="modal-container">
+	<div><img src=""></div>
+</div>
+<p class="description"><a href="#index">Index トップ</a></p>
+<p class="description"><a href="#">トップに戻る</a></p>
+<script>
+const modal = $('#modal-container');
+const img = modal.find('img');
+$('img.popup').each(function(index) {
+	$(this).click(function() {
+		img.attr('src', $(this).attr('src').replace('320', '800'));
+		modal.show();
+	})
+});
+modal.click(function() {
+	$(this).hide();
+});
+var birds_total = document.getElementById('birds_total');
+birds_total.innerHTML = '13';
+</script>
+</body>
+</html>
