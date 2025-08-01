@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>オセロゲーム - 2人対戦</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .game-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 10px;
+        }
+
+        .player-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        .player-disc {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 3px solid #333;
+            display: inline-block;
+        }
+
+        .black { background: #333; }
+        .white { background: #fff; }
+
+        .current-turn {
+            text-align: center;
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #555;
+        }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 2px;
+            background: #2d5a27;
+            padding: 10px;
+            border-radius: 15px;
+            margin: 20px 0;
+            box-shadow: inset 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .cell {
+            aspect-ratio: 1;
+            background: #4a8f47;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            min-height: 50px;
+        }
+
+        .cell:hover {
+            background: #5aa357;
+            transform: scale(1.05);
+        }
+
+        .cell.valid-move {
+            background: #6bb368;
+            box-shadow: 0 0 15px rgba(107, 179, 104, 0.7);
+        }
+
+        .disc {
+            width: 80%;
+            height: 80%;
+            border-radius: 50%;
+            border: 2px solid #222;
+            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            transform: scale(0);
+        }
+
+        .disc.placed {
+            transform: scale(1);
+        }
+
+        .disc.black {
+            background: radial-gradient(circle at 30% 30%, #555, #111);
+        }
+
+        .disc.white {
+            background: radial-gradient(circle at 30% 30%, #fff, #ddd);
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        .game-over {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .game-over-content {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 400px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .game-over h2 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .winner-disc {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 4px solid #333;
+            margin: 20px auto;
+        }
+
+        .score-display {
+            font-size: 1.5em;
+            margin: 20px 0;
+            color: #555;
+        }
+
+        @media (max-width: 600px) {
+            .game-container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            .game-info {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .player-info {
+                font-size: 1em;
+            }
+            
+            .cell {
+                min-height: 40px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>?? オセロゲーム</h1>
+        
+        <div class="game-info">
+            <div class="player-info">
+                <span class="player-disc black"></span>
+                <span>黒: <span id="black-score">2</span></span>
+            </div>
+            <div class="current-turn">
+                <span id="current-player">黒番</span>の番です
+            </div>
+            <div class="player-info">
+                <span class="player-disc white"></span>
+                <span>白: <span id="white-score">2</span></span>
+            </div>
+        </div>
+
+        <div class="board" id="board"></div>
+
+        <div class="controls">
+            <button class="btn btn-primary" onclick="newGame()">新しいゲーム</button>
+            <button class="btn btn-secondary" onclick="showValidMoves()">有効手を表示</button>
+        </div>
+    </div>
+
+    <div class="game-over" id="game-over">
+        <div class="game-over-content">
+            <h2 id="winner-text">ゲーム終了</h2>
+            <div class="winner-disc" id="winner-disc"></div>
+            <div class="score-display" id="final-score"></div>
+            <button class="btn btn-primary" onclick="newGame()">もう一度プレイ</button>
+        </div>
+    </div>
+
+    <script>
+        class OthelloGame {
+            constructor() {
+                this.board = Array(8).fill().map(() => Array(8).fill(0));
+                this.currentPlayer = 1; // 1: 黒, -1: 白
+                this.gameOver = false;
+                this.validMovesVisible = false;
+                this.initializeBoard();
+                this.updateDisplay();
+            }
+
+            initializeBoard() {
+                // 初期配置
+                this.board[3][3] = -1; // 白
+                this.board[3][4] = 1;  // 黒
+                this.board[4][3] = 1;  // 黒
+                this.board[4][4] = -1; // 白
+                
+                this.renderBoard();
+            }
+
+            renderBoard() {
+                const boardElement = document.getElementById('board');
+                boardElement.innerHTML = '';
+
+                for (let row = 0; row < 8; row++) {
+                    for (let col = 0; col < 8; col++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'cell';
+                        cell.onclick = () => this.makeMove(row, col);
+
+                        if (this.board[row][col] !== 0) {
+                            const disc = document.createElement('div');
+                            disc.className = `disc ${this.board[row][col] === 1 ? 'black' : 'white'}`;
+                            setTimeout(() => disc.classList.add('placed'), 50);
+                            cell.appendChild(disc);
+                        }
+
+                        boardElement.appendChild(cell);
+                    }
+                }
+            }
+
+            isValidMove(row, col) {
+                if (this.board[row][col] !== 0) return false;
+
+                const directions = [
+                    [-1, -1], [-1, 0], [-1, 1],
+                    [0, -1],           [0, 1],
+                    [1, -1],  [1, 0],  [1, 1]
+                ];
+
+                for (let [dr, dc] of directions) {
+                    if (this.checkDirection(row, col, dr, dc)) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            checkDirection(row, col, dr, dc) {
+                let r = row + dr;
+                let c = col + dc;
+                let hasOpponent = false;
+
+                while (r >= 0 && r < 8 && c >= 0 && c < 8) {
+                    if (this.board[r][c] === 0) return false;
+                    if (this.board[r][c] === -this.currentPlayer) {
+                        hasOpponent = true;
+                    } else if (this.board[r][c] === this.currentPlayer) {
+                        return hasOpponent;
+                    }
+                    r += dr;
+                    c += dc;
+                }
+                return false;
+            }
+
+            makeMove(row, col) {
+                if (this.gameOver || !this.isValidMove(row, col)) return;
+
+                this.board[row][col] = this.currentPlayer;
+                this.flipDiscs(row, col);
+                this.currentPlayer = -this.currentPlayer;
+                
+                setTimeout(() => {
+                    this.renderBoard();
+                    this.updateDisplay();
+                    this.checkGameEnd();
+                }, 100);
+            }
+
+            flipDiscs(row, col) {
+                const directions = [
+                    [-1, -1], [-1, 0], [-1, 1],
+                    [0, -1],           [0, 1],
+                    [1, -1],  [1, 0],  [1, 1]
+                ];
+
+                for (let [dr, dc] of directions) {
+                    if (this.checkDirection(row, col, dr, dc)) {
+                        let r = row + dr;
+                        let c = col + dc;
+                        
+                        while (r >= 0 && r < 8 && c >= 0 && c < 8 && 
+                               this.board[r][c] === -this.currentPlayer) {
+                            this.board[r][c] = this.currentPlayer;
+                            r += dr;
+                            c += dc;
+                        }
+                    }
+                }
+            }
+
+            getValidMoves() {
+                const moves = [];
+                for (let row = 0; row < 8; row++) {
+                    for (let col = 0; col < 8; col++) {
+                        if (this.isValidMove(row, col)) {
+                            moves.push([row, col]);
+                        }
+                    }
+                }
+                return moves;
+            }
+
+            updateDisplay() {
+                const blackCount = this.board.flat().filter(cell => cell === 1).length;
+                const whiteCount = this.board.flat().filter(cell => cell === -1).length;
+                
+                document.getElementById('black-score').textContent = blackCount;
+                document.getElementById('white-score').textContent = whiteCount;
+                document.getElementById('current-player').textContent = 
+                    this.currentPlayer === 1 ? '黒番' : '白番';
+            }
+
+            checkGameEnd() {
+                const validMoves = this.getValidMoves();
+                
+                if (validMoves.length === 0) {
+                    // パスする必要があるかチェック
+                    this.currentPlayer = -this.currentPlayer;
+                    const opponentMoves = this.getValidMoves();
+                    
+                    if (opponentMoves.length === 0) {
+                        // ゲーム終了
+                        this.endGame();
+                    } else {
+                        // 相手もパス、自分の手番に戻る
+                        this.currentPlayer = -this.currentPlayer;
+                        this.updateDisplay();
+                        alert(`${this.currentPlayer === 1 ? '白' : '黒'}はパスします。`);
+                    }
+                }
+            }
+
+            endGame() {
+                this.gameOver = true;
+                const blackCount = this.board.flat().filter(cell => cell === 1).length;
+                const whiteCount = this.board.flat().filter(cell => cell === -1).length;
+                
+                let winner, winnerText;
+                if (blackCount > whiteCount) {
+                    winner = '黒';
+                    winnerText = '黒の勝利！';
+                } else if (whiteCount > blackCount) {
+                    winner = '白';
+                    winnerText = '白の勝利！';
+                } else {
+                    winner = null;
+                    winnerText = '引き分け！';
+                }
+
+                document.getElementById('winner-text').textContent = winnerText;
+                document.getElementById('final-score').textContent = 
+                    `黒: ${blackCount} - 白: ${whiteCount}`;
+                
+                const winnerDisc = document.getElementById('winner-disc');
+                if (winner) {
+                    winnerDisc.className = `winner-disc ${winner === '黒' ? 'black' : 'white'}`;
+                } else {
+                    winnerDisc.style.background = 'linear-gradient(45deg, #333, #fff)';
+                }
+                
+                document.getElementById('game-over').style.display = 'flex';
+            }
+        }
+
+        let game = new OthelloGame();
+
+        function newGame() {
+            document.getElementById('game-over').style.display = 'none';
+            game = new OthelloGame();
+        }
+
+        function showValidMoves() {
+            const cells = document.querySelectorAll('.cell');
+            cells.forEach(cell => cell.classList.remove('valid-move'));
+            
+            if (!game.validMovesVisible) {
+                const validMoves = game.getValidMoves();
+                validMoves.forEach(([row, col]) => {
+                    const index = row * 8 + col;
+                    cells[index].classList.add('valid-move');
+                });
+            }
+            
+            game.validMovesVisible = !game.validMovesVisible;
+        }
+    </script>
+</body>
+</html>
