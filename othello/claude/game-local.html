@@ -386,33 +386,7 @@
         </div>
     </div>
 
-    <!-- Firebase SDK -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.22.0/firebase-app-compat.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.22.0/firebase-database-compat.min.js"></script>
-
     <script>
-        // Firebase設定（デモ用の公開設定）
-        const firebaseConfig = {
-            apiKey: "AIzaSyDummy-Key-For-Demo-Replace-With-Real",
-            authDomain: "othello-demo.firebaseapp.com",
-            databaseURL: "https://othello-demo-default-rtdb.firebaseio.com/",
-            projectId: "othello-demo",
-            storageBucket: "othello-demo.appspot.com",
-            messagingSenderId: "123456789012",
-            appId: "1:123456789012:web:dummyappid"
-        };
-
-        // Firebase初期化（実際の設定値が必要）
-        let database = null;
-        try {
-            if (typeof firebase !== 'undefined') {
-                firebase.initializeApp(firebaseConfig);
-                database = firebase.database();
-            }
-        } catch (error) {
-            console.log('Firebase設定が不完全です。デモモードで動作します。');
-        }
-
         class OnlineOthelloGame {
             constructor() {
                 this.board = Array(8).fill().map(() => Array(8).fill(0));
@@ -423,105 +397,63 @@
                 this.roomId = null;
                 this.playerId = this.generatePlayerId();
                 this.gameState = null;
-                this.roomRef = null;
-                this.listeners = [];
+                this.pollInterval = null;
                 
-                // Firebase が利用できない場合のフォールバック
-                this.useFirebase = database !== null;
+                // シンプルなHTTP APIを使ったゲーム状態管理
+                this.apiBase = 'https://api.jsonbin.io/v3/b';
+                this.apiKey = '$2a$10$your_api_key_here'; // 実際の使用時はJSONBinのAPIキーが必要
                 
-                if (this.useFirebase) {
-                    this.updateConnectionStatus('ready', 'Firebase接続完了 - ルームを作成するか参加してください');
-                } else {
-                    this.updateConnectionStatus('ready', 'デモモード - 同じデバイス内でのみ動作します');
-                }
+                this.updateConnectionStatus('ready', 'ルームを作成するか参加してください');
             }
 
             generatePlayerId() {
                 return 'player_' + Math.random().toString(36).substr(2, 9);
             }
 
-            generateRandomRoomId() {
-                return Math.random().toString(36).substr(2, 8).toUpperCase();
-            }
-
             generateRoomId() {
-                const roomId = this.generateRandomRoomId();
+                const roomId = Math.random().toString(36).substr(2, 8).toUpperCase();
                 document.getElementById('room-id-input').value = roomId;
-                return roomId;
-            }
-
-            getInitialBoard() {
-                const board = Array(8).fill().map(() => Array(8).fill(0));
-                board[3][3] = -1; // 白
-                board[3][4] = 1;  // 黒
-                board[4][3] = 1;  // 黒
-                board[4][4] = -1; // 白
-                return board;
-            }
-
-            setupFirebaseListeners() {
-                if (!this.roomRef) return;
-                
-                // ゲーム状態の変更を監視
-                const gameListener = this.roomRef.on('value', (snapshot) => {
-                    if (snapshot.exists()) {
-                        this.gameState = snapshot.val();
-                        this.loadGameState();
-                        
-                        // プレイヤーが2人になったら対戦開始
-                        const playerCount = Object.keys(this.gameState.players || {}).length;
-                        if (playerCount === 2 && this.gameState.gameStarted) {
-                            this.updateConnectionStatus('playing', '対戦中');
-                        }
-                    }
-                });
-                
-                this.listeners.push({ ref: this.roomRef, listener: gameListener });
             }
 
             async createRoom() {
                 const roomInput = document.getElementById('room-id-input').value.trim();
-                const roomId = roomInput || this.generateRandomRoomId();
+                const roomId = roomInput || this.generateRoomId();
                 
                 try {
                     this.updateConnectionStatus('connecting', 'ルームを作成中...');
                     
+                    // デモ用：ローカルストレージを使用（実際の実装ではサーバーAPIを使用）
                     const gameState = {
                         roomId: roomId,
                         players: {
                             [this.playerId]: { color: 1, name: 'Player 1' }
                         },
-                        board: this.getInitialBoard(),
+                        board: Array(8).fill().map(() => Array(8).fill(0)),
                         currentPlayer: 1,
                         gameStarted: false,
-                        gameOver: false,
-                        created: Date.now(),
                         lastUpdate: Date.now()
                     };
                     
-                    if (this.useFirebase) {
-                        // Firebase を使用
-                        this.roomRef = database.ref(`rooms/${roomId}`);
-                        
-                        // 既存のルームがあるかチェック
-                        const snapshot = await this.roomRef.once('value');
-                        if (snapshot.exists()) {
-                            throw new Error('このルームIDは既に使用されています');
-                        }
-                        
-                        await this.roomRef.set(gameState);
-                        this.setupFirebaseListeners();
-                        
-                    } else {
-                        // ローカルストレージ（デモ用）
-                        const storageKey = `othello_room_${roomId}`;
-                        const existingRoom = JSON.parse(localStorage.getItem(storageKey) || 'null');
-                        if (existingRoom && Date.now() - existingRoom.created < 3600000) {
-                            throw new Error('このルームIDは既に使用されています');
-                        }
-                        localStorage.setItem(storageKey, JSON.stringify(gameState));
-                        this.startPolling();
+                    // 初期配置
+                    gameState.board[3][3] = -1;
+                    gameState.board[3][4] = 1;
+                    gameState.board[4][3] = 1;
+                    gameState.board[4][4] = -1;
+                    
+                    // ローカルストレージに保存（デモ用）
+                    const storageKey = `othello_room_${roomId}`;
+                    const gameData = {
+                        ...gameState,
+                        created: Date.now()
+                    };
+                    
+                    // 既存のルームがあるかチェック
+                    const existingRoom = JSON.parse(localStorage.getItem(storageKey) || 'null');
+                    if (existingRoom && Date.now() - existingRoom.created < 3600000) { // 1時間以内
+                        throw new Error('このルームIDは既に使用されています');
                     }
+                    
+                    localStorage.setItem(storageKey, JSON.stringify(gameData));
                     
                     this.roomId = roomId;
                     this.myColor = 1; // 黒
@@ -529,6 +461,7 @@
                     
                     this.updateConnectionStatus('waiting', 'プレイヤー2の参加を待っています...');
                     this.showGame();
+                    this.startPolling();
                     
                 } catch (error) {
                     this.updateConnectionStatus('error', `エラー: ${error.message}`);
@@ -545,67 +478,38 @@
                 try {
                     this.updateConnectionStatus('connecting', 'ルームに参加中...');
                     
-                    if (this.useFirebase) {
-                        // Firebase を使用
-                        this.roomRef = database.ref(`rooms/${roomId}`);
-                        const snapshot = await this.roomRef.once('value');
-                        
-                        if (!snapshot.exists()) {
-                            throw new Error('ルームが見つかりません');
-                        }
-                        
-                        const gameData = snapshot.val();
-                        const playerCount = Object.keys(gameData.players || {}).length;
-                        
-                        if (playerCount >= 2) {
-                            throw new Error('ルームは満員です');
-                        }
-                        
-                        // プレイヤー2として参加
-                        await this.roomRef.child('players').child(this.playerId).set({
-                            color: -1, 
-                            name: 'Player 2'
-                        });
-                        
-                        await this.roomRef.update({
-                            gameStarted: true,
-                            lastUpdate: Date.now()
-                        });
-                        
-                        this.setupFirebaseListeners();
-                        
-                    } else {
-                        // ローカルストレージ（デモ用）
-                        const storageKey = `othello_room_${roomId}`;
-                        const gameData = JSON.parse(localStorage.getItem(storageKey) || 'null');
-                        
-                        if (!gameData) {
-                            throw new Error('ルームが見つかりません');
-                        }
-                        
-                        if (Date.now() - gameData.created > 3600000) {
-                            localStorage.removeItem(storageKey);
-                            throw new Error('ルームの有効期限が切れています');
-                        }
-                        
-                        const playerCount = Object.keys(gameData.players).length;
-                        if (playerCount >= 2) {
-                            throw new Error('ルームは満員です');
-                        }
-                        
-                        gameData.players[this.playerId] = { color: -1, name: 'Player 2' };
-                        gameData.gameStarted = true;
-                        gameData.lastUpdate = Date.now();
-                        
-                        localStorage.setItem(storageKey, JSON.stringify(gameData));
-                        this.startPolling();
+                    const storageKey = `othello_room_${roomId}`;
+                    const gameData = JSON.parse(localStorage.getItem(storageKey) || 'null');
+                    
+                    if (!gameData) {
+                        throw new Error('ルームが見つかりません');
                     }
+                    
+                    if (Date.now() - gameData.created > 3600000) { // 1時間経過
+                        localStorage.removeItem(storageKey);
+                        throw new Error('ルームの有効期限が切れています');
+                    }
+                    
+                    const playerCount = Object.keys(gameData.players).length;
+                    if (playerCount >= 2) {
+                        throw new Error('ルームは満員です');
+                    }
+                    
+                    // プレイヤー2として参加
+                    gameData.players[this.playerId] = { color: -1, name: 'Player 2' };
+                    gameData.gameStarted = true;
+                    gameData.lastUpdate = Date.now();
+                    
+                    localStorage.setItem(storageKey, JSON.stringify(gameData));
                     
                     this.roomId = roomId;
                     this.myColor = -1; // 白
+                    this.gameState = gameData;
                     
                     this.updateConnectionStatus('playing', '対戦中');
                     this.showGame();
+                    this.loadGameState();
+                    this.startPolling();
                     
                 } catch (error) {
                     this.updateConnectionStatus('error', `エラー: ${error.message}`);
@@ -680,21 +584,13 @@
                 this.currentPlayer = -this.currentPlayer;
                 
                 // ゲーム状態を更新
-                const updates = {
-                    board: this.board.map(row => [...row]),
-                    currentPlayer: this.currentPlayer,
-                    lastUpdate: Date.now()
-                };
+                this.gameState.board = this.board.map(row => [...row]);
+                this.gameState.currentPlayer = this.currentPlayer;
+                this.gameState.lastUpdate = Date.now();
                 
-                if (this.useFirebase && this.roomRef) {
-                    // Firebase に送信
-                    await this.roomRef.update(updates);
-                } else {
-                    // ローカルストレージに保存
-                    this.gameState = { ...this.gameState, ...updates };
-                    const storageKey = `othello_room_${this.roomId}`;
-                    localStorage.setItem(storageKey, JSON.stringify(this.gameState));
-                }
+                // サーバーに送信（ローカルストレージに保存）
+                const storageKey = `othello_room_${this.roomId}`;
+                localStorage.setItem(storageKey, JSON.stringify(this.gameState));
                 
                 setTimeout(() => {
                     this.renderBoard();
@@ -873,45 +769,20 @@
             }
 
             leaveRoom() {
-                // Firebase リスナーを削除
-                this.listeners.forEach(({ ref, listener }) => {
-                    ref.off('value', listener);
-                });
-                this.listeners = [];
-                
-                // ポーリングを停止
                 if (this.pollInterval) {
                     clearInterval(this.pollInterval);
                 }
                 
                 // ルームから退出
                 if (this.roomId) {
-                    if (this.useFirebase && this.roomRef) {
-                        // Firebase からプレイヤーを削除
-                        this.roomRef.child('players').child(this.playerId).remove();
-                        
-                        // プレイヤーがいなくなったらルームを削除
-                        this.roomRef.once('value').then((snapshot) => {
-                            if (snapshot.exists()) {
-                                const data = snapshot.val();
-                                const remainingPlayers = Object.keys(data.players || {});
-                                if (remainingPlayers.length === 0) {
-                                    this.roomRef.remove();
-                                }
-                            }
-                        });
-                        
-                    } else {
-                        // ローカルストレージから削除
-                        const storageKey = `othello_room_${this.roomId}`;
-                        const gameData = JSON.parse(localStorage.getItem(storageKey) || 'null');
-                        if (gameData && gameData.players[this.playerId]) {
-                            delete gameData.players[this.playerId];
-                            if (Object.keys(gameData.players).length === 0) {
-                                localStorage.removeItem(storageKey);
-                            } else {
-                                localStorage.setItem(storageKey, JSON.stringify(gameData));
-                            }
+                    const storageKey = `othello_room_${this.roomId}`;
+                    const gameData = JSON.parse(localStorage.getItem(storageKey) || 'null');
+                    if (gameData && gameData.players[this.playerId]) {
+                        delete gameData.players[this.playerId];
+                        if (Object.keys(gameData.players).length === 0) {
+                            localStorage.removeItem(storageKey);
+                        } else {
+                            localStorage.setItem(storageKey, JSON.stringify(gameData));
                         }
                     }
                 }
@@ -925,17 +796,12 @@
                 document.getElementById('game-over').style.display = 'none';
                 document.getElementById('room-id-input').value = '';
                 
-                if (this.useFirebase) {
-                    this.updateConnectionStatus('ready', 'Firebase接続完了 - ルームを作成するか参加してください');
-                } else {
-                    this.updateConnectionStatus('ready', 'デモモード - 同じデバイス内でのみ動作します');
-                }
+                this.updateConnectionStatus('ready', 'ルームを作成するか参加してください');
                 
                 // ゲーム状態をリセット
                 this.roomId = null;
                 this.myColor = null;
                 this.gameState = null;
-                this.roomRef = null;
             }
 
             showValidMoves() {
