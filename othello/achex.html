@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>オンライン対戦オセロゲーム</title>
+<style>
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+	transform: scale(0.95);
+}
+body {
+	font-family: 'Arial', sans-serif;
+	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+	min-height: 100vh;
+	display: flex;
+	justify-content: center;
+	align-items: flex-start; /* ← ここを center → flex-start に変更 */
+	padding: 20px;
+}
+.game-container {
+	background: rgba(255, 255, 255, 0.95);
+	border-radius: 20px;
+	padding: 30px;
+	box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+	backdrop-filter: blur(10px);
+	max-width: 600px;
+	width: 100%;
+	margin-top: 0px; /* <h1>の高さ＋margin-bottom分を調整 */
+}
+h1 {
+	text-align: center;
+	color: #333;
+	margin-bottom: 20px;
+	font-size: 2.5em;
+	text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+}
+.connection-status {
+	text-align: center;
+	padding: 10px;
+	border-radius: 10px;
+/*
+	margin-bottom: 20px;
+*/
+	font-weight: bold;
+}
+.status-connecting {
+	background: #fff3cd;
+	color: #856404;
+}
+.status-waiting {
+	background: #d1ecf1;
+	color: #0c5460;
+}
+.status-playing {
+	background: #d4edda;
+	color: #155724;
+}
+.status-error {
+	background: #f8d7da;
+	color: #721c24;
+}
+.room-section {
+	text-align: center;
+/*
+	margin-bottom: 20px;
+*/
+}
+.room-input {
+	display: flex;
+	gap: 10px;
+	justify-content: center;
+	margin-bottom: 15px;
+	flex-wrap: wrap;
+}
+.input-field {
+	padding: 12px;
+	border: 2px solid #ddd;
+	border-radius: 8px;
+	font-size: 1.1em;
+	min-width: 200px;
+}
+.input-field:focus {
+	outline: none;
+	border-color: #667eea;
+}
+.game-info {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+/*
+	margin-bottom: 20px;
+	padding: 15px;
+*/
+	background: rgba(0, 0, 0, 0.05);
+	border-radius: 10px;
+}
+.player-info {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	font-size: 1.2em;
+	font-weight: bold;
+}
+.player-disc {
+	width: 30px;
+	height: 30px;
+	border-radius: 50%;
+	border: 3px solid #333;
+	display: inline-block;
+}
+.black { background: #333; }
+.white { background: #fff; }
+.current-turn {
+	text-align: center;
+	font-size: 1.3em;
+	font-weight: bold;
+	color: #555;
+}
+.board {
+	display: grid;
+	grid-template-columns: repeat(8, 1fr);
+	gap: 2px;
+	background: #2d5a27;
+	padding: 10px;
+	border-radius: 15px;
+/*
+	margin: 20px 0;
+*/
+	box-shadow: inset 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+.cell {
+	aspect-ratio: 1;
+	background: #4a8f47;
+	border-radius: 8px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	cursor: pointer;
+	transition: all 0.3s ease;
+	position: relative;
+	min-height: 50px;
+}
+.cell:hover {
+	background: #5aa357;
+	transform: scale(1.05);
+}
+.cell.valid-move {
+	background: #6bb368;
+	box-shadow: 0 0 15px rgba(107, 179, 104, 0.7);
+}
+.cell.disabled {
+	cursor: not-allowed;
+	opacity: 0.7;
+}
+.disc {
+	width: 80%;
+	height: 80%;
+	border-radius: 50%;
+	border: 2px solid #222;
+	transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+	transform: scale(0);
+}
+.disc.placed {
+	transform: scale(1);
+}
+.disc.black {
+	background: radial-gradient(circle at 30% 30%, #555, #111);
+}
+.disc.white {
+	background: radial-gradient(circle at 30% 30%, #fff, #ddd);
+}
+.controls {
+	display: flex;
+	justify-content: center;
+	gap: 15px;
+/*
+	margin-top: 20px;
+*/
+	flex-wrap: wrap;
+}
+.btn {
+	padding: 12px 24px;
+	border: none;
+	border-radius: 25px;
+	font-size: 1.1em;
+	font-weight: bold;
+	cursor: pointer;
+	transition: all 0.3s ease;
+	text-transform: uppercase;
+	letter-spacing: 1px;
+}
+.btn:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+.btn-primary {
+	background: linear-gradient(45deg, #667eea, #764ba2);
+	color: white;
+}
+.btn-primary:hover:not(:disabled) {
+	transform: translateY(-2px);
+	box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+}
+.btn-secondary {
+	background: #6c757d;
+	color: white;
+}
+.btn-secondary:hover:not(:disabled) {
+	background: #5a6268;
+	transform: translateY(-2px);
+}
+.btn-success {
+	background: #28a745;
+	color: white;
+}
+.btn-success:hover:not(:disabled) {
+	background: #218838;
+	transform: translateY(-2px);
+}
+.game-over {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background: rgba(0, 0, 0, 0.8);
+	display: none;
+	justify-content: center;
+	align-items: center;
+	z-index: 1000;
+}
+.game-over-content {
+	background: white;
+	padding: 40px;
+	border-radius: 20px;
+	text-align: center;
+	max-width: 400px;
+	box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+.game-over h2 {
+	font-size: 2.5em;
+	margin-bottom: 20px;
+	color: #333;
+}
+.winner-disc {
+	width: 60px;
+	height: 60px;
+	border-radius: 50%;
+	border: 4px solid #333;
+	margin: 20px auto;
+}
+.score-display {
+	font-size: 1.5em;
+	margin: 20px 0;
+	color: #555;
+}
+.room-id-display {
+	background: #f8f9fa;
+	padding: 10px;
+	border-radius: 8px;
+	margin: 10px 0;
+	font-family: monospace;
+	font-size: 1.2em;
+	font-weight: bold;
+	color: #495057;
+}
+@media (max-width: 600px) {
+	.game-container {
+		padding: 20px;
+	}
+	h1 {
+		font-size: 2em;
+	}
+	.game-info {
+		flex-direction: column;
+		gap: 10px;
+	}
+	.player-info {
+		font-size: 1em;
+	}
+	.cell {
+		min-height: 40px;
+	}
+	.room-input {
+		flex-direction: column;
+		align-items: center;
+	}
+	.input-field {
+		min-width: auto;
+		width: 100%;
+		max-width: 300px;
+	}
+}
+</style>
+</head>
+<body>
+<div class="game-container" id="game-container">
+<h1 id="page-title">オンライン対戦オセロ</h1>
+<div class="connection-status status-connecting" id="connection-status">
+	接続を準備中...
+</div>
+<div class="room-section" id="room-section">
+	<div class="room-input">
+		<input type="text" id="room-id-input" class="input-field" placeholder="ルームID（空白で自動生成）" maxlength="20">
+		<button class="btn btn-primary" onclick="createRoom()">ルーム作成</button>
+		<button class="btn btn-success" onclick="joinRoom()">ルーム参加</button>
+	</div>
+	<div>
+		<button class="btn btn-secondary" onclick="generateRoomId()">ランダムID生成</button>
+	</div>
+</div>
+<div class="room-id-display" id="room-id-display" style="display: none;">
+	ルームID: <span id="current-room-id"></span>
+</div>
+<div class="game-info" id="game-info" style="display: none;">
+	<div class="player-info">
+		<span class="player-disc black"></span>
+		<span>黒: <span id="black-score">2</span></span>
+	</div>
+	<div class="current-turn">
+		<span id="current-player">黒番</span>の番です
+	</div>
+	<div class="player-info">
+		<span class="player-disc white"></span>
+		<span>白: <span id="white-score">2</span></span>
+	</div>
+</div>
+<div class="board" id="board" style="display: none;"></div>
+<div class="controls" id="game-controls" style="display: none;">
+	<button class="btn btn-secondary" onclick="showValidMoves()">有効手を表示</button>
+	<button class="btn btn-primary" onclick="leaveRoom()">ルームを退出</button>
+</div>
+</div>
+<div class="game-over" id="game-over">
+<div class="game-over-content">
+	<h2 id="winner-text">ゲーム終了</h2>
+	<div class="winner-disc" id="winner-disc"></div>
+	<div class="score-display" id="final-score"></div>
+	<button class="btn btn-primary" onclick="leaveRoom()">ルーム一覧に戻る</button>
+</div>
+</div>
+<script>
+class OnlineOthelloGame {
+	constructor() {
+		this.board = Array(8).fill().map(() => Array(8).fill(0));
+		this.currentPlayer = 1; // 1: 黒, -1: 白
+		this.myColor = null; // プレイヤーの色
+		this.gameOver = false;
+		this.validMovesVisible = false;
+		this.roomId = null;
+		this.playerId = this.generatePlayerId();
+		this.ws = null; // WebSocketオブジェクト
+		this.updateConnectionStatus('ready', 'ルームを作成するか参加してください');
+	}
+	generatePlayerId() {
+		return 'player_' + Math.random().toString(36).substr(2, 9);
+	}
+	generateRoomId() {
+		const roomId = Math.random().toString(36).substr(2, 8).toUpperCase();
+		document.getElementById('room-id-input').value = roomId;
+	}
+	async createRoom() {
+		const roomInput = document.getElementById('room-id-input').value.trim();
+		const roomId = roomInput || this.generateRoomId();
+		this.roomId = roomId;
+		this.myColor = 1; // 黒
+		this.updateConnectionStatus('connecting', 'ルームを作成中...');
+		this.connectWebSocket();
+		document.getElementById('page-title').style.display = 'none';
+		document.getElementById('game-container').style.marginTop = '-50px';
+	}
+	async joinRoom() {
+		const roomId = document.getElementById('room-id-input').value.trim();
+		if (!roomId) {
+			alert('ルームIDを入力してください');
+			return;
+		}
+		this.roomId = roomId;
+		this.myColor = -1; // 白
+		this.updateConnectionStatus('connecting', 'ルームに参加中...');
+		this.connectWebSocket();
+		document.getElementById('page-title').style.display = 'none';
+		document.getElementById('game-container').style.marginTop = '-50px';
+	}
+	connectWebSocket() {
+		if (this.ws) {
+			this.ws.close();
+		}
+		this.ws = new WebSocket('wss://cloud.achex.ca/chat');
+		this.ws.onopen = () => {
+			console.log('WebSocket接続成功');
+			const message = {
+				type: this.myColor === 1 ? 'createRoom' : 'joinRoom',
+				roomId: this.roomId,
+				playerId: this.playerId,
+				myColor: this.myColor
+			};
+			this.ws.send(JSON.stringify(message));
+			if (this.myColor === 1) {
+				this.updateConnectionStatus('waiting', 'プレイヤー2の参加を待っています...');
+				this.showGame();
+			}
+		};
+		this.ws.onmessage = (event) => {
+			const data = JSON.parse(event.data);
+			this.handleMessage(data);
+		};
+		this.ws.onclose = () => {
+			console.log('WebSocket接続終了');
+			this.updateConnectionStatus('error', 'サーバーとの接続が切れました。');
+		};
+		this.ws.onerror = (error) => {
+			console.error('WebSocketエラー:', error);
+			this.updateConnectionStatus('error', '接続エラーが発生しました。');
+		};
+	}
+	handleMessage(data) {
+		switch (data.type) {
+			case 'roomNotFound':
+				this.updateConnectionStatus('error', 'エラー: ルームが見つかりません');
+				this.leaveRoom();
+				break;
+			case 'roomFull':
+				this.updateConnectionStatus('error', 'エラー: ルームは満員です');
+				this.leaveRoom();
+				break;
+			case 'gameStarted':
+				this.updateConnectionStatus('playing', '対戦中');
+				this.showGame();
+				this.loadGameState(data.gameState);
+				break;
+			case 'gameStateUpdate':
+				this.loadGameState(data.gameState);
+				break;
+			case 'playerLeft':
+				this.updateConnectionStatus('error', '相手が退出しました。');
+				document.getElementById('board').style.pointerEvents = 'none';
+				break;
+			default:
+				console.log('不明なメッセージタイプ:', data.type);
+		}
+	}
+	showGame() {
+		document.getElementById('room-section').style.display = 'none';
+		document.getElementById('room-id-display').style.display = 'block';
+		document.getElementById('current-room-id').textContent = this.roomId;
+		document.getElementById('game-info').style.display = 'flex';
+		document.getElementById('board').style.display = 'grid';
+		document.getElementById('game-controls').style.display = 'flex';
+		this.renderBoard();
+	}
+	loadGameState(gameState) {
+		this.board = gameState.board.map(row => [...row]);
+		this.currentPlayer = gameState.currentPlayer;
+		this.gameOver = gameState.gameOver || false;
+		this.renderBoard();
+		this.updateDisplay();
+		if (this.gameOver) {
+			this.endGame();
+		}
+	}
+	async makeMove(row, col) {
+		if (this.gameOver || this.myColor !== this.currentPlayer || !this.isValidMove(row, col)) {
+			return;
+		}
+		// サーバーに手を送信
+		const moveMessage = {
+			type: 'makeMove',
+			roomId: this.roomId,
+			playerId: this.playerId,
+			row: row,
+			col: col
+		};
+		this.ws.send(JSON.stringify(moveMessage));
+	}
+	// オセロのゲームロジック（変更なし）
+	isValidMove(row, col) {
+		if (this.board[row][col] !== 0) return false;
+		const directions = [
+			[-1, -1], [-1, 0], [-1, 1],
+			[0, -1], [0, 1],
+			[1, -1], [1, 0], [1, 1]
+		];
+		for (let [dr, dc] of directions) {
+			if (this.checkDirection(row, col, dr, dc)) {
+				return true;
+			}
+		}
+		return false;
+	}
+	checkDirection(row, col, dr, dc) {
+		let r = row + dr;
+		let c = col + dc;
+		let hasOpponent = false;
+		while (r >= 0 && r < 8 && c >= 0 && c < 8) {
+			if (this.board[r][c] === 0) return false;
+			if (this.board[r][c] === -this.currentPlayer) {
+				hasOpponent = true;
+			} else if (this.board[r][c] === this.currentPlayer) {
+				return hasOpponent;
+			}
+			r += dr;
+			c += dc;
+		}
+		return false;
+	}
+	renderBoard() {
+		const boardElement = document.getElementById('board');
+		boardElement.innerHTML = '';
+		for (let row = 0; row < 8; row++) {
+			for (let col = 0; col < 8; col++) {
+				const cell = document.createElement('div');
+				cell.className = 'cell';
+				if (this.myColor !== this.currentPlayer) {
+					cell.classList.add('disabled');
+				} else {
+					cell.onclick = () => this.makeMove(row, col);
+				}
+				if (this.board[row][col] !== 0) {
+					const disc = document.createElement('div');
+					disc.className = `disc ${this.board[row][col] === 1 ? 'black' : 'white'}`;
+					setTimeout(() => disc.classList.add('placed'), 50);
+					cell.appendChild(disc);
+				}
+				boardElement.appendChild(cell);
+			}
+		}
+	}
+	getValidMoves() {
+		const moves = [];
+		for (let row = 0; row < 8; row++) {
+			for (let col = 0; col < 8; col++) {
+				if (this.isValidMove(row, col)) {
+					moves.push([row, col]);
+				}
+			}
+		}
+		return moves;
+	}
+	updateDisplay() {
+		const blackCount = this.board.flat().filter(cell => cell === 1).length;
+		const whiteCount = this.board.flat().filter(cell => cell === -1).length;
+		document.getElementById('black-score').textContent = blackCount;
+		document.getElementById('white-score').textContent = whiteCount;
+		const currentPlayerText = this.currentPlayer === 1 ? '黒番' : '白番';
+		const isMyTurn = this.myColor === this.currentPlayer;
+		document.getElementById('current-player').textContent =
+			isMyTurn ? `${currentPlayerText} (あなた)` : `${currentPlayerText} (相手)`;
+	}
+	endGame() {
+		this.gameOver = true;
+		const blackCount = this.board.flat().filter(cell => cell === 1).length;
+		const whiteCount = this.board.flat().filter(cell => cell === -1).length;
+		let winner, winnerText;
+		if (blackCount > whiteCount) {
+			winner = '黒';
+			winnerText = this.myColor === 1 ? 'あなたの勝利！' : '相手の勝利';
+		} else if (whiteCount > blackCount) {
+			winner = '白';
+			winnerText = this.myColor === -1 ? 'あなたの勝利！' : '相手の勝利';
+		} else {
+			winner = null;
+			winnerText = '引き分け！';
+		}
+		document.getElementById('winner-text').textContent = winnerText;
+		document.getElementById('final-score').textContent =
+			`黒: ${blackCount} - 白: ${whiteCount}`;
+		const winnerDisc = document.getElementById('winner-disc');
+		if (winner) {
+			winnerDisc.className = `winner-disc ${winner === '黒' ? 'black' : 'white'}`;
+		} else {
+			winnerDisc.style.background = 'linear-gradient(45deg, #333, #fff)';
+		}
+		document.getElementById('game-over').style.display = 'flex';
+	}
+	updateConnectionStatus(status, message) {
+		const statusElement = document.getElementById('connection-status');
+		statusElement.className = `connection-status status-${status}`;
+		statusElement.textContent = message;
+	}
+	leaveRoom() {
+		if (this.ws) {
+			this.ws.close();
+		}
+		this.board = Array(8).fill().map(() => Array(8).fill(0));
+		this.currentPlayer = 1;
+		this.myColor = null;
+		this.gameOver = false;
+		this.validMovesVisible = false;
+		this.roomId = null;
+		this.ws = null;
+		document.getElementById('room-section').style.display = 'block';
+		document.getElementById('room-id-display').style.display = 'none';
+		document.getElementById('game-info').style.display = 'none';
+		document.getElementById('board').style.display = 'none';
+		document.getElementById('game-controls').style.display = 'none';
+		document.getElementById('game-over').style.display = 'none';
+		document.getElementById('room-id-input').value = '';
+		this.updateConnectionStatus('ready', 'ルームを作成するか参加してください');
+		const boardElement = document.getElementById('board');
+		boardElement.innerHTML = '';
+		boardElement.style.pointerEvents = 'auto';
+	}
+	showValidMoves() {
+		const cells = document.querySelectorAll('.cell');
+		cells.forEach(cell => cell.classList.remove('valid-move'));
+		if (!this.validMovesVisible && this.myColor === this.currentPlayer) {
+			const validMoves = this.getValidMoves();
+			validMoves.forEach(([row, col]) => {
+				const index = row * 8 + col;
+				cells[index].classList.add('valid-move');
+			});
+		}
+		this.validMovesVisible = !this.validMovesVisible;
+	}
+}
+let game = new OnlineOthelloGame();
+function createRoom() {
+	game.createRoom();
+}
+function joinRoom() {
+	game.joinRoom();
+}
+function generateRoomId() {
+	game.generateRoomId();
+}
+function leaveRoom() {
+	game.leaveRoom();
+}
+function showValidMoves() {
+	game.showValidMoves();
+}
+window.addEventListener('beforeunload', () => {
+	if (game.ws && game.ws.readyState === WebSocket.OPEN) {
+		game.ws.close();
+	}
+});
+</script>
+</body>
+</html>
