@@ -745,7 +745,7 @@ class OnlineOthelloGame {
 		const currentPlayerText = this.currentPlayer === 1 ? '黒番' : '白番';
 		
 		if (this.isSpectator) {
-			document.getElementById('current-player').textContent = `${currentPlayerText} (観戦中)`;
+			document.getElementById('current-player').textContent = `${currentPlayerText}`;
 		} else {
 			const isMyTurn = this.myColor === this.currentPlayer;
 			document.getElementById('current-player').textContent = 
