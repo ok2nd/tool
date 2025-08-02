@@ -17,7 +17,7 @@ body {
 	min-height: 100vh;
 	display: flex;
 	justify-content: center;
-	align-items: flex-start; /* ← ここを center → flex-start に変更 */
+	align-items: flex-start;
 	padding: 20px;
 }
 .game-container {
@@ -28,7 +28,7 @@ body {
 	backdrop-filter: blur(10px);
 	max-width: 600px;
 	width: 100%;
-	margin-top: 0px; /* <h1>の高さ＋margin-bottom分を調整 */
+	margin-top: 0px;
 }
 h1 {
 	text-align: center;
@@ -41,9 +41,6 @@ h1 {
 	text-align: center;
 	padding: 10px;
 	border-radius: 10px;
-/*
-	margin-bottom: 20px;
-*/
 	font-weight: bold;
 }
 .status-connecting {
@@ -62,11 +59,12 @@ h1 {
 	background: #f8d7da;
 	color: #721c24;
 }
+.status-ready {
+	background: #e2e3e5;
+	color: #383d41;
+}
 .room-section {
 	text-align: center;
-/*
-	margin-bottom: 20px;
-*/
 }
 .room-input {
 	display: flex;
@@ -90,10 +88,6 @@ h1 {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-/*
-	margin-bottom: 20px;
-	padding: 15px;
-*/
 	background: rgba(0, 0, 0, 0.05);
 	border-radius: 10px;
 }
@@ -126,9 +120,6 @@ h1 {
 	background: #2d5a27;
 	padding: 10px;
 	border-radius: 15px;
-/*
-	margin: 20px 0;
-*/
 	box-shadow: inset 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 .cell {
@@ -176,9 +167,6 @@ h1 {
 	display: flex;
 	justify-content: center;
 	gap: 15px;
-/*
-	margin-top: 20px;
-*/
 	flex-wrap: wrap;
 }
 .btn {
@@ -295,12 +283,14 @@ h1 {
 	}
 }
 </style>
+<!-- PubNub SDKを読み込み -->
+<script src="https://cdn.pubnub.com/sdk/javascript/pubnub.8.0.1.min.js"></script>
 </head>
 <body>
 <div class="game-container" id="game-container">
 <h1 id="page-title">オンライン対戦オセロ</h1>
-<div class="connection-status status-connecting" id="connection-status">
-	接続を準備中...
+<div class="connection-status status-ready" id="connection-status">
+	ルームを作成するか参加してください
 </div>
 <div class="room-section" id="room-section">
 	<div class="room-input">
@@ -352,97 +342,208 @@ class OnlineOthelloGame {
 		this.validMovesVisible = false;
 		this.roomId = null;
 		this.playerId = this.generatePlayerId();
-		this.ws = null; // WebSocketオブジェクト
+		this.gameState = null;
+		
+		// PubNubの初期化（デモ用のキーを使用）
+		this.pubnub = new PubNub({
+			publishKey: "demo",
+			subscribeKey: "demo",
+			userId: this.playerId,
+			ssl: true
+		});
+		
 		this.updateConnectionStatus('ready', 'ルームを作成するか参加してください');
 	}
+	
 	generatePlayerId() {
 		return 'player_' + Math.random().toString(36).substr(2, 9);
 	}
+	
 	generateRoomId() {
 		const roomId = Math.random().toString(36).substr(2, 8).toUpperCase();
 		document.getElementById('room-id-input').value = roomId;
 	}
+	
 	async createRoom() {
 		const roomInput = document.getElementById('room-id-input').value.trim();
-		const roomId = roomInput || this.generateRoomId();
-		this.roomId = roomId;
-		this.myColor = 1; // 黒
-		this.updateConnectionStatus('connecting', 'ルームを作成中...');
-		this.connectWebSocket();
-		document.getElementById('page-title').style.display = 'none';
-		document.getElementById('game-container').style.marginTop = '-50px';
+		const roomId = roomInput || Math.random().toString(36).substr(2, 8).toUpperCase();
+		
+		try {
+			this.updateConnectionStatus('connecting', 'ルームを作成中...');
+			
+			// 初期ゲーム状態
+			const gameState = {
+				roomId: roomId,
+				players: {
+					[this.playerId]: { color: 1, name: 'Player 1' }
+				},
+				board: Array(8).fill().map(() => Array(8).fill(0)),
+				currentPlayer: 1,
+				gameStarted: false,
+				gameOver: false,
+				lastUpdate: Date.now()
+			};
+			
+			// 初期配置
+			gameState.board[3][3] = -1;
+			gameState.board[3][4] = 1;
+			gameState.board[4][3] = 1;
+			gameState.board[4][4] = -1;
+			
+			this.roomId = roomId;
+			this.myColor = 1; // 黒
+			this.gameState = gameState;
+			
+			// PubNubチャンネルに参加
+			await this.subscribeToRoom();
+			
+			// 初期状態を送信
+			await this.publishGameState();
+			
+			this.updateConnectionStatus('waiting', 'プレイヤー2の参加を待っています...');
+			this.showGame();
+			
+			document.getElementById('page-title').style.display = 'none';
+			document.getElementById('game-container').style.marginTop = '-50px';
+		} catch (error) {
+			this.updateConnectionStatus('error', `エラー: ${error.message}`);
+		}
 	}
+	
 	async joinRoom() {
 		const roomId = document.getElementById('room-id-input').value.trim();
 		if (!roomId) {
 			alert('ルームIDを入力してください');
 			return;
 		}
-		this.roomId = roomId;
-		this.myColor = -1; // 白
-		this.updateConnectionStatus('connecting', 'ルームに参加中...');
-		this.connectWebSocket();
-		document.getElementById('page-title').style.display = 'none';
-		document.getElementById('game-container').style.marginTop = '-50px';
-	}
-	connectWebSocket() {
-		if (this.ws) {
-			this.ws.close();
-		}
-		this.ws = new WebSocket('wss://cloud.achex.ca/chat');
-		this.ws.onopen = () => {
-			console.log('WebSocket接続成功');
-			const message = {
-				type: this.myColor === 1 ? 'createRoom' : 'joinRoom',
-				roomId: this.roomId,
+		
+		try {
+			this.updateConnectionStatus('connecting', 'ルームに参加中...');
+			
+			this.roomId = roomId;
+			this.myColor = -1; // 白
+			
+			// PubNubチャンネルに参加
+			await this.subscribeToRoom();
+			
+			// まず現在のゲーム状態を要求
+			const requestMessage = {
+				type: 'request_game_state',
 				playerId: this.playerId,
-				myColor: this.myColor
+				timestamp: Date.now()
 			};
-			this.ws.send(JSON.stringify(message));
-			if (this.myColor === 1) {
-				this.updateConnectionStatus('waiting', 'プレイヤー2の参加を待っています...');
-				this.showGame();
-			}
-		};
-		this.ws.onmessage = (event) => {
-			const data = JSON.parse(event.data);
-			this.handleMessage(data);
-		};
-		this.ws.onclose = () => {
-			console.log('WebSocket接続終了');
-			this.updateConnectionStatus('error', 'サーバーとの接続が切れました。');
-		};
-		this.ws.onerror = (error) => {
-			console.error('WebSocketエラー:', error);
-			this.updateConnectionStatus('error', '接続エラーが発生しました。');
-		};
-	}
-	handleMessage(data) {
-		switch (data.type) {
-			case 'roomNotFound':
-				this.updateConnectionStatus('error', 'エラー: ルームが見つかりません');
-				this.leaveRoom();
-				break;
-			case 'roomFull':
-				this.updateConnectionStatus('error', 'エラー: ルームは満員です');
-				this.leaveRoom();
-				break;
-			case 'gameStarted':
-				this.updateConnectionStatus('playing', '対戦中');
-				this.showGame();
-				this.loadGameState(data.gameState);
-				break;
-			case 'gameStateUpdate':
-				this.loadGameState(data.gameState);
-				break;
-			case 'playerLeft':
-				this.updateConnectionStatus('error', '相手が退出しました。');
-				document.getElementById('board').style.pointerEvents = 'none';
-				break;
-			default:
-				console.log('不明なメッセージタイプ:', data.type);
+			
+			await this.pubnub.publish({
+				channel: this.roomId,
+				message: requestMessage
+			});
+			
+			// 少し待ってから参加メッセージを送信
+			setTimeout(async () => {
+				const joinMessage = {
+					type: 'player_join',
+					playerId: this.playerId,
+					playerColor: -1,
+					timestamp: Date.now()
+				};
+				
+				await this.pubnub.publish({
+					channel: this.roomId,
+					message: joinMessage
+				});
+			}, 500);
+			
+			this.updateConnectionStatus('playing', '対戦中');
+			this.showGame();
+			
+			document.getElementById('page-title').style.display = 'none';
+			document.getElementById('game-container').style.marginTop = '-50px';
+		} catch (error) {
+			this.updateConnectionStatus('error', `エラー: ${error.message}`);
 		}
 	}
+	
+	async subscribeToRoom() {
+		return new Promise((resolve, reject) => {
+			// メッセージリスナーを設定
+			this.pubnub.addListener({
+				message: (messageEvent) => {
+					this.handleMessage(messageEvent.message);
+				},
+				presence: (presenceEvent) => {
+					this.handlePresence(presenceEvent);
+				}
+			});
+			
+			// チャンネルに参加
+			this.pubnub.subscribe({
+				channels: [this.roomId],
+				withPresence: true
+			});
+			
+			resolve();
+		});
+	}
+	
+	handleMessage(message) {
+		switch (message.type) {
+			case 'game_state':
+				if (message.gameState.lastUpdate > (this.gameState?.lastUpdate || 0)) {
+					this.gameState = message.gameState;
+					this.loadGameState();
+				}
+				break;
+			case 'request_game_state':
+				// プレイヤー1が現在のゲーム状態を送信
+				if (message.playerId !== this.playerId && this.myColor === 1 && this.gameState) {
+					this.publishGameState();
+				}
+				break;
+			case 'player_join':
+				if (message.playerId !== this.playerId && this.myColor === 1) {
+					// プレイヤー2が参加したら、ゲーム開始
+					this.gameState.players[message.playerId] = { 
+						color: message.playerColor, 
+						name: 'Player 2' 
+					};
+					this.gameState.gameStarted = true;
+					this.gameState.lastUpdate = Date.now();
+					this.publishGameState();
+					this.updateConnectionStatus('playing', '対戦中');
+					// プレイヤー1側でボードを再描画
+					this.loadGameState();
+				}
+				break;
+			case 'move':
+				if (message.playerId !== this.playerId) {
+					this.applyMove(message.row, message.col, message.gameState);
+				}
+				break;
+			case 'player_leave':
+				if (message.playerId !== this.playerId) {
+					this.updateConnectionStatus('error', '相手が退出しました');
+					document.getElementById('board').style.pointerEvents = 'none';
+				}
+				break;
+		}
+	}
+	
+	handlePresence(presenceEvent) {
+		// プレゼンス機能は必要に応じて実装
+	}
+	
+	async publishGameState() {
+		const message = {
+			type: 'game_state',
+			gameState: this.gameState
+		};
+		
+		await this.pubnub.publish({
+			channel: this.roomId,
+			message: message
+		});
+	}
+	
 	showGame() {
 		document.getElementById('room-section').style.display = 'none';
 		document.getElementById('room-id-display').style.display = 'block';
@@ -452,37 +553,65 @@ class OnlineOthelloGame {
 		document.getElementById('game-controls').style.display = 'flex';
 		this.renderBoard();
 	}
-	loadGameState(gameState) {
-		this.board = gameState.board.map(row => [...row]);
-		this.currentPlayer = gameState.currentPlayer;
-		this.gameOver = gameState.gameOver || false;
+	
+	loadGameState() {
+		this.board = this.gameState.board.map(row => [...row]);
+		this.currentPlayer = this.gameState.currentPlayer;
+		this.gameOver = this.gameState.gameOver || false;
 		this.renderBoard();
 		this.updateDisplay();
 		if (this.gameOver) {
 			this.endGame();
 		}
 	}
+	
 	async makeMove(row, col) {
 		if (this.gameOver || this.myColor !== this.currentPlayer || !this.isValidMove(row, col)) {
 			return;
 		}
-		// サーバーに手を送信
+		
+		this.board[row][col] = this.currentPlayer;
+		this.flipDiscs(row, col);
+		this.currentPlayer = -this.currentPlayer;
+		
+		// ゲーム状態を更新
+		this.gameState.board = this.board.map(row => [...row]);
+		this.gameState.currentPlayer = this.currentPlayer;
+		this.gameState.lastUpdate = Date.now();
+		
+		// 手をPubNubで送信
 		const moveMessage = {
-			type: 'makeMove',
-			roomId: this.roomId,
+			type: 'move',
 			playerId: this.playerId,
 			row: row,
-			col: col
+			col: col,
+			gameState: this.gameState
 		};
-		this.ws.send(JSON.stringify(moveMessage));
+		
+		await this.pubnub.publish({
+			channel: this.roomId,
+			message: moveMessage
+		});
+		
+		setTimeout(() => {
+			this.renderBoard();
+			this.updateDisplay();
+			this.checkGameEnd();
+		}, 100);
 	}
-	// オセロのゲームロジック（変更なし）
+	
+	applyMove(row, col, gameState) {
+		this.gameState = gameState;
+		this.loadGameState();
+	}
+	
+	// オセロのゲームロジック
 	isValidMove(row, col) {
 		if (this.board[row][col] !== 0) return false;
 		const directions = [
 			[-1, -1], [-1, 0], [-1, 1],
-			[0, -1], [0, 1],
-			[1, -1], [1, 0], [1, 1]
+			[0, -1],		   [0, 1],
+			[1, -1],  [1, 0],  [1, 1]
 		];
 		for (let [dr, dc] of directions) {
 			if (this.checkDirection(row, col, dr, dc)) {
@@ -491,6 +620,7 @@ class OnlineOthelloGame {
 		}
 		return false;
 	}
+	
 	checkDirection(row, col, dr, dc) {
 		let r = row + dr;
 		let c = col + dc;
@@ -507,6 +637,27 @@ class OnlineOthelloGame {
 		}
 		return false;
 	}
+	
+	flipDiscs(row, col) {
+		const directions = [
+			[-1, -1], [-1, 0], [-1, 1],
+			[0, -1],		   [0, 1],
+			[1, -1],  [1, 0],  [1, 1]
+		];
+		for (let [dr, dc] of directions) {
+			if (this.checkDirection(row, col, dr, dc)) {
+				let r = row + dr;
+				let c = col + dc;
+				while (r >= 0 && r < 8 && c >= 0 && c < 8 && 
+					   this.board[r][c] === -this.currentPlayer) {
+					this.board[r][c] = this.currentPlayer;
+					r += dr;
+					c += dc;
+				}
+			}
+		}
+	}
+	
 	renderBoard() {
 		const boardElement = document.getElementById('board');
 		boardElement.innerHTML = '';
@@ -514,11 +665,13 @@ class OnlineOthelloGame {
 			for (let col = 0; col < 8; col++) {
 				const cell = document.createElement('div');
 				cell.className = 'cell';
-				if (this.myColor !== this.currentPlayer) {
+				
+				if (this.myColor !== this.currentPlayer || !this.gameState?.gameStarted) {
 					cell.classList.add('disabled');
 				} else {
 					cell.onclick = () => this.makeMove(row, col);
 				}
+				
 				if (this.board[row][col] !== 0) {
 					const disc = document.createElement('div');
 					disc.className = `disc ${this.board[row][col] === 1 ? 'black' : 'white'}`;
@@ -529,6 +682,7 @@ class OnlineOthelloGame {
 			}
 		}
 	}
+	
 	getValidMoves() {
 		const moves = [];
 		for (let row = 0; row < 8; row++) {
@@ -540,20 +694,43 @@ class OnlineOthelloGame {
 		}
 		return moves;
 	}
+	
 	updateDisplay() {
 		const blackCount = this.board.flat().filter(cell => cell === 1).length;
 		const whiteCount = this.board.flat().filter(cell => cell === -1).length;
+		
 		document.getElementById('black-score').textContent = blackCount;
 		document.getElementById('white-score').textContent = whiteCount;
+		
 		const currentPlayerText = this.currentPlayer === 1 ? '黒番' : '白番';
 		const isMyTurn = this.myColor === this.currentPlayer;
-		document.getElementById('current-player').textContent =
+		document.getElementById('current-player').textContent = 
 			isMyTurn ? `${currentPlayerText} (あなた)` : `${currentPlayerText} (相手)`;
 	}
+	
+	async checkGameEnd() {
+		const validMoves = this.getValidMoves();
+		if (validMoves.length === 0) {
+			this.currentPlayer = -this.currentPlayer;
+			const opponentMoves = this.getValidMoves();
+			if (opponentMoves.length === 0) {
+				this.gameState.gameOver = true;
+				await this.publishGameState();
+				this.endGame();
+			} else {
+				this.currentPlayer = -this.currentPlayer;
+				this.gameState.currentPlayer = this.currentPlayer;
+				this.gameState.lastUpdate = Date.now();
+				await this.publishGameState();
+			}
+		}
+	}
+	
 	endGame() {
 		this.gameOver = true;
 		const blackCount = this.board.flat().filter(cell => cell === 1).length;
 		const whiteCount = this.board.flat().filter(cell => cell === -1).length;
+		
 		let winner, winnerText;
 		if (blackCount > whiteCount) {
 			winner = '黒';
@@ -565,33 +742,60 @@ class OnlineOthelloGame {
 			winner = null;
 			winnerText = '引き分け！';
 		}
+		
 		document.getElementById('winner-text').textContent = winnerText;
-		document.getElementById('final-score').textContent =
+		document.getElementById('final-score').textContent = 
 			`黒: ${blackCount} - 白: ${whiteCount}`;
+		
 		const winnerDisc = document.getElementById('winner-disc');
 		if (winner) {
 			winnerDisc.className = `winner-disc ${winner === '黒' ? 'black' : 'white'}`;
 		} else {
 			winnerDisc.style.background = 'linear-gradient(45deg, #333, #fff)';
 		}
+		
 		document.getElementById('game-over').style.display = 'flex';
 	}
+	
 	updateConnectionStatus(status, message) {
 		const statusElement = document.getElementById('connection-status');
 		statusElement.className = `connection-status status-${status}`;
 		statusElement.textContent = message;
 	}
-	leaveRoom() {
-		if (this.ws) {
-			this.ws.close();
+	
+	async leaveRoom() {
+		if (this.roomId) {
+			// 退出メッセージを送信
+			const leaveMessage = {
+				type: 'player_leave',
+				playerId: this.playerId
+			};
+			
+			try {
+				await this.pubnub.publish({
+					channel: this.roomId,
+					message: leaveMessage
+				});
+			} catch (error) {
+				console.error('退出メッセージの送信に失敗:', error);
+			}
+			
+			// チャンネルから退出
+			this.pubnub.unsubscribe({
+				channels: [this.roomId]
+			});
 		}
+		
+		// ゲーム状態をリセット
 		this.board = Array(8).fill().map(() => Array(8).fill(0));
 		this.currentPlayer = 1;
 		this.myColor = null;
 		this.gameOver = false;
 		this.validMovesVisible = false;
 		this.roomId = null;
-		this.ws = null;
+		this.gameState = null;
+		
+		// UIをリセット
 		document.getElementById('room-section').style.display = 'block';
 		document.getElementById('room-id-display').style.display = 'none';
 		document.getElementById('game-info').style.display = 'none';
@@ -599,14 +803,20 @@ class OnlineOthelloGame {
 		document.getElementById('game-controls').style.display = 'none';
 		document.getElementById('game-over').style.display = 'none';
 		document.getElementById('room-id-input').value = '';
+		document.getElementById('page-title').style.display = 'block';
+		document.getElementById('game-container').style.marginTop = '0px';
+		
 		this.updateConnectionStatus('ready', 'ルームを作成するか参加してください');
+		
 		const boardElement = document.getElementById('board');
 		boardElement.innerHTML = '';
 		boardElement.style.pointerEvents = 'auto';
 	}
+	
 	showValidMoves() {
 		const cells = document.querySelectorAll('.cell');
 		cells.forEach(cell => cell.classList.remove('valid-move'));
+		
 		if (!this.validMovesVisible && this.myColor === this.currentPlayer) {
 			const validMoves = this.getValidMoves();
 			validMoves.forEach(([row, col]) => {
@@ -617,25 +827,33 @@ class OnlineOthelloGame {
 		this.validMovesVisible = !this.validMovesVisible;
 	}
 }
+
 let game = new OnlineOthelloGame();
+
 function createRoom() {
 	game.createRoom();
 }
+
 function joinRoom() {
 	game.joinRoom();
 }
+
 function generateRoomId() {
 	game.generateRoomId();
 }
+
 function leaveRoom() {
 	game.leaveRoom();
 }
+
 function showValidMoves() {
 	game.showValidMoves();
 }
+
+// ページを離れる時にルームから退出
 window.addEventListener('beforeunload', () => {
-	if (game.ws && game.ws.readyState === WebSocket.OPEN) {
-		game.ws.close();
+	if (game.roomId) {
+		game.leaveRoom();
 	}
 });
 </script>
