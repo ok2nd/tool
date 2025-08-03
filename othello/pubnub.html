@@ -283,7 +283,6 @@ h1 {
 	}
 }
 </style>
-<!-- PubNub SDKを読み込み -->
 <script src="https://cdn.pubnub.com/sdk/javascript/pubnub.8.0.1.min.js"></script>
 </head>
 <body>
@@ -311,7 +310,7 @@ h1 {
 		<span>黒: <span id="black-score">2</span></span>
 	</div>
 	<div class="current-turn">
-		<span id="current-player">黒番</span>の番です
+		<span id="current-player">黒</span>の番です
 	</div>
 	<div class="player-info">
 		<span class="player-disc white"></span>
@@ -320,6 +319,7 @@ h1 {
 </div>
 <div class="board" id="board" style="display: none;"></div>
 <div class="controls" id="game-controls" style="display: none;">
+	<button class="btn btn-secondary" id="pass-button" onclick="passTurn()">パス</button>
 	<button class="btn btn-secondary" onclick="showValidMoves()">有効手を表示</button>
 	<button class="btn btn-primary" onclick="leaveRoom()">ルームを退出</button>
 </div>
@@ -343,7 +343,8 @@ class OnlineOthelloGame {
 		this.roomId = null;
 		this.playerId = this.generatePlayerId();
 		this.gameState = null;
-		this.isSpectator = false; // 観戦者フラグ
+		this.isSpectator = false;
+		this.opponentLeft = false;
 		
 		// PubNubの初期化（デモ用のキーを使用）
 		this.pubnub = new PubNub({
@@ -372,7 +373,12 @@ class OnlineOthelloGame {
 		try {
 			this.updateConnectionStatus('connecting', 'ルームを作成中...');
 			
-			// 初期ゲーム状態
+			const presence = await this.pubnub.hereNow({ channels: [roomId] });
+			if (presence.channels[roomId] && presence.channels[roomId].occupancy > 0) {
+				this.updateConnectionStatus('error', 'このルームIDはすでに使用されています。別のIDを指定してください。');
+				return;
+			}
+			
 			const gameState = {
 				roomId: roomId,
 				players: {
@@ -385,20 +391,18 @@ class OnlineOthelloGame {
 				lastUpdate: Date.now()
 			};
 			
-			// 初期配置
 			gameState.board[3][3] = -1;
 			gameState.board[3][4] = 1;
 			gameState.board[4][3] = 1;
 			gameState.board[4][4] = -1;
 			
 			this.roomId = roomId;
-			this.myColor = 1; // 黒
+			this.myColor = 1;
+			this.isSpectator = false;
 			this.gameState = gameState;
 			
-			// PubNubチャンネルに参加
 			await this.subscribeToRoom();
 			
-			// 初期状態を送信
 			await this.publishGameState();
 			
 			this.updateConnectionStatus('waiting', 'プレイヤー2の参加を待っています...');
@@ -419,14 +423,18 @@ class OnlineOthelloGame {
 		}
 		
 		try {
-			this.updateConnectionStatus('connecting', 'ルームに参加中...');
+			this.updateConnectionStatus('connecting', 'ルームに接続中...');
+			
+			const presence = await this.pubnub.hereNow({ channels: [roomId] });
+			if (!presence.channels[roomId] || presence.channels[roomId].occupancy === 0) {
+				this.updateConnectionStatus('error', 'このルームIDは存在しません。');
+				return;
+			}
 			
 			this.roomId = roomId;
 			
-			// PubNubチャンネルに参加
 			await this.subscribeToRoom();
 			
-			// まず現在のゲーム状態を要求
 			const requestMessage = {
 				type: 'request_game_state',
 				playerId: this.playerId,
@@ -438,22 +446,20 @@ class OnlineOthelloGame {
 				message: requestMessage
 			});
 			
-			// 少し待ってから参加メッセージを送信
+			// join_messageを少し遅らせて、state_messageを先に受け取る可能性を高める
 			setTimeout(async () => {
 				const joinMessage = {
 					type: 'player_join',
 					playerId: this.playerId,
-					playerColor: -1, // 仮の色（観戦者の場合は無視される）
 					timestamp: Date.now()
 				};
-				
 				await this.pubnub.publish({
 					channel: this.roomId,
 					message: joinMessage
 				});
+				
+				this.showGame();
 			}, 500);
-			
-			this.showGame();
 			
 			document.getElementById('page-title').style.display = 'none';
 			document.getElementById('game-container').style.marginTop = '-50px';
@@ -464,7 +470,6 @@ class OnlineOthelloGame {
 	
 	async subscribeToRoom() {
 		return new Promise((resolve, reject) => {
-			// メッセージリスナーを設定
 			this.pubnub.addListener({
 				message: (messageEvent) => {
 					this.handleMessage(messageEvent.message);
@@ -474,7 +479,6 @@ class OnlineOthelloGame {
 				}
 			});
 			
-			// チャンネルに参加
 			this.pubnub.subscribe({
 				channels: [this.roomId],
 				withPresence: true
@@ -493,30 +497,36 @@ class OnlineOthelloGame {
 				}
 				break;
 			case 'request_game_state':
-				// プレイヤー1が現在のゲーム状態を送信
 				if (message.playerId !== this.playerId && this.myColor === 1 && this.gameState) {
 					this.publishGameState();
 				}
 				break;
 			case 'player_join':
 				if (message.playerId !== this.playerId) {
-					if (this.myColor === 1) {
-						// プレイヤー1の場合
+					if (this.myColor === 1 && this.gameState) {
 						const playerCount = Object.keys(this.gameState.players || {}).length;
-						if (playerCount < 2) {
-							// プレイヤー2として参加
-							this.gameState.players[message.playerId] = { 
-								color: message.playerColor, 
-								name: 'Player 2',
-								isSpectator: false
+						
+						if (this.gameState.players[message.playerId]) {
+							this.gameState.players[message.playerId].rejoined = true;
+							this.opponentLeft = false;
+							this.gameState.lastUpdate = Date.now();
+							this.publishGameState();
+							this.updateConnectionStatus('playing', '対戦中');
+							this.loadGameState();
+						}
+						else if (playerCount < 2) {
+							const newPlayerColor = this.gameState.players[Object.keys(this.gameState.players)[0]].color === 1 ? -1 : 1;
+							this.gameState.players[message.playerId] = {
+								color: newPlayerColor,
+								name: `Player ${Object.keys(this.gameState.players).length + 1}`
 							};
 							this.gameState.gameStarted = true;
 							this.gameState.lastUpdate = Date.now();
 							this.publishGameState();
 							this.updateConnectionStatus('playing', '対戦中');
 							this.loadGameState();
-						} else {
-							// 観戦者として参加
+						}
+						else {
 							this.gameState.spectators = this.gameState.spectators || {};
 							this.gameState.spectators[message.playerId] = {
 								name: `観戦者${Object.keys(this.gameState.spectators || {}).length + 1}`,
@@ -533,17 +543,59 @@ class OnlineOthelloGame {
 					this.applyMove(message.row, message.col, message.gameState);
 				}
 				break;
-			case 'player_leave':
+			case 'pass':
 				if (message.playerId !== this.playerId) {
-					this.updateConnectionStatus('error', '相手が退出しました');
+					this.applyPass(message.gameState);
+				}
+				break;
+			case 'player_leave':
+				if (message.isPlayer) {
+					if (this.gameState.players && this.gameState.players[message.playerId]) {
+						delete this.gameState.players[message.playerId];
+					}
+					
+					const playerCount = Object.keys(this.gameState.players || {}).length;
+					
+					if (this.myColor) {
+						this.opponentLeft = true;
+						this.updateConnectionStatus('error', '相手が退出しました。再接続を待っています...');
+					} else {
+						this.isSpectator = true;
+						this.updateConnectionStatus('error', 'プレイヤーが退出しました。中断中');
+					}
+					
 					document.getElementById('board').style.pointerEvents = 'none';
+					this.publishGameState();
+				} else {
+					if (this.gameState && this.gameState.spectators && this.gameState.spectators[message.playerId]) {
+						delete this.gameState.spectators[message.playerId];
+						this.publishGameState();
+					}
 				}
 				break;
 		}
 	}
 	
-	handlePresence(presenceEvent) {
-		// プレゼンス機能は必要に応じて実装
+	async handlePresence(presenceEvent) {
+		if (presenceEvent.action === 'leave' || presenceEvent.action === 'timeout') {
+			const isPlayer = this.gameState && this.gameState.players && this.gameState.players[presenceEvent.uuid];
+			if (isPlayer) {
+				const leaveMessage = {
+					type: 'player_leave',
+					playerId: presenceEvent.uuid,
+					isPlayer: true
+				};
+				await this.pubnub.publish({
+					channel: this.roomId,
+					message: leaveMessage
+				});
+			} else {
+				if (this.gameState && this.gameState.spectators && this.gameState.spectators[presenceEvent.uuid]) {
+					delete this.gameState.spectators[presenceEvent.uuid];
+					this.publishGameState();
+				}
+			}
+		}
 	}
 	
 	async publishGameState() {
@@ -569,43 +621,54 @@ class OnlineOthelloGame {
 	}
 	
 	loadGameState() {
+		if (!this.gameState) return;
+		
 		this.board = this.gameState.board.map(row => [...row]);
 		this.currentPlayer = this.gameState.currentPlayer;
 		this.gameOver = this.gameState.gameOver || false;
 		
-		// 自分の役割を判定
-		if (this.gameState.players && this.gameState.players[this.playerId]) {
-			this.myColor = this.gameState.players[this.playerId].color;
+		const players = this.gameState.players || {};
+		const playerCount = Object.keys(players).length;
+		
+		// 自分の状態を更新
+		const isMyPlayer = players[this.playerId];
+		if (isMyPlayer) {
+			this.myColor = players[this.playerId].color;
 			this.isSpectator = false;
-			this.updateConnectionStatus('playing', '対戦中');
-		} else if (this.gameState.spectators && this.gameState.spectators[this.playerId]) {
+		} else {
 			this.myColor = null;
 			this.isSpectator = true;
-			this.updateConnectionStatus('error', '既に2人がプレー中です。観戦はできます。');
-		} else {
-			// まだ役割が決まっていない場合
-			const playerCount = Object.keys(this.gameState.players || {}).length;
-			if (playerCount < 2) {
-				this.myColor = -1; // 白プレイヤーとして参加
-				this.isSpectator = false;
-				this.updateConnectionStatus('playing', '対戦中');
+		}
+		
+		if (!this.isSpectator) {
+			this.opponentLeft = playerCount < 2;
+			if (this.opponentLeft) {
+				this.updateConnectionStatus('error', '相手が退出しました。再接続を待っています...');
+				document.getElementById('board').style.pointerEvents = 'none';
 			} else {
-				this.myColor = null;
-				this.isSpectator = true;
-				this.updateConnectionStatus('error', '既に2人がプレー中です。観戦はできます。');
+				this.updateConnectionStatus('playing', '対戦中');
+				document.getElementById('board').style.pointerEvents = 'auto';
 			}
+		} else {
+			if (playerCount === 2) {
+				this.updateConnectionStatus('playing', '既に2人がプレー中です。観戦はできます。');
+			} else {
+				this.updateConnectionStatus('error', 'プレイヤーが退出しました。中断中');
+			}
+			document.getElementById('board').style.pointerEvents = 'none';
 		}
 		
 		this.renderBoard();
 		this.updateDisplay();
 		if (this.gameOver) {
 			this.endGame();
+		} else {
+			this.showGame();
 		}
 	}
 	
 	async makeMove(row, col) {
-		// 観戦者は手を打てない
-		if (this.isSpectator || this.gameOver || this.myColor !== this.currentPlayer || !this.isValidMove(row, col)) {
+		if (this.opponentLeft || this.isSpectator || this.gameOver || this.myColor !== this.currentPlayer || !this.isValidMove(row, col)) {
 			return;
 		}
 		
@@ -613,12 +676,10 @@ class OnlineOthelloGame {
 		this.flipDiscs(row, col);
 		this.currentPlayer = -this.currentPlayer;
 		
-		// ゲーム状態を更新
 		this.gameState.board = this.board.map(row => [...row]);
 		this.gameState.currentPlayer = this.currentPlayer;
 		this.gameState.lastUpdate = Date.now();
 		
-		// 手をPubNubで送信
 		const moveMessage = {
 			type: 'move',
 			playerId: this.playerId,
@@ -639,18 +700,52 @@ class OnlineOthelloGame {
 		}, 100);
 	}
 	
+	async passTurn() {
+		if (this.opponentLeft || this.isSpectator || this.gameOver || this.myColor !== this.currentPlayer) {
+			return;
+		}
+		
+		if (this.getValidMoves().length > 0) {
+			alert('まだ置ける場所があります。');
+			return;
+		}
+		
+		this.currentPlayer = -this.currentPlayer;
+		
+		this.gameState.currentPlayer = this.currentPlayer;
+		this.gameState.lastUpdate = Date.now();
+		
+		const passMessage = {
+			type: 'pass',
+			playerId: this.playerId,
+			gameState: this.gameState
+		};
+		
+		await this.pubnub.publish({
+			channel: this.roomId,
+			message: passMessage
+		});
+		
+		this.updateDisplay();
+		this.checkGameEnd();
+	}
+	
+	applyPass(gameState) {
+		this.gameState = gameState;
+		this.loadGameState();
+	}
+	
 	applyMove(row, col, gameState) {
 		this.gameState = gameState;
 		this.loadGameState();
 	}
 	
-	// オセロのゲームロジック
 	isValidMove(row, col) {
 		if (this.board[row][col] !== 0) return false;
 		const directions = [
 			[-1, -1], [-1, 0], [-1, 1],
-			[0, -1],		   [0, 1],
-			[1, -1],  [1, 0],  [1, 1]
+			[0, -1], [0, 1],
+			[1, -1], [1, 0], [1, 1]
 		];
 		for (let [dr, dc] of directions) {
 			if (this.checkDirection(row, col, dr, dc)) {
@@ -680,15 +775,15 @@ class OnlineOthelloGame {
 	flipDiscs(row, col) {
 		const directions = [
 			[-1, -1], [-1, 0], [-1, 1],
-			[0, -1],		   [0, 1],
-			[1, -1],  [1, 0],  [1, 1]
+			[0, -1], [0, 1],
+			[1, -1], [1, 0], [1, 1]
 		];
 		for (let [dr, dc] of directions) {
 			if (this.checkDirection(row, col, dr, dc)) {
 				let r = row + dr;
 				let c = col + dc;
 				while (r >= 0 && r < 8 && c >= 0 && c < 8 && 
-					   this.board[r][c] === -this.currentPlayer) {
+					this.board[r][c] === -this.currentPlayer) {
 					this.board[r][c] = this.currentPlayer;
 					r += dr;
 					c += dc;
@@ -705,8 +800,7 @@ class OnlineOthelloGame {
 				const cell = document.createElement('div');
 				cell.className = 'cell';
 				
-				// 観戦者または自分のターンでない場合は無効化
-				if (this.isSpectator || this.myColor !== this.currentPlayer || !this.gameState?.gameStarted) {
+				if (this.opponentLeft || this.isSpectator || this.myColor !== this.currentPlayer || !this.gameState?.gameStarted) {
 					cell.classList.add('disabled');
 				} else {
 					cell.onclick = () => this.makeMove(row, col);
@@ -742,7 +836,7 @@ class OnlineOthelloGame {
 		document.getElementById('black-score').textContent = blackCount;
 		document.getElementById('white-score').textContent = whiteCount;
 		
-		const currentPlayerText = this.currentPlayer === 1 ? '黒番' : '白番';
+		const currentPlayerText = this.currentPlayer === 1 ? '黒' : '白';
 		
 		if (this.isSpectator) {
 			document.getElementById('current-player').textContent = `${currentPlayerText}`;
@@ -763,7 +857,6 @@ class OnlineOthelloGame {
 				await this.publishGameState();
 				this.endGame();
 			} else {
-				this.currentPlayer = -this.currentPlayer;
 				this.gameState.currentPlayer = this.currentPlayer;
 				this.gameState.lastUpdate = Date.now();
 				await this.publishGameState();
@@ -810,11 +903,10 @@ class OnlineOthelloGame {
 	
 	async leaveRoom() {
 		if (this.roomId) {
-			// 退出メッセージを送信
 			const leaveMessage = {
 				type: 'player_leave',
 				playerId: this.playerId,
-				isSpectator: this.isSpectator
+				isPlayer: this.isSpectator === false
 			};
 			
 			try {
@@ -826,13 +918,11 @@ class OnlineOthelloGame {
 				console.error('退出メッセージの送信に失敗:', error);
 			}
 			
-			// チャンネルから退出
 			this.pubnub.unsubscribe({
 				channels: [this.roomId]
 			});
 		}
 		
-		// ゲーム状態をリセット
 		this.board = Array(8).fill().map(() => Array(8).fill(0));
 		this.currentPlayer = 1;
 		this.myColor = null;
@@ -841,8 +931,8 @@ class OnlineOthelloGame {
 		this.roomId = null;
 		this.gameState = null;
 		this.isSpectator = false;
+		this.opponentLeft = false;
 		
-		// UIをリセット
 		document.getElementById('room-section').style.display = 'block';
 		document.getElementById('room-id-display').style.display = 'none';
 		document.getElementById('game-info').style.display = 'none';
@@ -853,16 +943,15 @@ class OnlineOthelloGame {
 		document.getElementById('page-title').style.display = 'block';
 		document.getElementById('game-container').style.marginTop = '0px';
 		
-		this.updateConnectionStatus('ready', 'ルームを作成するか参加してください');
-		
 		const boardElement = document.getElementById('board');
 		boardElement.innerHTML = '';
 		boardElement.style.pointerEvents = 'auto';
+		
+		this.updateConnectionStatus('ready', 'ルームを作成するか参加してください');
 	}
 	
 	showValidMoves() {
-		// 観戦者は有効手を表示できない
-		if (this.isSpectator) {
+		if (this.isSpectator || this.opponentLeft) {
 			return;
 		}
 		
@@ -879,30 +968,25 @@ class OnlineOthelloGame {
 		this.validMovesVisible = !this.validMovesVisible;
 	}
 }
-
 let game = new OnlineOthelloGame();
-
 function createRoom() {
 	game.createRoom();
 }
-
 function joinRoom() {
 	game.joinRoom();
 }
-
 function generateRoomId() {
 	game.generateRoomId();
 }
-
 function leaveRoom() {
 	game.leaveRoom();
 }
-
 function showValidMoves() {
 	game.showValidMoves();
 }
-
-// ページを離れる時にルームから退出
+function passTurn() {
+	game.passTurn();
+}
 window.addEventListener('beforeunload', () => {
 	if (game.roomId) {
 		game.leaveRoom();
