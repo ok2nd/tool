@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Bokeh / Background blur simulator</title>
+<style>
+:root{--accent:#6c63ff}
+html,body{height:100%;margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial}
+.app{display:flex;gap:18px;padding:18px;align-items:flex-start}
+.controls{width:360px;background:#fff;border-radius:12px;padding:14px;box-shadow:0 6px 24px rgba(8,12,30,0.08)}
+h1{font-size:18px;margin:0 0 8px}
+.row{display:flex;gap:8px;align-items:center;margin:10px 0}
+label{font-size:13px;color:#333;min-width:120px}
+input[type=range]{flex:1}
+select,input[type=number]{padding:6px;border-radius:6px;border:1px solid #ddd}
+button{background:var(--accent);color:#fff;border:0;padding:10px 12px;border-radius:8px;cursor:pointer}
+.preview{flex:1;display:flex;flex-direction:column;gap:8px;align-items:center}
+.canvasWrap{width:100%;max-width:960px;height:640px;background:#222;border-radius:12px;overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center}
+.bgLayer,.bgLayerBlur{position:absolute;inset:0;background-size:cover;background-position:center}
+.bgLayerBlur{filter:blur(0px) brightness(0.95);transform:scale(1.02)}
+.subject{position:absolute;width:36%;max-width:420px;left:50%;top:55%;transform:translate(-50%,-50%);object-fit:contain;pointer-events:none}
+.controlsSmall{display:flex;gap:8px;flex-wrap:wrap}
+.presetThumb{width:68px;height:46px;border-radius:6px;object-fit:cover;border:2px solid transparent;cursor:pointer}
+.presetThumb.sel{border-color:var(--accent)}
+footer{font-size:12px;color:#666;margin-top:8px}
+.value{min-width:56px;text-align:right;font-variant-numeric:tabular-nums}
+.rowCenter{display:flex;align-items:center}
+.fileInput{display:flex;gap:8px}
+.note{font-size:12px;color:#666;margin-top:6px}
+</style>
+</head>
+<body>
+<div class="app">
+<div class="controls">
+<h1>Bokeh シミュレータ</h1>
+<div class="row">
+<label>センサーサイズ</label>
+<select id="sensor">
+<option value="full">フルフレーム</option>
+<option value="apsc">APS-C</option>
+<option value="m43">フォーサーズ (4/3)</option>
+</select>
+</div>
+
+<div class="row">
+<label>焦点距離 (mm)</label>
+<input id="focal" type="range" min="14" max="400" step="1" value="85">
+<div class="value" id="focalVal">85</div>
+</div>
+
+<div class="row">
+<label>絞り値 (F)</label>
+<input id="aperture" type="range" min="0.7" max="22" step="0.1" value="1.8">
+<div class="value" id="apertureVal">1.8</div>
+</div>
+
+<div class="row">
+<label>被写体までの距離 (m)</label>
+<input id="subjectDist" type="range" min="0.2" max="20" step="0.01" value="3">
+<div class="value" id="subjectDistVal">3.00</div>
+</div>
+
+<div class="row">
+<label>背景の距離 (m)</label>
+<input id="bgDist" type="range" min="0.5" max="200" step="0.1" value="20">
+<div class="value" id="bgDistVal">20.0</div>
+</div>
+
+<div class="row">
+<label>被写体プリセット</label>
+<div class="controlsSmall">
+<img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=800&auto=format&fit=crop" class="presetThumb sel" data-subject="https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=1600&auto=format&fit=crop" alt="woman1">
+<img src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?q=80&w=800&auto=format&fit=crop" class="presetThumb" data-subject="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?q=80&w=1600&auto=format&fit=crop" alt="woman2">
+<img src="https://images.unsplash.com/photo-1524503033411-c9566986fc8f?q=80&w=800&auto=format&fit=crop" class="presetThumb" data-subject="https://images.unsplash.com/photo-1524503033411-c9566986fc8f?q=80&w=1600&auto=format&fit=crop" alt="woman3">
+</div>
+</div>
+<div class="row">
+<label>カスタム被写体</label>
+<div class="fileInput">
+<input type="file" id="uploadSubject" accept="image/*">
+</div>
+</div>
+
+<div class="row">
+<label>背景プリセット</label>
+<div class="controlsSmall">
+<img src="https://images.unsplash.com/photo-1469474968028-56623f02e42e?q=80&w=800&auto=format&fit=crop" class="presetThumb sel" data-bg="https://images.unsplash.com/photo-1469474968028-56623f02e42e?q=80&w=2000&auto=format&fit=crop" alt="bg1">
+<img src="https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=800&auto=format&fit=crop" class="presetThumb" data-bg="https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=2000&auto=format&fit=crop" alt="bg2">
+<img src="https://images.unsplash.com/photo-1491553895911-0055eca6402d?q=80&w=800&auto=format&fit=crop" class="presetThumb" data-bg="https://images.unsplash.com/photo-1491553895911-0055eca6402d?q=80&w=2000&auto=format&fit=crop" alt="bg3">
+</div>
+</div>
+<div class="row">
+<label>カスタム背景</label>
+<div class="fileInput">
+<input type="file" id="uploadBg" accept="image/*">
+</div>
+</div>
+
+<div class="row">
+<label>出力モード</label>
+<select id="mode">
+<option value="simple">シンプル: 背景のみをぼかす</option>
+<option value="graded">グラデーション: 距離で段階的にぼかす</option>
+<option value="circle">円形フォーカス (被写界深度の感じ)</option>
+</select>
+</div>
+
+<div style="display:flex;gap:8px;margin-top:10px">
+<button id="download">PNGをダウンロード</button>
+<button id="reset">リセット</button>
+</div>
+<div class="note">ヒント: 焦点距離を長く、絞り値を小さく、被写体に近づくほど背景ボケが強くなります。</div>
+<footer>簡易シミュレーションです。本格的な光学計算は近似を使っています。</footer>
+</div>
+
+<div class="preview">
+<div class="canvasWrap" id="preview">
+<div class="bgLayer" id="bgLayer"></div>
+<div class="bgLayerBlur" id="bgLayerBlur"></div>
+<img id="subject" class="subject" src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=1600&auto=format&fit=crop" alt="subject">
+</div>
+<div style="width:100%;max-width:960px;display:flex;justify-content:space-between;align-items:center">
+<div>プレビュー</div>
+<div class="rowCenter">推定ボケ量: <strong id="blurPx">0</strong> px</div>
+</div>
+</div>
+</div>
+
+<script>
+// UI bindings
+const sensorEl = document.getElementById('sensor');
+const focalEl = document.getElementById('focal'); const focalVal = document.getElementById('focalVal');
+const apertureEl = document.getElementById('aperture'); const apertureVal = document.getElementById('apertureVal');
+const subjectDistEl = document.getElementById('subjectDist'); const subjectDistVal = document.getElementById('subjectDistVal');
+const bgDistEl = document.getElementById('bgDist'); const bgDistVal = document.getElementById('bgDistVal');
+const bgLayer = document.getElementById('bgLayer');
+const bgLayerBlur = document.getElementById('bgLayerBlur');
+const subjectImg = document.getElementById('subject');
+const blurPxDisplay = document.getElementById('blurPx');
+const modeEl = document.getElementById('mode');
+
+function updateValueDisplays(){
+focalVal.textContent = focalEl.value;
+apertureVal.textContent = parseFloat(apertureEl.value).toFixed(1);
+subjectDistVal.textContent = parseFloat(subjectDistEl.value).toFixed(2);
+bgDistVal.textContent = parseFloat(bgDistEl.value).toFixed(1);
+}
+[focalEl,apertureEl,subjectDistEl,bgDistEl].forEach(el=>el.addEventListener('input',()=>{updateValueDisplays(); render();}));
+sensorEl.addEventListener('change',render); modeEl.addEventListener('change',render);
+updateValueDisplays();
+
+// preset handling
+document.querySelectorAll('.controls .presetThumb').forEach(img=>{
+img.addEventListener('click',e=>{
+const isBg = img.dataset.bg !== undefined;
+if(isBg){
+document.querySelectorAll('[data-bg]').forEach(x=>x.classList.remove('sel'));
+img.classList.add('sel');
+setBg(img.dataset.bg);
+} else {
+document.querySelectorAll('[data-subject]').forEach(x=>x.classList.remove('sel'));
+img.classList.add('sel');
+setSubject(img.dataset.subject);
+}
+});
+});
+
+function setBg(url){ bgLayer.style.backgroundImage = `url('${url}')`; bgLayerBlur.style.backgroundImage = `url('${url}')`; }
+function setSubject(url){ subjectImg.src = url; }
+
+// initial from presets (first ones already in DOM)
+setBg(document.querySelector('[data-bg]').dataset.bg);
+setSubject(document.querySelector('[data-subject]').dataset.subject);
+
+// uploads
+const uploadSubject = document.getElementById('uploadSubject');
+const uploadBg = document.getElementById('uploadBg');
+uploadSubject.addEventListener('change', e=>{
+const f = e.target.files[0]; if(!f) return; const url = URL.createObjectURL(f); setSubject(url);
+});
+uploadBg.addEventListener('change', e=>{
+const f = e.target.files[0]; if(!f) return; const url = URL.createObjectURL(f); setBg(url);
+});
+
+// core: map optics -> blur in pixels (approximation)
+function computeBlurPixels(){
+const focal = Number(focalEl.value); // mm
+const N = Number(apertureEl.value); // f-number
+const subjectM = Number(subjectDistEl.value); // meters
+const bgM = Number(bgDistEl.value); // meters
+const sensor = sensorEl.value; // full, apsc, m43
+
+// sensor factor roughly maps circle-of-confusion tolerance -> bigger sensor more shallow DOF
+const sensorFactor = {full:1.0,apsc:0.7,m43:0.5}[sensor];
+
+// convert to mm
+const subject = subjectM*1000;
+const bg = bgM*1000;
+
+// approximate blur circle diameter (mm) using thin-lens approximation (simplified):
+// b |f^2 * (bg - subject)| / (N * bg * subject)
+// This is a simplified derivative approximation of the lens equation; it's not exact but behaves well qualitatively.
+const f = focal;
+const b_mm = Math.abs((f*f*(bg - subject)) / (N * bg * subject));
+
+// map sensor to pixels: assume preview width maps to sensor width (approx). We'll scale to the preview size.
+// Use an empirical multiplier to convert mm-on-sensor to blur pixels in our preview
+const previewDiagonalPx = Math.hypot(window.innerWidth*0.7,640);
+const sensorWidthMm = {full:36,apsc:23.6,m43:17.3}[sensor];
+
+// mm per pixel approx (sensor projected across subject image width in preview). We'll assume subject occupies ~300px width for conversion.
+const subjectPreviewPx = document.getElementById('subject').clientWidth || 360;
+const mmPerPx = sensorWidthMm / subjectPreviewPx;
+let blurPx = b_mm / mmPerPx * sensorFactor;
+
+// mode adjustments
+const mode = modeEl.value;
+if(mode === 'graded') blurPx *= 1.1;
+if(mode === 'circle') blurPx *= 1.6;
+
+// clamp and smooth
+blurPx = Math.max(0, Math.min(120, blurPx));
+return blurPx;
+}
+
+function render(){
+const blurPx = computeBlurPixels();
+blurPxDisplay.textContent = Math.round(blurPx);
+
+// apply blurred layer filter
+// use CSS filter with px; we slightly increase scale to avoid edge artifacts
+bgLayerBlur.style.filter = `blur(${blurPx}px) brightness(0.95)`;
+
+// visual tweaks depending on mode
+const mode = modeEl.value;
+if(mode === 'simple'){
+bgLayerBlur.style.opacity = 1;
+bgLayer.style.opacity = 0.0;
+subjectImg.style.filter = 'none';
+} else if(mode === 'graded'){
+// show faint sharp layer under blur to give depth layering
+bgLayer.style.opacity = 0.45; bgLayer.style.filter = 'brightness(0.95)';
+bgLayerBlur.style.opacity = 1;
+subjectImg.style.filter = 'none';
+} else if(mode === 'circle'){
+// apply a soft vignette sharp mask: we simulate a focused disc around the subject by blending opacity
+bgLayer.style.opacity = 0.25; bgLayer.style.filter = 'brightness(0.92)';
+bgLayerBlur.style.opacity = 1;
+subjectImg.style.filter = 'none';
+
+// we can also add a radial-gradient overlay to visually emphasize the focus circle
+const wrap = document.getElementById('preview');
+wrap.style.backgroundImage = `radial-gradient(circle at 50% 55%, rgba(0,0,0,0.0) 0%, rgba(0,0,0,0.12) 50%, rgba(0,0,0,0.22) 100%)`;
+} else {
+bgLayer.style.opacity = 0;
+bgLayerBlur.style.opacity = 1;
+}
+}
+
+// download
+document.getElementById('download').addEventListener('click',async()=>{
+// render combined canvas
+const wrap = document.getElementById('preview');
+const w = wrap.clientWidth, h = wrap.clientHeight;
+const canvas = document.createElement('canvas'); canvas.width = w; canvas.height = h;
+const ctx = canvas.getContext('2d');
+
+// draw blurred background
+const blurPx = computeBlurPixels();
+const bgUrl = (bgLayer.style.backgroundImage || '').slice(5,-2);
+const bgImg = await loadImage(bgUrl);
+
+if (blurPx > 0) {
+// create offscreen canvas for blur
+const offscreenCanvas = document.createElement('canvas');
+offscreenCanvas.width = bgImg.width;
+offscreenCanvas.height = bgImg.height;
+const offscreenCtx = offscreenCanvas.getContext('2d');
+offscreenCtx.filter = `blur(${blurPx}px)`;
+offscreenCtx.drawImage(bgImg, 0, 0);
+drawCover(ctx, offscreenCanvas, 0, 0, w, h);
+} else {
+drawCover(ctx, bgImg, 0, 0, w, h);
+}
+
+// draw subject centered
+const subjImg = await loadImage(subjectImg.src);
+// scale subject to ~36% width
+const targetW = Math.round(w * 0.36);
+const ratio = subjImg.width / subjImg.height;
+const targetH = Math.round(targetW / ratio);
+const x = Math.round(w/2 - targetW/2);
+const y = Math.round(h*0.55 - targetH/2);
+ctx.drawImage(subjImg, x, y, targetW, targetH);
+
+// export
+const data = canvas.toDataURL('image/png');
+const a = document.createElement('a'); a.href = data; a.download = 'bokeh_simulation.png'; a.click();
+});
+
+function drawCover(ctx,img,x,y,w,h){
+const r = Math.max(w/img.width, h/img.height);
+const nw = img.width * r; const nh = img.height * r;
+const ox = x - (nw - w)/2; const oy = y - (nh - h)/2;
+ctx.drawImage(img, ox, oy, nw, nh);
+}
+
+function loadImage(src){ return new Promise((res,rej)=>{ const i=new Image(); i.crossOrigin='anonymous'; i.onload=()=>res(i); i.onerror=rej; i.src=src; }); }
+
+// reset
+document.getElementById('reset').addEventListener('click',()=>{
+focalEl.value=85; apertureEl.value=1.8; subjectDistEl.value=3; bgDistEl.value=20; sensorEl.value='full'; modeEl.value='simple'; updateValueDisplays(); render();
+});
+
+// initial render
+window.addEventListener('load',()=>{updateValueDisplays(); render();});
+window.addEventListener('resize',render);
+</script>
+</body>
+</html>
