@@ -61,14 +61,10 @@ h1 {
 	background-color: #4a7c4d;
 	color: #fff;
 }
-#info {
-	color: red;
-}
 </style>
 </head>
 <body>
 <h1>ブラウザの表示幅・ピクセル(pixel)チェック</h1>
-<div id="info"></div>
 <div class="contents">
 <div class="box500">500px</div><div class="box500">500px</div><div class="box500">500px</div><div class="box500">500px</div>
 </div>
@@ -95,13 +91,5 @@ h1 {
 	<div class="check-box" style="width:1680px;">1680px</div>
 	<div class="check-box" style="width:1920px;">1920px</div>
 </div>
-<script>
-function updateWindowWidth() {
-	document.getElementById("info").textContent =
-		"ブラウザの横幅: " + window.innerWidth + "px";
-}
-window.addEventListener("resize", updateWindowWidth);
-window.addEventListener("load", updateWindowWidth);
-</script>
 </body>
 </html>
