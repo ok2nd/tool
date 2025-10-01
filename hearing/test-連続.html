@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>難聴検査アプリ</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', 'Helvetica', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .button-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .freq-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .freq-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .freq-button:active {
+            transform: translateY(0);
+        }
+
+        .freq-button:disabled {
+            background: linear-gradient(135deg, #ccc 0%, #999 100%);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status {
+            text-align: center;
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            color: #333;
+            font-size: 16px;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .playing {
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .warning {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            color: #856404;
+            font-size: 14px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎧 難聴検査アプリ</h1>
+        <p class="subtitle">各ボタンを押すと、その周波数の音が2秒間再生されます</p>
+        
+        <div class="warning">
+            ⚠️ 音量を適切なレベルに調整してからご使用ください
+        </div>
+
+        <div class="button-grid">
+            <button class="freq-button" data-freq="1000">1000 Hz</button>
+            <button class="freq-button" data-freq="2000">2000 Hz</button>
+            <button class="freq-button" data-freq="4000">4000 Hz</button>
+            <button class="freq-button" data-freq="6000">6000 Hz</button>
+            <button class="freq-button" data-freq="8000">8000 Hz</button>
+            <button class="freq-button" data-freq="10000">10000 Hz</button>
+            <button class="freq-button" data-freq="12000">12000 Hz</button>
+            <button class="freq-button" data-freq="14000">14000 Hz</button>
+            <button class="freq-button" data-freq="16000">16000 Hz</button>
+        </div>
+
+        <div class="status" id="status">準備完了</div>
+    </div>
+
+    <script>
+        let audioContext = null;
+        let isPlaying = false;
+
+        // AudioContextの初期化
+        function initAudioContext() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        // 指定周波数の音を再生
+        function playTone(frequency) {
+            if (isPlaying) return;
+            
+            initAudioContext();
+            isPlaying = true;
+
+            // オシレーター（音源）の作成
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            oscillator.frequency.value = frequency;
+            oscillator.type = 'sine'; // サイン波
+
+            // 音量の設定（0.3 = 30%）
+            gainNode.gain.value = 0.3;
+
+            // 再生開始
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 2); // 2秒後に停止
+
+            // ステータス更新
+            updateStatus(`${frequency} Hz を再生中...`, true);
+            disableButtons(true);
+
+            // 2秒後の処理
+            setTimeout(() => {
+                isPlaying = false;
+                updateStatus('準備完了', false);
+                disableButtons(false);
+            }, 2000);
+        }
+
+        // ステータス表示の更新
+        function updateStatus(message, playing) {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = message;
+            if (playing) {
+                statusEl.classList.add('playing');
+            } else {
+                statusEl.classList.remove('playing');
+            }
+        }
+
+        // ボタンの有効/無効切り替え
+        function disableButtons(disabled) {
+            const buttons = document.querySelectorAll('.freq-button');
+            buttons.forEach(button => {
+                button.disabled = disabled;
+            });
+        }
+
+        // ボタンにイベントリスナーを追加
+        document.querySelectorAll('.freq-button').forEach(button => {
+            button.addEventListener('click', () => {
+                const frequency = parseInt(button.getAttribute('data-freq'));
+                playTone(frequency);
+            });
+        });
+    </script>
+</body>
+</html>
