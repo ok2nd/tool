@@ -181,6 +181,7 @@
             const height = window.innerHeight;
             const centerX = width / 2;
             const centerY = height / 2;
+            const excludeRadius = 50;
 
             const cols = Math.floor(width / spacing);
             const rows = Math.floor(height / spacing);
@@ -192,11 +193,17 @@
                     const x = offsetX + col * spacing;
                     const y = offsetY + row * spacing;
 
-                    const dot = document.createElement('div');
-                    dot.className = 'dot';
-                    dot.style.left = x + 'px';
-                    dot.style.top = y + 'px';
-                    document.body.appendChild(dot);
+                    const distanceFromCenter = Math.sqrt(
+                        Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2)
+                    );
+
+                    if (distanceFromCenter > excludeRadius) {
+                        const dot = document.createElement('div');
+                        dot.className = 'dot';
+                        dot.style.left = x + 'px';
+                        dot.style.top = y + 'px';
+                        document.body.appendChild(dot);
+                    }
                 }
             }
         }
