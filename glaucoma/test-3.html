@@ -97,62 +97,16 @@
         .warning.hidden {
             display: none;
         }
-
-        .spacing-control {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: rgba(255, 255, 255, 0.95);
-            padding: 15px;
-            border-radius: 8px;
-            z-index: 10;
-        }
-
-        .spacing-control label {
-            display: block;
-            margin-bottom: 8px;
-            font-size: 14px;
-            color: #333;
-            font-weight: bold;
-        }
-
-        .spacing-btn {
-            padding: 8px 16px;
-            margin-right: 8px;
-            font-size: 14px;
-            border: 2px solid #1976d2;
-            background: white;
-            color: #1976d2;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .spacing-btn:hover {
-            background: #e3f2fd;
-        }
-
-        .spacing-btn.active {
-            background: #1976d2;
-            color: white;
-        }
     </style>
 </head>
 <body>
     <div class="instructions" onclick="this.classList.add('hidden')">
         <h1>緑内障簡易視野検査</h1>
         <p>
-            パソコン等の大きな画面でご利用ください。<br>
             中央の赤い点を見つめたまま、周辺の白い点がすべて見えるか確認してください。<br>
             片目を手で覆い、片目ずつ検査してください。<br>
             <small>(クリックで閉じる)</small>
         </p>
-    </div>
-
-    <div class="spacing-control">
-        <label>点の間隔</label>
-        <button class="spacing-btn" onclick="setSpacing(1)">1cm</button>
-        <button class="spacing-btn active" onclick="setSpacing(2)">2cm</button>
     </div>
 
     <div class="center-point"></div>
@@ -162,21 +116,10 @@
     </div>
 
     <script>
-        let currentSpacing = 2;
-
-        function setSpacing(cm) {
-            currentSpacing = cm;
-            document.querySelectorAll('.spacing-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            event.target.classList.add('active');
-            createDots();
-        }
-
         function createDots() {
             document.querySelectorAll('.dot').forEach(dot => dot.remove());
 
-            const spacing = currentSpacing * 37.795275591; // cm to pixels (96 DPI)
+            const spacing = 2 * 37.795275591; // 2cm in pixels (96 DPI)
             const width = window.innerWidth;
             const height = window.innerHeight;
             const centerX = width / 2;
