@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>緑内障簡易視野検査</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 30px;
+            max-width: 800px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 24px;
+            text-align: center;
+        }
+
+        .instructions {
+            background: #e3f2fd;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .instructions h2 {
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: #1976d2;
+        }
+
+        .instructions ul {
+            margin-left: 20px;
+        }
+
+        .instructions li {
+            margin-bottom: 8px;
+        }
+
+        .warning {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #ffc107;
+            font-size: 14px;
+        }
+
+        .eye-selector {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .eye-btn {
+            padding: 12px 30px;
+            font-size: 16px;
+            border: 2px solid #1976d2;
+            background: white;
+            color: #1976d2;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .eye-btn:hover {
+            background: #e3f2fd;
+        }
+
+        .eye-btn.active {
+            background: #1976d2;
+            color: white;
+        }
+
+        #testArea {
+            position: relative;
+            width: 100%;
+            height: 500px;
+            background: #000;
+            border-radius: 8px;
+            cursor: crosshair;
+            display: none;
+        }
+
+        #testArea.active {
+            display: block;
+        }
+
+        .center-point {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 12px;
+            height: 12px;
+            background: #ff0000;
+            border-radius: 50%;
+        }
+
+        .test-point {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: #ffffff;
+            border-radius: 50%;
+            opacity: 0;
+            transition: opacity 0.2s;
+            pointer-events: none;
+        }
+
+        .test-point.visible {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 16px;
+        }
+
+        .results {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            background: #e8f5e9;
+            border-radius: 8px;
+        }
+
+        .results.show {
+            display: block;
+        }
+
+        .results h2 {
+            color: #2e7d32;
+            margin-bottom: 15px;
+        }
+
+        .result-item {
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .reset-btn {
+            margin-top: 20px;
+            padding: 12px 30px;
+            font-size: 16px;
+            background: #1976d2;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .reset-btn:hover {
+            background: #1565c0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>緑内障簡易視野検査</h1>
+        
+        <div class="warning">
+            <strong>注意:</strong> これは医療診断ツールではありません。気になる症状がある場合は、必ず眼科医にご相談ください。
+        </div>
+
+        <div class="instructions">
+            <h2>検査方法</h2>
+            <ul>
+                <li>検査する目を選択してください</li>
+                <li>画面中央の赤い点を見つめ続けてください</li>
+                <li>周辺に白い点が現れたら、見えた瞬間にクリックしてください</li>
+                <li>中央の赤い点から目を離さないようにしてください</li>
+                <li>片目ずつ検査してください(もう片方の目は手で覆う)</li>
+            </ul>
+        </div>
+
+        <div class="eye-selector">
+            <button class="eye-btn" data-eye="right">右目で検査</button>
+            <button class="eye-btn" data-eye="left">左目で検査</button>
+        </div>
+
+        <div id="testArea">
+            <div class="center-point"></div>
+        </div>
+
+        <div class="status" id="status">
+            検査する目を選択してください
+        </div>
+
+        <div class="results" id="results">
+            <h2>検査結果</h2>
+            <div class="result-item">総テスト数: <span id="totalTests">0</span></div>
+            <div class="result-item">検出数: <span id="detectedCount">0</span></div>
+            <div class="result-item">検出率: <span id="detectionRate">0</span>%</div>
+            <div class="result-item">平均反応時間: <span id="avgReaction">0</span>ms</div>
+            <button class="reset-btn" onclick="resetTest()">もう一度検査する</button>
+        </div>
+    </div>
+
+    <script>
+        let currentEye = null;
+        let testRunning = false;
+        let testCount = 0;
+        let detectedCount = 0;
+        let reactionTimes = [];
+        let currentPoint = null;
+        let pointStartTime = 0;
+        const maxTests = 20;
+        const testInterval = 2000;
+        let testTimer = null;
+
+        const eyeButtons = document.querySelectorAll('.eye-btn');
+        const testArea = document.getElementById('testArea');
+        const status = document.getElementById('status');
+        const results = document.getElementById('results');
+
+        eyeButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                currentEye = btn.dataset.eye;
+                eyeButtons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                startTest();
+            });
+        });
+
+        testArea.addEventListener('click', (e) => {
+            if (!testRunning || !currentPoint) return;
+            
+            const rect = testArea.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const clickY = e.clientY - rect.top;
+            const pointX = parseFloat(currentPoint.style.left);
+            const pointY = parseFloat(currentPoint.style.top);
+            
+            const distance = Math.sqrt(
+                Math.pow(clickX - pointX, 2) + 
+                Math.pow(clickY - pointY, 2)
+            );
+            
+            if (distance < 50) {
+                detectedCount++;
+                const reactionTime = Date.now() - pointStartTime;
+                reactionTimes.push(reactionTime);
+                hideCurrentPoint();
+            }
+        });
+
+        function startTest() {
+            testRunning = true;
+            testCount = 0;
+            detectedCount = 0;
+            reactionTimes = [];
+            testArea.classList.add('active');
+            results.classList.remove('show');
+            status.textContent = `検査中... (${testCount}/${maxTests})`;
+            showNextPoint();
+        }
+
+        function showNextPoint() {
+            if (testCount >= maxTests) {
+                endTest();
+                return;
+            }
+
+            testCount++;
+            status.textContent = `検査中... (${testCount}/${maxTests})`;
+
+            const point = document.createElement('div');
+            point.className = 'test-point';
+            
+            const centerX = testArea.offsetWidth / 2;
+            const centerY = testArea.offsetHeight / 2;
+            const angle = Math.random() * Math.PI * 2;
+            const distance = 100 + Math.random() * 150;
+            
+            const x = centerX + Math.cos(angle) * distance;
+            const y = centerY + Math.sin(angle) * distance;
+            
+            point.style.left = x + 'px';
+            point.style.top = y + 'px';
+            
+            testArea.appendChild(point);
+            currentPoint = point;
+            
+            setTimeout(() => {
+                point.classList.add('visible');
+                pointStartTime = Date.now();
+            }, 50);
+
+            testTimer = setTimeout(() => {
+                hideCurrentPoint();
+            }, 1500);
+        }
+
+        function hideCurrentPoint() {
+            if (currentPoint) {
+                currentPoint.remove();
+                currentPoint = null;
+            }
+            clearTimeout(testTimer);
+            
+            setTimeout(() => {
+                showNextPoint();
+            }, testInterval - 1500);
+        }
+
+        function endTest() {
+            testRunning = false;
+            testArea.classList.remove('active');
+            
+            const avgReaction = reactionTimes.length > 0 
+                ? Math.round(reactionTimes.reduce((a, b) => a + b, 0) / reactionTimes.length)
+                : 0;
+            
+            const detectionRate = Math.round((detectedCount / maxTests) * 100);
+            
+            document.getElementById('totalTests').textContent = maxTests;
+            document.getElementById('detectedCount').textContent = detectedCount;
+            document.getElementById('detectionRate').textContent = detectionRate;
+            document.getElementById('avgReaction').textContent = avgReaction;
+            
+            status.textContent = '検査完了';
+            results.classList.add('show');
+        }
+
+        function resetTest() {
+            currentEye = null;
+            eyeButtons.forEach(b => b.classList.remove('active'));
+            status.textContent = '検査する目を選択してください';
+            results.classList.remove('show');
+        }
+    </script>
+</body>
+</html>

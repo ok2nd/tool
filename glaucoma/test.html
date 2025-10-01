@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>緑内障簡易検査</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #000;
+            overflow: hidden;
+            height: 100vh;
+            position: relative;
+        }
+
+        .instructions {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px 30px;
+            border-radius: 8px;
+            text-align: center;
+            max-width: 500px;
+            z-index: 10;
+            cursor: pointer;
+            transition: opacity 0.3s;
+        }
+
+        .instructions:hover {
+            opacity: 0.9;
+        }
+
+        .instructions.hidden {
+            display: none;
+        }
+
+        .instructions h1 {
+            font-size: 20px;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .instructions p {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .center-point {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 16px;
+            height: 16px;
+            background: #ff0000;
+            border-radius: 50%;
+            z-index: 5;
+        }
+
+        .dot {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #ffffff;
+            border-radius: 50%;
+        }
+
+        .warning {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 243, 205, 0.95);
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 12px;
+            color: #333;
+            text-align: center;
+            max-width: 600px;
+            cursor: pointer;
+            transition: opacity 0.3s;
+        }
+
+        .warning:hover {
+            opacity: 0.9;
+        }
+
+        .warning.hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="instructions" onclick="this.classList.add('hidden')">
+        <h1>緑内障簡易視野検査</h1>
+        <p>
+            中央の赤い点を見つめたまま、周辺の白い点がすべて見えるか確認してください。<br>
+            片目を手で覆い、片目ずつ検査してください。<br>
+            <small>(クリックで閉じる)</small>
+        </p>
+    </div>
+
+    <div class="center-point"></div>
+
+    <div class="warning" onclick="this.classList.add('hidden')">
+        注意: これは医療診断ツールではありません。気になる症状がある場合は必ず眼科医にご相談ください。(クリックで閉じる)
+    </div>
+
+    <script>
+        function createDots() {
+            document.querySelectorAll('.dot').forEach(dot => dot.remove());
+
+            const spacing = 2 * 37.795275591; // 2cm in pixels (96 DPI)
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            const centerX = width / 2;
+            const centerY = height / 2;
+            const excludeRadius = 50;
+
+            const cols = Math.floor(width / spacing);
+            const rows = Math.floor(height / spacing);
+            const offsetX = (width - (cols - 1) * spacing) / 2;
+            const offsetY = (height - (rows - 1) * spacing) / 2;
+
+            for (let col = 0; col < cols; col++) {
+                for (let row = 0; row < rows; row++) {
+                    const x = offsetX + col * spacing;
+                    const y = offsetY + row * spacing;
+
+                    const distanceFromCenter = Math.sqrt(
+                        Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2)
+                    );
+
+                    if (distanceFromCenter > excludeRadius) {
+                        const dot = document.createElement('div');
+                        dot.className = 'dot';
+                        dot.style.left = x + 'px';
+                        dot.style.top = y + 'px';
+                        document.body.appendChild(dot);
+                    }
+                }
+            }
+        }
+
+        createDots();
+
+        window.addEventListener('resize', createDots);
+    </script>
+</body>
+</html>
