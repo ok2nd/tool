@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>カラーソートパズル</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 800px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 28px;
+        }
+
+        .info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            font-size: 16px;
+            color: #666;
+        }
+
+        .tubes-container {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .tube {
+            width: 60px;
+            height: 240px;
+            border: 4px solid #333;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column-reverse;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            background: #f9f9f9;
+            position: relative;
+        }
+
+        .tube:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .tube.selected {
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+            border-color: gold;
+        }
+
+        .color-segment {
+            height: 60px;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 24px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+
+        .btn-new {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .btn-new:hover {
+            background: #45a049;
+        }
+
+        .btn-reset {
+            background: #ff9800;
+            color: white;
+        }
+
+        .btn-reset:hover {
+            background: #e68900;
+        }
+
+        .message {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #4CAF50;
+            min-height: 25px;
+        }
+
+        @keyframes celebrate {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .celebrate {
+            animation: celebrate 0.5s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 カラーソートパズル</h1>
+        <div class="info">
+            <div>移動回数: <span id="moves">0</span></div>
+            <div>レベル: <span id="level">1</span></div>
+        </div>
+        <div class="tubes-container" id="tubesContainer"></div>
+        <div class="buttons">
+            <button class="btn-new" onclick="newGame()">新しいゲーム</button>
+            <button class="btn-reset" onclick="resetGame()">リセット</button>
+        </div>
+        <div class="message" id="message"></div>
+    </div>
+
+    <script>
+        const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E2'];
+        let tubes = [];
+        let selectedTube = null;
+        let moves = 0;
+        let level = 1;
+        let initialState = [];
+
+        function initGame(lvl) {
+            level = lvl;
+            const numColors = Math.min(3 + level, 8);
+            const numTubes = numColors + 2;
+            tubes = [];
+            
+            // 各色を4つずつ作成
+            let allColors = [];
+            for (let i = 0; i < numColors; i++) {
+                for (let j = 0; j < 4; j++) {
+                    allColors.push(colors[i]);
+                }
+            }
+            
+            // シャッフル
+            for (let i = allColors.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [allColors[i], allColors[j]] = [allColors[j], allColors[i]];
+            }
+            
+            // チューブに配分
+            for (let i = 0; i < numTubes; i++) {
+                tubes.push([]);
+            }
+            
+            for (let i = 0; i < allColors.length; i++) {
+                tubes[i % (numTubes - 2)].push(allColors[i]);
+            }
+            
+            initialState = tubes.map(t => [...t]);
+            moves = 0;
+            selectedTube = null;
+            updateDisplay();
+        }
+
+        function updateDisplay() {
+            const container = document.getElementById('tubesContainer');
+            container.innerHTML = '';
+            
+            tubes.forEach((tube, idx) => {
+                const tubeEl = document.createElement('div');
+                tubeEl.className = 'tube';
+                if (selectedTube === idx) {
+                    tubeEl.classList.add('selected');
+                }
+                
+                tube.forEach(color => {
+                    const segment = document.createElement('div');
+                    segment.className = 'color-segment';
+                    segment.style.backgroundColor = color;
+                    tubeEl.appendChild(segment);
+                });
+                
+                tubeEl.onclick = () => selectTube(idx);
+                container.appendChild(tubeEl);
+            });
+            
+            document.getElementById('moves').textContent = moves;
+            document.getElementById('level').textContent = level;
+        }
+
+        function selectTube(idx) {
+            if (selectedTube === null) {
+                if (tubes[idx].length > 0) {
+                    selectedTube = idx;
+                    updateDisplay();
+                }
+            } else {
+                if (selectedTube === idx) {
+                    selectedTube = null;
+                    updateDisplay();
+                } else {
+                    if (canPour(selectedTube, idx)) {
+                        pour(selectedTube, idx);
+                        moves++;
+                        selectedTube = null;
+                        updateDisplay();
+                        checkWin();
+                    } else {
+                        selectedTube = null;
+                        updateDisplay();
+                    }
+                }
+            }
+        }
+
+        function canPour(from, to) {
+            if (tubes[from].length === 0) return false;
+            if (tubes[to].length >= 4) return false;
+            if (tubes[to].length === 0) return true;
+            
+            const fromColor = tubes[from][tubes[from].length - 1];
+            const toColor = tubes[to][tubes[to].length - 1];
+            return fromColor === toColor;
+        }
+
+        function pour(from, to) {
+            const color = tubes[from][tubes[from].length - 1];
+            
+            while (tubes[from].length > 0 && 
+                   tubes[from][tubes[from].length - 1] === color && 
+                   tubes[to].length < 4) {
+                tubes[to].push(tubes[from].pop());
+            }
+        }
+
+        function checkWin() {
+            const isComplete = tubes.every(tube => 
+                tube.length === 0 || 
+                (tube.length === 4 && tube.every(c => c === tube[0]))
+            );
+            
+            if (isComplete) {
+                document.getElementById('message').textContent = '🎉 クリア！おめでとうございます！';
+                document.querySelector('.container').classList.add('celebrate');
+                setTimeout(() => {
+                    document.querySelector('.container').classList.remove('celebrate');
+                }, 500);
+            }
+        }
+
+        function newGame() {
+            initGame(level + 1);
+            document.getElementById('message').textContent = '';
+        }
+
+        function resetGame() {
+            tubes = initialState.map(t => [...t]);
+            moves = 0;
+            selectedTube = null;
+            updateDisplay();
+            document.getElementById('message').textContent = '';
+        }
+
+        // ゲーム開始
+        initGame(1);
+    </script>
+</body>
+</html>
