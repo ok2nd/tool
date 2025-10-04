@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D ジェンガゲーム</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        #gameCanvas {
+            display: block;
+            width: 100%;
+            height: 100vh;
+        }
+        
+        .ui {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            z-index: 100;
+            pointer-events: none;
+        }
+        
+        h1 {
+            color: white;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        .score {
+            color: white;
+            font-size: 1.5em;
+            background: rgba(0,0,0,0.3);
+            padding: 10px 30px;
+            border-radius: 10px;
+            display: inline-block;
+            margin-bottom: 15px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            pointer-events: auto;
+        }
+        
+        button {
+            padding: 12px 24px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            background: white;
+            color: #667eea;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            transition: all 0.3s;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+        }
+        
+        .instructions {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            background: rgba(0,0,0,0.3);
+            padding: 15px 30px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+            text-align: center;
+        }
+        
+        .game-over {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 40px 60px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            display: none;
+            z-index: 1000;
+            text-align: center;
+        }
+        
+        .game-over.show {
+            display: block;
+            animation: popup 0.4s ease-out;
+        }
+        
+        @keyframes popup {
+            from {
+                transform: translate(-50%, -50%) scale(0.8);
+                opacity: 0;
+            }
+            to {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+            }
+        }
+        
+        .game-over h2 {
+            color: #667eea;
+            font-size: 2.5em;
+            margin-bottom: 20px;
+        }
+        
+        .game-over p {
+            font-size: 1.3em;
+            margin-bottom: 25px;
+            color: #333;
+        }
+        
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.8em;
+            }
+            
+            .score {
+                font-size: 1.2em;
+            }
+            
+            button {
+                padding: 10px 20px;
+                font-size: 14px;
+            }
+            
+            .instructions {
+                font-size: 0.9em;
+                padding: 10px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    
+    <div class="ui">
+        <h1>🎮 3D ジェンガゲーム</h1>
+        <div class="score">抜き取ったブロック: <span id="score">0</span></div>
+        <div class="controls">
+            <button id="resetBtn">🔄 リセット</button>
+            <button id="newGameBtn">🎲 新しいゲーム</button>
+        </div>
+    </div>
+    
+    <div class="instructions">
+        <strong>操作方法:</strong> ブロックをクリック/タップして抜き取る | マウスドラッグで視点回転
+    </div>
+    
+    <div class="game-over" id="gameOver">
+        <h2>ゲームオーバー！</h2>
+        <p>抜き取ったブロック数: <span id="finalScore">0</span></p>
+        <button onclick="location.reload()">もう一度プレイ</button>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js"></script>
+    
+    <script>
+        let scene, camera, renderer, world;
+        let blocks = [];
+        let ground;
+        let score = 0;
+        let gameOver = false;
+        let initialSetup = [];
+        let mouse = new THREE.Vector2();
+        let raycaster = new THREE.Raycaster();
+        let isDragging = false;
+        let previousMousePosition = { x: 0, y: 0 };
+        let cameraAngle = 0;
+        let cameraHeight = 8;
+        let cameraDistance = 20;
+        let physicsActive = false; // 物理演算の有効化フラグ
+        
+        const BLOCK_WIDTH = 1.5;  // 長い方（ブロックの長さ）
+        const BLOCK_HEIGHT = 0.5; // 高さ
+        const BLOCK_DEPTH = 0.5;  // 短い方（ブロックの幅）
+        const BLOCKS_PER_LAYER = 3;
+        const LAYERS = 18; // 18層 × 3個 = 54個
+        
+        function init() {
+            // Three.js シーン設定
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x87ceeb);
+            scene.fog = new THREE.Fog(0x87ceeb, 10, 50);
+            
+            // カメラ
+            camera = new THREE.PerspectiveCamera(
+                60,
+                window.innerWidth / window.innerHeight,
+                0.1,
+                1000
+            );
+            updateCameraPosition();
+            
+            // レンダラー
+            const canvas = document.getElementById('gameCanvas');
+            renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            
+            // ライト
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(10, 20, 10);
+            directionalLight.castShadow = true;
+            directionalLight.shadow.camera.left = -15;
+            directionalLight.shadow.camera.right = 15;
+            directionalLight.shadow.camera.top = 15;
+            directionalLight.shadow.camera.bottom = -15;
+            directionalLight.shadow.mapSize.width = 2048;
+            directionalLight.shadow.mapSize.height = 2048;
+            scene.add(directionalLight);
+            
+            const hemisphereLight = new THREE.HemisphereLight(0xffffbb, 0x080820, 0.3);
+            scene.add(hemisphereLight);
+            
+            // Cannon.js 物理ワールド
+            world = new CANNON.World();
+            world.gravity.set(0, -9.82, 0); // 現実の重力に近づける
+            
+            // より強固な接触設定
+            const contactMaterial = new CANNON.ContactMaterial(
+                new CANNON.Material(),
+                new CANNON.Material(),
+                {
+                    friction: 0.8,        // 摩擦を大幅に増加
+                    restitution: 0.1,     // 反発を減少
+                    contactEquationStiffness: 1e8,  // 接触剛性を大幅に増加
+                    contactEquationRelaxation: 3    // 緩和を増加
+                }
+            );
+            world.addContactMaterial(contactMaterial);
+            world.defaultContactMaterial = contactMaterial;
+            
+            // 地面
+            createGround();
+            
+            // タワー作成
+            createTower();
+            
+            // イベントリスナー
+            setupEventListeners();
+            
+            // アニメーション開始
+            animate();
+        }
+        
+        function updateCameraPosition() {
+            camera.position.x = Math.sin(cameraAngle) * cameraDistance;
+            camera.position.y = cameraHeight;
+            camera.position.z = Math.cos(cameraAngle) * cameraDistance;
+            camera.lookAt(0, 5, 0);
+        }
+        
+        function createGround() {
+            // Three.js 地面
+            const groundGeometry = new THREE.BoxGeometry(30, 1, 30);
+            const groundMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0x8b7355,
+                roughness: 0.9,
+                metalness: 0.1
+            });
+            ground = new THREE.Mesh(groundGeometry, groundMaterial);
+            ground.position.y = -0.5;
+            ground.receiveShadow = true;
+            scene.add(ground);
+            
+            // Cannon.js 地面（摩擦を増やして安定性向上）
+            const groundShape = new CANNON.Box(new CANNON.Vec3(15, 0.5, 15));
+            const groundPhysicsMaterial = new CANNON.Material({
+                friction: 0.9,
+                restitution: 0.1
+            });
+            const groundBody = new CANNON.Body({ 
+                mass: 0,
+                shape: groundShape,
+                material: groundPhysicsMaterial
+            });
+            groundBody.position.set(0, -0.5, 0);
+            world.addBody(groundBody);
+        }
+        
+        function createTower() {
+            blocks = [];
+            initialSetup = [];
+            
+            const colors = [
+                0xD2B48C, 0xDEB887, 0xF5DEB3, 0xD2691E
+            ];
+            
+            for (let layer = 0; layer < LAYERS; layer++) {
+                const y = layer * BLOCK_HEIGHT;
+                const isHorizontal = layer % 2 === 0;
+                const color = colors[layer % colors.length];
+                
+                for (let i = 0; i < BLOCKS_PER_LAYER; i++) {
+                    let x, z, rotationY;
+                    
+                    if (isHorizontal) {
+                        // 偶数層：X軸方向に並べる（ブロックの長い方がX軸方向）
+                        rotationY = 0;
+                        // 3つのブロックを横に並べる：中心からの距離 = BLOCK_DEPTH
+                        z = (i - 1) * BLOCK_DEPTH; // -0.5, 0, 0.5
+                        x = 0;
+                    } else {
+                        // 奇数層：Z軸方向に並べる（ブロックの長い方がZ軸方向）
+                        rotationY = Math.PI / 2;
+                        // 3つのブロックを縦に並べる：中心からの距離 = BLOCK_DEPTH
+                        x = (i - 1) * BLOCK_DEPTH; // -0.5, 0, 0.5
+                        z = 0;
+                    }
+                    
+                    createBlock(x, y, z, rotationY, color, layer);
+                }
+            }
+            
+            // 初期設定を保存
+            blocks.forEach(block => {
+                initialSetup.push({
+                    position: block.body.position.clone(),
+                    quaternion: block.body.quaternion.clone(),
+                    color: block.mesh.material.color.getHex()
+                });
+            });
+        }
+        
+        function createBlock(x, y, z, rotation, color, layer) {
+            // Three.js ブロック
+            const geometry = new THREE.BoxGeometry(BLOCK_WIDTH, BLOCK_HEIGHT, BLOCK_DEPTH);
+            const material = new THREE.MeshStandardMaterial({ 
+                color: color,
+                roughness: 0.6,
+                metalness: 0.1
+            });
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            scene.add(mesh);
+            
+            // Cannon.js ブロック
+            const shape = new CANNON.Box(new CANNON.Vec3(
+                BLOCK_WIDTH / 2,
+                BLOCK_HEIGHT / 2,
+                BLOCK_DEPTH / 2
+            ));
+            
+            const blockMaterial = new CANNON.Material({
+                friction: 0.8,
+                restitution: 0.1
+            });
+            
+            const body = new CANNON.Body({
+                mass: 0, // 初期状態では質量0で固定
+                shape: shape,
+                material: blockMaterial,
+                linearDamping: 0.3,    // 線形減衰を追加
+                angularDamping: 0.3    // 角度減衰を追加
+            });
+            body.position.set(x, y + BLOCK_HEIGHT / 2, z);
+            body.quaternion.setFromEuler(0, rotation, 0);
+            body.type = CANNON.Body.STATIC; // 静的オブジェクトとして設定
+            body.allowSleep = true;
+            body.sleepSpeedLimit = 0.01;
+            body.sleepTimeLimit = 0.5;
+            
+            world.addBody(body);
+            
+            blocks.push({
+                mesh: mesh,
+                body: body,
+                removed: false,
+                layer: layer
+            });
+        }
+        
+        function removeBlock(block) {
+            if (block.removed) return;
+            
+            block.removed = true;
+            scene.remove(block.mesh);
+            world.removeBody(block.body);
+            
+            score++;
+            document.getElementById('score').textContent = score;
+            
+            // 初めてブロックを抜いた時に物理演算を有効化
+            if (!physicsActive) {
+                physicsActive = true;
+                // すべてのブロックを動的に変更（重量を設定）
+                blocks.forEach(b => {
+                    if (!b.removed) {
+                        b.body.type = CANNON.Body.DYNAMIC;
+                        b.body.mass = 2.0; // 重量を増やして安定性向上
+                        b.body.updateMassProperties();
+                        b.body.velocity.set(0, 0, 0);
+                        b.body.angularVelocity.set(0, 0, 0);
+                    }
+                });
+            }
+            
+            setTimeout(checkGameOver, 3000);
+        }
+        
+        function checkGameOver() {
+            if (gameOver) return;
+            
+            let fallenBlocks = 0;
+            let tippedBlocks = 0;
+            
+            blocks.forEach(block => {
+                if (!block.removed) {
+                    // 落下判定
+                    if (block.body.position.y < -2) {
+                        fallenBlocks++;
+                    }
+                    // 傾き判定（過度に傾いているブロック）
+                    const euler = new CANNON.Vec3();
+                    block.body.quaternion.toEuler(euler);
+                    const tiltAngle = Math.abs(euler.x) + Math.abs(euler.z);
+                    if (tiltAngle > Math.PI / 3) { // 60度以上傾いている
+                        tippedBlocks++;
+                    }
+                }
+            });
+            
+            // より寛容な判定（10個以上落下または傾いた場合）
+            if (fallenBlocks + tippedBlocks > 10) {
+                gameOver = true;
+                document.getElementById('finalScore').textContent = score;
+                setTimeout(() => {
+                    document.getElementById('gameOver').classList.add('show');
+                }, 500);
+            }
+        }
+        
+        function resetGame() {
+            // すべてのブロックを削除
+            blocks.forEach(block => {
+                scene.remove(block.mesh);
+                world.removeBody(block.body);
+            });
+            blocks = [];
+            physicsActive = false; // 物理演算を再度無効化
+            
+            // 初期位置に復元
+            initialSetup.forEach((setup, index) => {
+                const block = blocks[index] || {};
+                const isHorizontal = Math.floor(index / BLOCKS_PER_LAYER) % 2 === 0;
+                const rotation = isHorizontal ? 0 : Math.PI / 2;
+                const layer = Math.floor(index / BLOCKS_PER_LAYER);
+                
+                let x = setup.position.x;
+                let y = layer * BLOCK_HEIGHT;
+                let z = setup.position.z;
+                
+                createBlock(x, y, z, rotation, setup.color, layer);
+            });
+            
+            score = 0;
+            gameOver = false;
+            document.getElementById('score').textContent = score;
+            document.getElementById('gameOver').classList.remove('show');
+        }
+        
+        function setupEventListeners() {
+            const canvas = document.getElementById('gameCanvas');
+            
+            // マウス/タッチでブロック選択
+            canvas.addEventListener('click', onBlockClick);
+            canvas.addEventListener('touchstart', onTouchStart);
+            
+            // カメラ回転
+            canvas.addEventListener('mousedown', onMouseDown);
+            canvas.addEventListener('mousemove', onMouseMove);
+            canvas.addEventListener('mouseup', onMouseUp);
+            canvas.addEventListener('touchmove', onTouchMove);
+            
+            // ボタン
+            document.getElementById('resetBtn').addEventListener('click', resetGame);
+            document.getElementById('newGameBtn').addEventListener('click', () => {
+                blocks.forEach(block => {
+                    scene.remove(block.mesh);
+                    world.removeBody(block.body);
+                });
+                physicsActive = false; // 物理演算を再度無効化
+                createTower();
+                score = 0;
+                gameOver = false;
+                document.getElementById('score').textContent = score;
+                document.getElementById('gameOver').classList.remove('show');
+            });
+            
+            // ウィンドウリサイズ
+            window.addEventListener('resize', onWindowResize);
+        }
+        
+        function onBlockClick(event) {
+            if (gameOver || isDragging) return;
+            
+            const canvas = document.getElementById('gameCanvas');
+            const rect = canvas.getBoundingClientRect();
+            mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+            mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+            
+            raycaster.setFromCamera(mouse, camera);
+            
+            const meshes = blocks.filter(b => !b.removed).map(b => b.mesh);
+            const intersects = raycaster.intersectObjects(meshes);
+            
+            if (intersects.length > 0) {
+                const selectedMesh = intersects[0].object;
+                const block = blocks.find(b => b.mesh === selectedMesh);
+                if (block) {
+                    removeBlock(block);
+                }
+            }
+        }
+        
+        function onTouchStart(event) {
+            if (event.touches.length === 1) {
+                event.preventDefault();
+                const touch = event.touches[0];
+                const canvas = document.getElementById('gameCanvas');
+                const rect = canvas.getBoundingClientRect();
+                mouse.x = ((touch.clientX - rect.left) / rect.width) * 2 - 1;
+                mouse.y = -((touch.clientY - rect.top) / rect.height) * 2 + 1;
+                
+                raycaster.setFromCamera(mouse, camera);
+                const meshes = blocks.filter(b => !b.removed).map(b => b.mesh);
+                const intersects = raycaster.intersectObjects(meshes);
+                
+                if (intersects.length > 0) {
+                    const selectedMesh = intersects[0].object;
+                    const block = blocks.find(b => b.mesh === selectedMesh);
+                    if (block) {
+                        removeBlock(block);
+                    }
+                }
+            }
+        }
+        
+        function onMouseDown(event) {
+            isDragging = true;
+            previousMousePosition = { x: event.clientX, y: event.clientY };
+        }
+        
+        function onMouseMove(event) {
+            if (isDragging) {
+                const deltaX = event.clientX - previousMousePosition.x;
+                cameraAngle += deltaX * 0.01;
+                updateCameraPosition();
+                previousMousePosition = { x: event.clientX, y: event.clientY };
+            }
+        }
+        
+        function onMouseUp() {
+            isDragging = false;
+        }
+        
+        function onTouchMove(event) {
+            if (event.touches.length === 1) {
+                const touch = event.touches[0];
+                const deltaX = touch.clientX - previousMousePosition.x;
+                cameraAngle += deltaX * 0.01;
+                updateCameraPosition();
+                previousMousePosition = { x: touch.clientX, y: touch.clientY };
+            }
+        }
+        
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // 物理シミュレーション更新（物理演算が有効な場合のみ）
+            if (physicsActive) {
+                world.step(1 / 60);
+            }
+            
+            // Three.jsメッシュを物理ボディに同期
+            blocks.forEach(block => {
+                if (!block.removed) {
+                    block.mesh.position.copy(block.body.position);
+                    block.mesh.quaternion.copy(block.body.quaternion);
+                }
+            });
+            
+            renderer.render(scene, camera);
+        }
+        
+        init();
+    </script>
+</body>
+</html>
