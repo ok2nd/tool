@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>倉庫番</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 10px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        h1 {
+            color: #667eea;
+            font-size: clamp(1.5rem, 5vw, 2rem);
+        }
+
+        .level-panel {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .level-select {
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #333;
+            font-size: 14px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .new-game-btn {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+
+        .new-game-btn:hover {
+            background: #229954;
+        }
+
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            font-size: clamp(0.9rem, 3vw, 1rem);
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .info-label {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .info-value {
+            font-weight: bold;
+            color: #667eea;
+            font-size: 1.2em;
+        }
+
+        #game-board {
+            display: inline-block;
+            background: #2c3e50;
+            padding: 10px;
+            border-radius: 10px;
+            margin: 0 auto;
+            touch-action: none;
+        }
+
+        .board-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .cell {
+            width: 40px;
+            height: 40px;
+            display: inline-block;
+            text-align: center;
+            line-height: 40px;
+            font-size: 24px;
+            vertical-align: top;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            max-width: 250px;
+            margin: 0 auto 20px;
+        }
+
+        .control-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+            touch-action: manipulation;
+        }
+
+        .control-btn:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+
+        .control-btn:active {
+            transform: translateY(0);
+        }
+
+        .control-btn.empty {
+            background: transparent;
+            cursor: default;
+        }
+
+        .reset-btn {
+            grid-column: 2;
+            background: #e74c3c;
+            font-size: 16px;
+        }
+
+        .reset-btn:hover {
+            background: #c0392b;
+        }
+
+        .success-message {
+            text-align: center;
+            color: #27ae60;
+            font-size: 1.5em;
+            font-weight: bold;
+            margin: 20px 0;
+            display: none;
+        }
+
+        .instructions {
+            background: #f0f7ff;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            position: relative;
+            cursor: pointer;
+            transition: opacity 0.3s;
+        }
+
+        .instructions:hover {
+            opacity: 0.9;
+        }
+
+        .instructions h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .instructions p {
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 8px;
+            font-size: 0.95em;
+        }
+
+        .instructions-hint {
+            text-align: center;
+            color: #999;
+            font-size: 0.85em;
+            margin-top: 10px;
+            font-style: italic;
+        }
+
+        .instructions.hidden {
+            display: none;
+        }
+
+        @media (max-width: 480px) {
+            .cell {
+                width: 35px;
+                height: 35px;
+                line-height: 35px;
+                font-size: 20px;
+            }
+
+            .container {
+                padding: 15px;
+            }
+
+            .control-btn {
+                padding: 12px;
+                font-size: 18px;
+            }
+
+            .instructions p {
+                font-size: 0.9em;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .cell {
+                width: 30px;
+                height: 30px;
+                line-height: 30px;
+                font-size: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎮 倉庫番</h1>
+            <div class="level-panel">
+                <select class="level-select" id="level-select">
+                    <option value="0">レベル 1 (簡単)</option>
+                    <option value="1">レベル 2 (普通)</option>
+                    <option value="2">レベル 3 (普通)</option>
+                    <option value="3">レベル 4 (難しい)</option>
+                    <option value="4">レベル 5 (難しい)</option>
+                </select>
+                <button class="new-game-btn" id="new-game">新しいゲーム</button>
+            </div>
+        </div>
+
+        <div class="game-info">
+            <div class="info-item">
+                <span class="info-label">移動数</span>
+                <span class="info-value" id="moves">0</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">箱の配置</span>
+                <span class="info-value" id="boxes-placed">0/0</span>
+            </div>
+        </div>
+
+        <div class="success-message" id="success">🎉 クリア！</div>
+
+        <div class="board-container">
+            <div id="game-board"></div>
+        </div>
+
+        <div class="controls">
+            <div class="control-btn empty"></div>
+            <button class="control-btn" id="up">▲</button>
+            <div class="control-btn empty"></div>
+            <button class="control-btn" id="left">◀</button>
+            <button class="control-btn reset-btn" id="reset">リセット</button>
+            <button class="control-btn" id="right">▶</button>
+            <div class="control-btn empty"></div>
+            <button class="control-btn" id="down">▼</button>
+            <div class="control-btn empty"></div>
+        </div>
+
+        <div class="instructions" id="instructions">
+            <h3>📖 遊び方</h3>
+            <p>🧑 <strong>プレイヤー</strong>を操作して、📦 <strong>箱</strong>を 🎯 <strong>目標地点</strong>に全て配置するとクリア！</p>
+            <p>✅ 箱が目標地点に配置されると色が変わります。</p>
+            <p>⚠️ 箱は<strong>押す</strong>ことはできますが、<strong>引く</strong>ことはできません。</p>
+            <p>🎯 壁や他の箱に押し付けると動かせなくなるので注意！</p>
+            <p>⌨️ <strong>キーボード操作:</strong> 矢印キーで移動、Rキーでリセット</p>
+            <p>🎮 <strong>画面操作:</strong> ボタンをクリック/タップして操作</p>
+            <div class="instructions-hint">💡 クリックして説明を閉じる</div>
+        </div>
+    </div>
+
+    <script>
+        var currentLevel = 0;
+        var gameState = {
+            map: [],
+            player: { x: 0, y: 0 },
+            moves: 0,
+            totalBoxes: 0,
+            placedBoxes: 0,
+            initialState: null
+        };
+
+        function createEmptyRoom(size) {
+            var map = [];
+            for (var i = 0; i < size; i++) {
+                var row = [];
+                for (var j = 0; j < size; j++) {
+                    if (i === 0 || i === size - 1 || j === 0 || j === size - 1) {
+                        row.push('#');
+                    } else {
+                        row.push(' ');
+                    }
+                }
+                map.push(row);
+            }
+            return map;
+        }
+
+        function shuffle(array) {
+            for (var i = array.length - 1; i > 0; i--) {
+                var j = Math.floor(Math.random() * (i + 1));
+                var temp = array[i];
+                array[i] = array[j];
+                array[j] = temp;
+            }
+            return array;
+        }
+
+        function generateLevel(levelIndex) {
+            var sizes = [7, 8, 9, 10, 11];
+            var boxCounts = [2, 3, 4, 5, 6];
+            var size = sizes[levelIndex];
+            var boxCount = boxCounts[levelIndex];
+            
+            var map = createEmptyRoom(size);
+            var centerX = Math.floor(size / 2);
+            var centerY = Math.floor(size / 2);
+            
+            var safeZone = [];
+            for (var y = 2; y < size - 2; y++) {
+                for (var x = 2; x < size - 2; x++) {
+                    safeZone.push({x: x, y: y});
+                }
+            }
+            
+            shuffle(safeZone);
+            
+            var goals = [];
+            var positions = [
+                {dx: -1, dy: -1}, {dx: 1, dy: -1},
+                {dx: -1, dy: 1}, {dx: 1, dy: 1},
+                {dx: 0, dy: -2}, {dx: 0, dy: 2},
+                {dx: -2, dy: 0}, {dx: 2, dy: 0}
+            ];
+            
+            shuffle(positions);
+            
+            for (var i = 0; i < boxCount && i < positions.length; i++) {
+                var gx = centerX + positions[i].dx;
+                var gy = centerY + positions[i].dy;
+                if (gx > 1 && gx < size - 2 && gy > 1 && gy < size - 2) {
+                    goals.push({x: gx, y: gy});
+                    map[gy][gx] = '.';
+                }
+            }
+            
+            while (goals.length < boxCount && safeZone.length > 0) {
+                var pos = safeZone.shift();
+                var tooClose = false;
+                for (var j = 0; j < goals.length; j++) {
+                    if (Math.abs(pos.x - goals[j].x) <= 1 && Math.abs(pos.y - goals[j].y) <= 1) {
+                        tooClose = true;
+                        break;
+                    }
+                }
+                if (!tooClose) {
+                    goals.push(pos);
+                    map[pos.y][pos.x] = '.';
+                }
+            }
+            
+            var boxPositions = [
+                {dx: -1, dy: 0}, {dx: 1, dy: 0},
+                {dx: 0, dy: -1}, {dx: 0, dy: 1},
+                {dx: -2, dy: -1}, {dx: 2, dy: -1},
+                {dx: -2, dy: 1}, {dx: 2, dy: 1}
+            ];
+            
+            shuffle(boxPositions);
+            
+            var boxes = [];
+            for (var i = 0; i < boxCount && i < boxPositions.length; i++) {
+                var bx = centerX + boxPositions[i].dx;
+                var by = centerY + boxPositions[i].dy;
+                
+                if (bx > 1 && bx < size - 2 && by > 1 && by < size - 2 && map[by][bx] === ' ') {
+                    var isSafe = true;
+                    
+                    var up = map[by - 1][bx] === '#';
+                    var down = map[by + 1][bx] === '#';
+                    var left = map[by][bx - 1] === '#';
+                    var right = map[by][bx + 1] === '#';
+                    
+                    if ((up && left) || (up && right) || (down && left) || (down && right)) {
+                        isSafe = false;
+                    }
+                    
+                    if (isSafe) {
+                        boxes.push({x: bx, y: by});
+                        map[by][bx] = '$';
+                    }
+                }
+            }
+            
+            while (boxes.length < boxCount && safeZone.length > 0) {
+                var pos = safeZone.shift();
+                if (map[pos.y][pos.x] === ' ') {
+                    var up = map[pos.y - 1][pos.x] === '#';
+                    var down = map[pos.y + 1][pos.x] === '#';
+                    var left = map[pos.y][pos.x - 1] === '#';
+                    var right = map[pos.y][pos.x + 1] === '#';
+                    
+                    if (!((up && left) || (up && right) || (down && left) || (down && right))) {
+                        boxes.push(pos);
+                        map[pos.y][pos.x] = '$';
+                    }
+                }
+            }
+            
+            var playerPos = {x: centerX, y: centerY};
+            if (map[centerY][centerX] !== ' ') {
+                for (var y = 2; y < size - 2; y++) {
+                    for (var x = 2; x < size - 2; x++) {
+                        if (map[y][x] === ' ') {
+                            playerPos = {x: x, y: y};
+                            break;
+                        }
+                    }
+                    if (map[playerPos.y][playerPos.x] === ' ') break;
+                }
+            }
+            
+            return {map: map, player: playerPos};
+        }
+
+        function initLevel(levelIndex) {
+            var level = generateLevel(levelIndex);
+            gameState.map = level.map;
+            gameState.player = level.player;
+            gameState.moves = 0;
+            gameState.totalBoxes = 0;
+            gameState.placedBoxes = 0;
+
+            for (var y = 0; y < gameState.map.length; y++) {
+                for (var x = 0; x < gameState.map[y].length; x++) {
+                    var cell = gameState.map[y][x];
+                    if (cell === '$' || cell === '*') {
+                        gameState.totalBoxes++;
+                        if (cell === '*') gameState.placedBoxes++;
+                    }
+                }
+            }
+
+            gameState.initialState = {
+                map: JSON.parse(JSON.stringify(gameState.map)),
+                player: {x: gameState.player.x, y: gameState.player.y}
+            };
+
+            document.getElementById('success').style.display = 'none';
+            updateDisplay();
+        }
+
+        function updateDisplay() {
+            var board = document.getElementById('game-board');
+            board.innerHTML = '';
+
+            for (var y = 0; y < gameState.map.length; y++) {
+                for (var x = 0; x < gameState.map[y].length; x++) {
+                    var cell = document.createElement('div');
+                    cell.className = 'cell';
+
+                    if (x === gameState.player.x && y === gameState.player.y) {
+                        cell.textContent = '🧑';
+                    } else {
+                        var mapCell = gameState.map[y][x];
+                        if (mapCell === '#') {
+                            cell.textContent = '🧱';
+                        } else if (mapCell === '$') {
+                            cell.textContent = '📦';
+                        } else if (mapCell === '.') {
+                            cell.textContent = '🎯';
+                        } else if (mapCell === '*') {
+                            cell.textContent = '✅';
+                        } else {
+                            cell.textContent = ' ';
+                        }
+                    }
+
+                    board.appendChild(cell);
+                }
+                board.appendChild(document.createElement('br'));
+            }
+
+            document.getElementById('moves').textContent = gameState.moves;
+            document.getElementById('boxes-placed').textContent = gameState.placedBoxes + '/' + gameState.totalBoxes;
+
+            if (gameState.placedBoxes === gameState.totalBoxes && gameState.totalBoxes > 0) {
+                document.getElementById('success').style.display = 'block';
+            }
+        }
+
+        function move(dx, dy) {
+            var newX = gameState.player.x + dx;
+            var newY = gameState.player.y + dy;
+
+            if (newY < 0 || newY >= gameState.map.length || newX < 0 || newX >= gameState.map[newY].length) {
+                return;
+            }
+
+            var targetCell = gameState.map[newY][newX];
+
+            if (targetCell === '#') return;
+
+            if (targetCell === '$' || targetCell === '*') {
+                var boxNewX = newX + dx;
+                var boxNewY = newY + dy;
+
+                if (boxNewY < 0 || boxNewY >= gameState.map.length || boxNewX < 0 || boxNewX >= gameState.map[boxNewY].length) {
+                    return;
+                }
+
+                var boxTargetCell = gameState.map[boxNewY][boxNewX];
+
+                if (boxTargetCell === '#' || boxTargetCell === '$' || boxTargetCell === '*') {
+                    return;
+                }
+
+                if (targetCell === '*') gameState.placedBoxes--;
+
+                gameState.map[newY][newX] = targetCell === '*' ? '.' : ' ';
+
+                if (boxTargetCell === '.') {
+                    gameState.map[boxNewY][boxNewX] = '*';
+                    gameState.placedBoxes++;
+                } else {
+                    gameState.map[boxNewY][boxNewX] = '$';
+                }
+            }
+
+            gameState.player.x = newX;
+            gameState.player.y = newY;
+            gameState.moves++;
+
+            updateDisplay();
+        }
+
+        function resetLevel() {
+            if (gameState.initialState) {
+                gameState.map = JSON.parse(JSON.stringify(gameState.initialState.map));
+                gameState.player = {x: gameState.initialState.player.x, y: gameState.initialState.player.y};
+                gameState.moves = 0;
+                gameState.placedBoxes = 0;
+
+                for (var y = 0; y < gameState.map.length; y++) {
+                    for (var x = 0; x < gameState.map[y].length; x++) {
+                        if (gameState.map[y][x] === '*') {
+                            gameState.placedBoxes++;
+                        }
+                    }
+                }
+
+                document.getElementById('success').style.display = 'none';
+                updateDisplay();
+            }
+        }
+
+        document.getElementById('up').addEventListener('click', function() { move(0, -1); });
+        document.getElementById('down').addEventListener('click', function() { move(0, 1); });
+        document.getElementById('left').addEventListener('click', function() { move(-1, 0); });
+        document.getElementById('right').addEventListener('click', function() { move(1, 0); });
+        document.getElementById('reset').addEventListener('click', resetLevel);
+
+        document.getElementById('level-select').addEventListener('change', function(e) {
+            currentLevel = parseInt(e.target.value);
+            initLevel(currentLevel);
+        });
+
+        document.getElementById('new-game').addEventListener('click', function() {
+            initLevel(currentLevel);
+        });
+
+        document.getElementById('instructions').addEventListener('click', function() {
+            document.getElementById('instructions').classList.add('hidden');
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowUp') {
+                move(0, -1);
+            } else if (e.key === 'ArrowDown') {
+                move(0, 1);
+            } else if (e.key === 'ArrowLeft') {
+                move(-1, 0);
+            } else if (e.key === 'ArrowRight') {
+                move(1, 0);
+            } else if (e.key === 'r' || e.key === 'R') {
+                resetLevel();
+            }
+        });
+
+        initLevel(currentLevel);
+    </script>
+</body>
+</html>
