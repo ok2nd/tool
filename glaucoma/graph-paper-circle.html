@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>緑内障簡易視野検査（ドットタイプ）</title>
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+body {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    position: relative;
+    background: black;
+}
+.dot-container {
+    width: 100%;
+    height: 100%;
+    background-color: black;
+    background-image: radial-gradient(circle, white 3.78px, transparent 3.78px);
+    background-size: 37.8px 37.8px;
+    background-position: 0 0;
+    position: relative;
+}
+.center-dot {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+	width: 15px;
+	height: 15px;
+    background-color: red;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+}
+.instructions {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 10px;
+    border-radius: 5px;
+    font-family: sans-serif;
+    font-size: 14px;
+    max-width: 300px;
+    z-index: 20;
+}
+.switching {
+	position: absolute;
+	top: 10px;
+	left: 10px;
+	background: rgba(255, 255, 255, 0.9);
+	padding: 10px;
+	border-radius: 5px;
+	font-family: sans-serif;
+	font-size: 14px;
+	max-width: 300px
+}
+</style>
+</head>
+<body>
+    <div class="dot-container">
+        <div class="center-dot"></div>
+    </div>
+<div class="switching">
+	<a href="graph-paper.html">切替</a>
+</div>
+<!--
+<div class="instructions">
+    <strong>緑内障簡易視野検査</strong><br>
+    中央の赤い円を注視してください。<br>
+    白いドットの欠損や見えない部分を確認します。
+</div>
+-->
+</body>
+</html>
