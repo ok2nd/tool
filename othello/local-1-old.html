@@ -9,6 +9,7 @@
 	margin: 0;
 	padding: 0;
 	box-sizing: border-box;
+	transform: scale(0.95);
 }
 body {
 	font-family: 'Arial', sans-serif;
@@ -16,9 +17,8 @@ body {
 	min-height: 100vh;
 	display: flex;
 	justify-content: center;
-	align-items: flex-start;
+	align-items: flex-start; /* ← ここを center → flex-start に変更 */
 	padding: 20px;
-	transform: scale(0.95);
 }
 .game-container {
 	background: rgba(255, 255, 255, 0.95);
@@ -28,7 +28,7 @@ body {
 	backdrop-filter: blur(10px);
 	max-width: 600px;
 	width: 100%;
-	margin-top: 0px;
+	margin-top: 0px; /* <h1>の高さ＋margin-bottom分を調整 */
 }
 h1 {
 	text-align: center;
@@ -41,6 +41,9 @@ h1 {
 	text-align: center;
 	padding: 10px;
 	border-radius: 10px;
+/*
+	margin-bottom: 20px;
+*/
 	font-weight: bold;
 }
 .status-connecting {
@@ -59,12 +62,11 @@ h1 {
 	background: #f8d7da;
 	color: #721c24;
 }
-.status-ready {
-	background: #e7f3ff;
-	color: #004085;
-}
 .room-section {
 	text-align: center;
+/*
+	margin-bottom: 20px;
+*/
 }
 .room-input {
 	display: flex;
@@ -88,10 +90,12 @@ h1 {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
+/*
+	margin-bottom: 20px;
+	padding: 15px;
+*/
 	background: rgba(0, 0, 0, 0.05);
 	border-radius: 10px;
-	padding: 15px;
-	margin-bottom: 15px;
 }
 .player-info {
 	display: flex;
@@ -122,9 +126,10 @@ h1 {
 	background: #2d5a27;
 	padding: 10px;
 	border-radius: 15px;
+/*
 	margin: 20px 0;
+*/
 	box-shadow: inset 0 4px 8px rgba(0, 0, 0, 0.3);
-	max-width: 100%;
 }
 .cell {
 	aspect-ratio: 1;
@@ -171,6 +176,9 @@ h1 {
 	display: flex;
 	justify-content: center;
 	gap: 15px;
+/*
+	margin-top: 20px;
+*/
 	flex-wrap: wrap;
 }
 .btn {
@@ -253,36 +261,28 @@ h1 {
 	background: #f8f9fa;
 	padding: 10px;
 	border-radius: 8px;
-	margin: 10px 0 20px 0;
+	margin: 10px 0;
 	font-family: monospace;
 	font-size: 1.2em;
 	font-weight: bold;
 	color: #495057;
 }
 @media (max-width: 600px) {
-	body {
-		padding: 10px;
-	}
 	.game-container {
-		padding: 15px;
+		padding: 20px;
 	}
 	h1 {
-		font-size: 1.8em;
+		font-size: 2em;
 	}
 	.game-info {
 		flex-direction: column;
 		gap: 10px;
-		padding: 10px;
 	}
 	.player-info {
 		font-size: 1em;
 	}
-	.board {
-		padding: 5px;
-		margin: 15px 0;
-	}
 	.cell {
-		min-height: 35px;
+		min-height: 40px;
 	}
 	.room-input {
 		flex-direction: column;
@@ -293,22 +293,18 @@ h1 {
 		width: 100%;
 		max-width: 300px;
 	}
-	.btn {
-		padding: 10px 20px;
-		font-size: 1em;
-	}
 }
 </style>
 </head>
 <body>
 <div class="game-container" id="game-container">
 <h1 id="page-title">オンライン対戦オセロ</h1>
-<div class="connection-status status-ready" id="connection-status">
+<div class="connection-status status-connecting" id="connection-status">
 	接続を準備中...
 </div>
 <div class="room-section" id="room-section">
 	<div class="room-input">
-		<input type="text" id="room-id-input" class="input-field" placeholder="ルームID(空白で自動生成)" maxlength="20">
+		<input type="text" id="room-id-input" class="input-field" placeholder="ルームID（空白で自動生成）" maxlength="20">
 		<button class="btn btn-primary" onclick="createRoom()">ルーム作成</button>
 		<button class="btn btn-success" onclick="joinRoom()">ルーム参加</button>
 	</div>
@@ -350,33 +346,32 @@ h1 {
 class OnlineOthelloGame {
 	constructor() {
 		this.board = Array(8).fill().map(() => Array(8).fill(0));
-		this.currentPlayer = 1;
-		this.myColor = null;
+		this.currentPlayer = 1; // 1: 黒, -1: 白
+		this.myColor = null; // プレイヤーの色
 		this.gameOver = false;
 		this.validMovesVisible = false;
 		this.roomId = null;
 		this.playerId = this.generatePlayerId();
 		this.gameState = null;
 		this.pollInterval = null;
+		// シンプルなHTTP APIを使ったゲーム状態管理
 		this.apiBase = 'https://api.jsonbin.io/v3/b';
-		this.apiKey = '$2a$10$your_api_key_here';
+		this.apiKey = '$2a$10$your_api_key_here'; // 実際の使用時はJSONBinのAPIキーが必要
 		this.updateConnectionStatus('ready', 'ルームを作成するか参加してください');
 	}
 	generatePlayerId() {
 		return 'player_' + Math.random().toString(36).substr(2, 9);
 	}
-	generateRoomIdString() {
-		return Math.random().toString(36).substr(2, 8).toUpperCase();
-	}
 	generateRoomId() {
-		const roomId = this.generateRoomIdString();
+		const roomId = Math.random().toString(36).substr(2, 8).toUpperCase();
 		document.getElementById('room-id-input').value = roomId;
 	}
 	async createRoom() {
 		const roomInput = document.getElementById('room-id-input').value.trim();
-		const roomId = roomInput || this.generateRoomIdString();
+		const roomId = roomInput || this.generateRoomId();
 		try {
 			this.updateConnectionStatus('connecting', 'ルームを作成中...');
+			// デモ用：ローカルストレージを使用（実際の実装ではサーバーAPIを使用）
 			const gameState = {
 				roomId: roomId,
 				players: {
@@ -387,29 +382,31 @@ class OnlineOthelloGame {
 				gameStarted: false,
 				lastUpdate: Date.now()
 			};
+			// 初期配置
 			gameState.board[3][3] = -1;
 			gameState.board[3][4] = 1;
 			gameState.board[4][3] = 1;
 			gameState.board[4][4] = -1;
+			// ローカルストレージに保存（デモ用）
 			const storageKey = `othello_room_${roomId}`;
 			const gameData = {
 				...gameState,
 				created: Date.now()
 			};
+			// 既存のルームがあるかチェック
 			const existingRoom = JSON.parse(localStorage.getItem(storageKey) || 'null');
-			if (existingRoom && Date.now() - existingRoom.created < 3600000) {
+			if (existingRoom && Date.now() - existingRoom.created < 3600000) { // 1時間以内
 				throw new Error('このルームIDは既に使用されています');
 			}
 			localStorage.setItem(storageKey, JSON.stringify(gameData));
 			this.roomId = roomId;
-			this.myColor = 1;
+			this.myColor = 1; // 黒
 			this.gameState = gameState;
 			this.updateConnectionStatus('waiting', 'プレイヤー2の参加を待っています...');
 			this.showGame();
 			this.startPolling();
-			document.getElementById('page-title').style.display = 'none';
+			document.getElementById('page-title').style.display = 'none';	// タイトル非表示
 			document.getElementById('game-container').style.marginTop = '-50px';
-			document.getElementById('room-id-input').value = '';
 		} catch (error) {
 			this.updateConnectionStatus('error', `エラー: ${error.message}`);
 		}
@@ -427,7 +424,7 @@ class OnlineOthelloGame {
 			if (!gameData) {
 				throw new Error('ルームが見つかりません');
 			}
-			if (Date.now() - gameData.created > 3600000) {
+			if (Date.now() - gameData.created > 3600000) { // 1時間経過
 				localStorage.removeItem(storageKey);
 				throw new Error('ルームの有効期限が切れています');
 			}
@@ -435,20 +432,20 @@ class OnlineOthelloGame {
 			if (playerCount >= 2) {
 				throw new Error('ルームは満員です');
 			}
+			// プレイヤー2として参加
 			gameData.players[this.playerId] = { color: -1, name: 'Player 2' };
 			gameData.gameStarted = true;
 			gameData.lastUpdate = Date.now();
 			localStorage.setItem(storageKey, JSON.stringify(gameData));
 			this.roomId = roomId;
-			this.myColor = -1;
+			this.myColor = -1; // 白
 			this.gameState = gameData;
 			this.updateConnectionStatus('playing', '対戦中');
 			this.showGame();
 			this.loadGameState();
 			this.startPolling();
-			document.getElementById('page-title').style.display = 'none';
+			document.getElementById('page-title').style.display = 'none';	// タイトル非表示
 			document.getElementById('game-container').style.marginTop = '-50px';
-			document.getElementById('room-id-input').value = '';
 		} catch (error) {
 			this.updateConnectionStatus('error', `エラー: ${error.message}`);
 		}
@@ -468,27 +465,32 @@ class OnlineOthelloGame {
 		}
 		this.pollInterval = setInterval(() => {
 			this.pollGameState();
-		}, 2000);
+		}, 2000); // 2秒ごとにポーリング
 	}
 	async pollGameState() {
 		try {
 			const storageKey = `othello_room_${this.roomId}`;
 			const gameData = JSON.parse(localStorage.getItem(storageKey) || 'null');
-			if (this.myColor === 1 && gameData && gameData.gameStarted && !this.gameState.gameStarted) {
+			// プレイヤー1のゲーム開始ステータスを更新する処理
+			if (this.myColor === 1 && gameData.gameStarted && !this.gameState.gameStarted) {
 				this.updateConnectionStatus('playing', '対戦中');
 				this.gameState.gameStarted = true;
 			}
+			// ルームが存在しない場合、または自分しかいない場合
 			if (!gameData || Object.keys(gameData.players).length <= 1) {
+				// ゲーム中だった場合にのみ、相手の退出を通知
 				if (this.gameState && this.gameState.gameStarted) {
 					this.updateConnectionStatus('error', '相手が退出しました。');
+					// ポーリングを停止
 					if (this.pollInterval) {
 						clearInterval(this.pollInterval);
 					}
+					// ゲーム操作を無効化
 					document.getElementById('board').style.pointerEvents = 'none';
 					return;
 				}
 			}
-			if (gameData && gameData.lastUpdate > this.gameState.lastUpdate) {
+			if (gameData.lastUpdate > this.gameState.lastUpdate) {
 				this.gameState = gameData;
 				this.loadGameState();
 			}
@@ -513,9 +515,11 @@ class OnlineOthelloGame {
 		this.board[row][col] = this.currentPlayer;
 		this.flipDiscs(row, col);
 		this.currentPlayer = -this.currentPlayer;
+		// ゲーム状態を更新
 		this.gameState.board = this.board.map(row => [...row]);
 		this.gameState.currentPlayer = this.currentPlayer;
 		this.gameState.lastUpdate = Date.now();
+		// サーバーに送信（ローカルストレージに保存）
 		const storageKey = `othello_room_${this.roomId}`;
 		localStorage.setItem(storageKey, JSON.stringify(this.gameState));
 		setTimeout(() => {
@@ -524,6 +528,7 @@ class OnlineOthelloGame {
 			this.checkGameEnd();
 		}, 100);
 	}
+	// オセロのゲームロジック（前回と同じ）
 	isValidMove(row, col) {
 		if (this.board[row][col] !== 0) return false;
 		const directions = [
@@ -580,6 +585,7 @@ class OnlineOthelloGame {
 			for (let col = 0; col < 8; col++) {
 				const cell = document.createElement('div');
 				cell.className = 'cell';
+				// 自分のターンでない場合は無効化
 				if (this.myColor !== this.currentPlayer) {
 					cell.classList.add('disabled');
 				} else {
@@ -626,6 +632,7 @@ class OnlineOthelloGame {
 				this.endGame();
 			} else {
 				this.currentPlayer = -this.currentPlayer;
+				// パス通知は相手のターンで表示
 			}
 		}
 	}
@@ -636,13 +643,13 @@ class OnlineOthelloGame {
 		let winner, winnerText;
 		if (blackCount > whiteCount) {
 			winner = '黒';
-			winnerText = this.myColor === 1 ? 'あなたの勝利!' : '相手の勝利';
+			winnerText = this.myColor === 1 ? 'あなたの勝利！' : '相手の勝利';
 		} else if (whiteCount > blackCount) {
 			winner = '白';
-			winnerText = this.myColor === -1 ? 'あなたの勝利!' : '相手の勝利';
+			winnerText = this.myColor === -1 ? 'あなたの勝利！' : '相手の勝利';
 		} else {
 			winner = null;
-			winnerText = '引き分け!';
+			winnerText = '引き分け！';
 		}
 		document.getElementById('winner-text').textContent = winnerText;
 		document.getElementById('final-score').textContent = 
@@ -667,6 +674,7 @@ class OnlineOthelloGame {
 		if (this.pollInterval) {
 			clearInterval(this.pollInterval);
 		}
+		// ルームから退出
 		if (this.roomId) {
 			const storageKey = `othello_room_${this.roomId}`;
 			const gameData = JSON.parse(localStorage.getItem(storageKey) || 'null');
@@ -679,6 +687,7 @@ class OnlineOthelloGame {
 				}
 			}
 		}
+		// ゲーム状態をリセットする処理
 		this.board = Array(8).fill().map(() => Array(8).fill(0));
 		this.currentPlayer = 1;
 		this.myColor = null;
@@ -687,6 +696,7 @@ class OnlineOthelloGame {
 		this.roomId = null;
 		this.gameState = null;
 		this.pollInterval = null;
+		// UIをリセット
 		document.getElementById('room-section').style.display = 'block';
 		document.getElementById('room-id-display').style.display = 'none';
 		document.getElementById('game-info').style.display = 'none';
@@ -694,11 +704,11 @@ class OnlineOthelloGame {
 		document.getElementById('game-controls').style.display = 'none';
 		document.getElementById('game-over').style.display = 'none';
 		document.getElementById('room-id-input').value = '';
-		document.getElementById('page-title').style.display = 'block';
-		document.getElementById('game-container').style.marginTop = '0px';
 		this.updateConnectionStatus('ready', 'ルームを作成するか参加してください');
+		// オセロ盤面の表示を初期状態に戻す
 		const boardElement = document.getElementById('board');
 		boardElement.innerHTML = '';
+		// ??追加: ボードのクリックイベントを有効に戻す
 		boardElement.style.pointerEvents = 'auto';
 	}
 	showValidMoves() {
@@ -730,6 +740,7 @@ function leaveRoom() {
 function showValidMoves() {
 	game.showValidMoves();
 }
+// ページを離れる時にルームから退出
 window.addEventListener('beforeunload', () => {
 	if (game.roomId) {
 		game.leaveRoom();
