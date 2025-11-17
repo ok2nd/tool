@@ -1,0 +1,25 @@
+
+HTML、CSS、JavaScriptで青空文庫ビューワを作成。
+
+aozora-viewer.htmlというファイル名で、HTML、CSS、JavaScript全てが入っている。
+青空文庫ファイルXHTMLはサーバー側の本アプリHTMLと同じ階層のディレクトリ「xhtml」に入っている。
+XHTMLファイルの中の文字コードは<meta charset=xxxx>で判断する。
+とりあえずはWindowsサーバーに以下のような名前でXHTMLファイルが入っている。スマホのローカルでWebViewで使うことも想定すること。
+	夏目漱石 夢十夜.html
+	芥川龍之介 蜘蛛の糸.html
+aozora-viewer.htmlは、ブラウザURLで実行。
+aozora-viewer.html?file=xhtml/XHTMLファイル名&title=作品名&creator=作者名&font-size=16px
+作品名と作者名は、XHTMLファイルの中に以下の形式で入っている。
+	<meta name="DC.Title" content="作品名">
+	<meta name="DC.Creator" content="作者名">
+XHTMLファイル名を読み込んで、縦書きで表示。
+ルビも振る事。
+フォントはJIS第3水準、第4水準も表示できるフォントを使う。
+最重要ポイントは、スマホの青空文庫ビューワと同じく、ブラウザ画面サイズに合わせてページングが正しく行えること。
+ページ単位で左右に余白が付く事。（重要）
+ページは右側から1ページ,2ページ,...
+初期時点では、一番右のページ1を表示。
+スワイプでページ移動できること。
+プルダウン等でページ移動も可能なこと。
+
+

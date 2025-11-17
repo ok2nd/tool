@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>青空文庫ビューワ（修正版）</title>
+<style>
+:root{
+  --header-height:60px;
+  --page-gap:40px;
+  --bg:#2c2c2c;
+  --page-bg:#f5f5dc;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);font-family:"Yu Mincho","Hiragino Mincho ProN",serif;-webkit-font-smoothing:antialiased}
+.header{
+  position:fixed;top:0;left:0;right:0;height:var(--header-height);
+  background:rgba(51,51,51,0.95);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:8px 14px;z-index:1000;gap:12px;
+}
+.book-info{overflow:hidden;min-width:0}
+.book-title{font-weight:bold;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.book-creator{font-size:13px;color:#ccc;margin-top:2px}
+.controls{display:flex;align-items:center;gap:8px}
+.btn{background:#fff;color:#333;border:0;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:14px}
+.page-indicator{background:rgba(51,51,51,0.6);color:#fff;padding:6px 10px;border-radius:8px;font-size:14px}
+
+.viewer-container{
+  position:absolute;top:var(--header-height);left:0;right:0;bottom:0;display:flex;justify-content:center;align-items:flex-start;overflow:hidden;
+}
+#viewport {height:100%;width:100%;display:flex;justify-content:center;align-items:center;}
+
+/* mask は画面内の余白（上下左右）を持つ */
+#mask {
+  height:100%;overflow:hidden;display:block;box-sizing:border-box;
+  padding:24px; /* 画面の余白（上下左右） */
+  margin:0 auto;
+  background:var(--page-bg);
+  -webkit-user-select:none; user-select:none;
+  touch-action: none; /* タッチの既定のスクロールを抑え、pointer イベントを確実に受け取る */
+}
+
+/* 各「ページ（列）」の内部に左右余白をつける（← 追加） */
+#flow > .pageFrame {
+  display:block;
+  height:100%;
+  box-sizing:border-box;
+  padding:0 24px; /* 各ページ内の左右余白（文字がはみ出さないように） */
+}
+
+#flow {
+  height:100%;writing-mode: vertical-rl;text-orientation: mixed;column-fill: auto;
+  column-gap: var(--page-gap);will-change: transform;
+  transition: transform 260ms cubic-bezier(.2,.8,.2,1);
+}
+.page-content { height:100%; overflow:hidden; line-height:1.9; letter-spacing:0.05em; padding:0; }
+.page-content p{ margin:0 0 1em 0; }
+ruby rt{ font-size:0.5em; line-height:1; }
+
+.overlay{ position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); color:#fff; background:rgba(0,0,0,0.6); padding:14px 18px; border-radius:8px; z-index:1200; }
+
+@media(max-width:768px){
+  .book-title{ font-size:14px }
+  .book-creator{ font-size:12px }
+  .btn{ padding:6px 8px; font-size:13px }
+}
+</style>
+</head>
+<body>
+  <div class="header">
+    <div class="book-info">
+      <div class="book-title" id="bookTitle">読み込み中...</div>
+      <div class="book-creator" id="bookCreator"></div>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:8px">
+      <div class="page-indicator" id="pageIndicator">0 / 0</div>
+      <select id="pageSelect" title="ページへジャンプ" style="padding:6px 8px;border-radius:6px;border:0;font-size:14px"></select>
+      <button class="btn" id="prevBtn">◀</button>
+      <button class="btn" id="nextBtn">▶</button>
+      <button class="btn" id="closeBtn">× 閉じる</button>
+    </div>
+  </div>
+
+  <div class="viewer-container">
+    <div id="viewport">
+      <div id="mask" aria-live="polite">
+        <div id="flow"><div class="pageFrame"><div class="page-content"></div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="loading">読み込み中...</div>
+
+<script>
+const flow = document.getElementById('flow');
+const mask = document.getElementById('mask');
+const loadingEl = document.getElementById('loading');
+const bookTitleEl = document.getElementById('bookTitle');
+const bookCreatorEl = document.getElementById('bookCreator');
+const pageIndicator = document.getElementById('pageIndicator');
+const pageSelect = document.getElementById('pageSelect');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const closeBtn = document.getElementById('closeBtn');
+
+let columnWidth = 0;
+const columnGap = 40;
+let totalPages = 1;
+let currentDisplayPage = 1;
+let isPointerDown = false;
+let startX = 0;
+let startOffset = 0;
+let pointerId = null;
+let currentOffset = 0;
+let startTime = 0;
+
+function getUrlParams(){
+  const p = new URLSearchParams(window.location.search);
+  return {
+    creator: p.get('creator') || '',
+    title: p.get('title') || '',
+    fontSize: p.get('font-size') || '',
+    file: p.get('file') || ''
+  };
+}
+
+function processAozoraNotation(html){
+  html = html.replace(/([^《》\s]+)《([^》]+)》/g, '<ruby>$1<rt>$2<\/rt><\/ruby>');
+  html = html.replace(/※\[[^\]]*\]/g, '');
+  html = html.replace(/※\s*\(\s*第[^)]+\)/g, '');
+  html = html.replace(/※\s*（\s*第[^）]+\）/g, '');
+  html = html.replace(/［＃[^］]*］/g, '');
+  html = html.replace(/※\s*（[^）]{0,80}）/g, '');
+  html = html.replace(/※\s*\([^)]{0,80}\)/g, '');
+  return html;
+}
+
+async function loadBook(){
+  try {
+    const params = getUrlParams();
+    if (params.title) bookTitleEl.textContent = params.title;
+    if (params.creator) bookCreatorEl.textContent = params.creator;
+
+    if (!params.file) {
+      loadingEl.style.display = 'block';
+      loadingEl.textContent = 'file パラメータを指定してください。';
+      return;
+    }
+
+    loadingEl.style.display = 'block';
+    loadingEl.textContent = 'ファイルを読み込み中...';
+
+    const res = await fetch(params.file);
+    if (!res.ok) throw new Error('ファイル読み込み失敗: ' + res.status);
+
+    const arrayBuffer = await res.arrayBuffer();
+    const uint8 = new Uint8Array(arrayBuffer);
+
+    let text = new TextDecoder('utf-8', {fatal:false}).decode(uint8);
+    const metaMatch = text.match(/<meta[^>]*charset=([^"'>\s]+)/i) || text.match(/<meta[^>]*content=["'][^"']*charset=([^"'\s;]+)/i);
+    if (metaMatch) {
+      const cs = metaMatch[1].toLowerCase();
+      if (cs.includes('shift') || cs.includes('sjis') || cs.includes('cp932') || cs.includes('windows-31j')) {
+        try { text = new TextDecoder('shift-jis').decode(uint8); } catch(e){}
+      } else if (cs.includes('euc')) {
+        try { text = new TextDecoder('euc-jp').decode(uint8); } catch(e){}
+      }
+    } else {
+      if (text.includes('�')) {
+        try {
+          const sj = new TextDecoder('shift-jis').decode(uint8);
+          if (!sj.includes('�')) text = sj;
+        } catch(e){}
+      }
+    }
+
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(text, 'text/html');
+    let bodyNode = doc.querySelector('.main_text') || doc.querySelector('body');
+    if (!bodyNode) throw new Error('本文が見つかりません');
+
+    let inner = bodyNode.innerHTML;
+    inner = processAozoraNotation(inner);
+
+    if (params.fontSize) flow.style.fontSize = params.fontSize;
+
+    const frame = flow.querySelector('.pageFrame');
+    const pageContent = frame.querySelector('.page-content');
+    pageContent.innerHTML = inner;
+
+    await applyLayoutAndInit();
+
+    loadingEl.style.display = 'none';
+  } catch (err) {
+    loadingEl.style.display = 'block';
+    loadingEl.textContent = 'エラー: ' + (err.message || err);
+  }
+}
+
+async function applyLayoutAndInit(){
+  await new Promise(r => requestAnimationFrame(r));
+
+  const maskStyle = getComputedStyle(mask);
+  const padTop = parseFloat(maskStyle.paddingTop) || 0;
+  const padBottom = parseFloat(maskStyle.paddingBottom) || 0;
+  const padLeft = parseFloat(maskStyle.paddingLeft) || 0;
+  const padRight = parseFloat(maskStyle.paddingRight) || 0;
+
+  const pageHeight = mask.clientHeight - padTop - padBottom;
+
+  const minW = 280;
+  const maxW = Math.max(minW, Math.floor(window.innerWidth * 0.9));
+
+  // 各 pageFrame の左右内側 padding と mask の左右 padding を考慮して
+  // 列幅が画面内に収まるように最大値を制限する（これで左右のはみ出しを防ぐ）
+  const frameInnerPaddingLR = 24 + 24; // pageFrame に設定した左右 padding (left + right)
+  const availableWidth = Math.max(300, mask.clientWidth - padLeft - padRight); // mask内の使用可能幅
+  const maxByWidth = Math.floor(availableWidth - frameInnerPaddingLR); // 1列が占めうる最大幅
+
+  columnWidth = Math.max(minW, Math.min(maxW, Math.floor(Math.min(pageHeight, maxByWidth))));
+
+  flow.style.columnWidth = columnWidth + 'px';
+  flow.style.columnGap = columnGap + 'px';
+
+  await new Promise(r => setTimeout(r, 60));
+
+  const stride = columnWidth + columnGap;
+  const flowScrollWidth = flow.scrollWidth;
+  let estCols = Math.round((flowScrollWidth + columnGap) / stride);
+  if (estCols < 1) estCols = 1;
+  totalPages = estCols;
+
+  currentDisplayPage = 1;
+  currentOffset = - (totalPages - currentDisplayPage) * stride;
+  applyTransform(false);
+
+  setupPageSelect();
+  updateIndicator();
+}
+
+function applyTransform(animate = true){
+  if (!animate) {
+    flow.style.transition = 'none';
+    flow.style.transform = `translateX(${currentOffset}px)`;
+    requestAnimationFrame(()=> {
+      flow.style.transition = 'transform 260ms cubic-bezier(.2,.8,.2,1)';
+    });
+  } else {
+    flow.style.transform = `translateX(${currentOffset}px)`;
+  }
+  updateIndicator();
+}
+
+function updateIndicator(){
+  pageIndicator.textContent = `${currentDisplayPage} / ${totalPages}`;
+  if (pageSelect.options.length === totalPages) pageSelect.value = String(currentDisplayPage);
+}
+
+function setupPageSelect(){
+  pageSelect.innerHTML = '';
+  for (let i=1;i<=totalPages;i++){
+    const o = document.createElement('option');
+    o.value = String(i);
+    o.textContent = String(i);
+    pageSelect.appendChild(o);
+  }
+  pageSelect.value = String(currentDisplayPage);
+}
+
+function goToDisplayPage(dp, smooth = true){
+  dp = Math.max(1, Math.min(totalPages, Math.round(dp)));
+  const stride = columnWidth + columnGap;
+  currentDisplayPage = dp;
+  currentOffset = - (totalPages - currentDisplayPage) * stride;
+  applyTransform(smooth);
+}
+
+/* ----------------
+   スワイプ判定改善：
+   - pointerdown: 位置 + 時間を記録
+   - pointermove: ドラッグ中はオフセットを直接更新（滑らか）
+   - pointerup: dx, dt を見て閾値 or 速度でページ移動
+   閾値: 20px、速度閾値: 800 px/s
+   ---------------- */
+mask.addEventListener('pointerdown', (e) => {
+  try { mask.setPointerCapture(e.pointerId); } catch(e){}
+  isPointerDown = true;
+  pointerId = e.pointerId;
+  startX = e.clientX;
+  startOffset = currentOffset;
+  startTime = performance.now();
+  flow.style.transition = 'none';
+});
+
+mask.addEventListener('pointermove', (e) => {
+  if (!isPointerDown || e.pointerId !== pointerId) return;
+  const dx = e.clientX - startX;
+  let newOffset = startOffset + dx;
+  const minOffset = - (totalPages - 1) * (columnWidth + columnGap);
+  const maxOffset = 0;
+  if (newOffset > maxOffset) newOffset = maxOffset;
+  if (newOffset < minOffset) newOffset = minOffset;
+  currentOffset = newOffset;
+  flow.style.transform = `translateX(${currentOffset}px)`;
+});
+
+mask.addEventListener('pointerup', (e) => {
+  if (!isPointerDown || e.pointerId !== pointerId) return;
+  isPointerDown = false;
+  try { mask.releasePointerCapture(pointerId); } catch(e){}
+  pointerId = null;
+
+  const endX = e.clientX;
+  const dx = endX - startX;
+  const dt = Math.max(1, performance.now() - startTime); // ms
+  const velocity = (dx / dt) * 1000; // px/s
+
+  const DIST_THRESHOLD = 20; // px（短いスワイプでも反応）
+  const VEL_THRESHOLD = 800; // px/s（フリック）
+
+  // 右へ（dx > 0）にスワイプしたら "前の" ページ（+1）
+  // 左へ（dx < 0）にスワイプしたら "次の" ページ（-1）
+  if (dx > DIST_THRESHOLD || velocity > VEL_THRESHOLD) {
+    goToDisplayPage(currentDisplayPage + 1, true);
+  } else if (dx < -DIST_THRESHOLD || velocity < -VEL_THRESHOLD) {
+    goToDisplayPage(currentDisplayPage - 1, true);
+  } else {
+    // 小さい動きは現在ページにスナップ
+    snapToNearest();
+  }
+});
+
+mask.addEventListener('pointercancel', (e) => {
+  if (!isPointerDown) return;
+  isPointerDown = false;
+  try { mask.releasePointerCapture(pointerId); } catch(e){}
+  pointerId = null;
+  snapToNearest();
+});
+
+function snapToNearest(){
+  const stride = columnWidth + columnGap;
+  let approxDP = totalPages + currentOffset / stride;
+  let nearest = Math.round(approxDP);
+  nearest = Math.max(1, Math.min(totalPages, nearest));
+  goToDisplayPage(nearest, true);
+}
+
+prevBtn.addEventListener('click', ()=> {
+  goToDisplayPage(currentDisplayPage + 1, true);
+});
+
+nextBtn.addEventListener('click', ()=> {
+  goToDisplayPage(currentDisplayPage - 1, true);
+});
+
+pageSelect.addEventListener('change', ()=> {
+  const dp = parseInt(pageSelect.value, 10) || 1;
+  goToDisplayPage(dp, true);
+});
+
+closeBtn.addEventListener('click', ()=> { try { window.close(); } catch(e){} });
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowLeft') goToDisplayPage(currentDisplayPage + 1, true);
+  else if (e.key === 'ArrowRight') goToDisplayPage(currentDisplayPage - 1, true);
+});
+
+let resizeTimer = null;
+window.addEventListener('resize', ()=> {
+  if (resizeTimer) clearTimeout(resizeTimer);
+  const saved = currentDisplayPage;
+  resizeTimer = setTimeout(async ()=> {
+    await applyLayoutAndInit();
+    goToDisplayPage(saved, false);
+  }, 200);
+});
+
+(function(){
+  const params = getUrlParams();
+  if (params.file) loadBook();
+  else {
+    loadingEl.style.display = 'none';
+    bookTitleEl.textContent = 'file パラメータが未指定です';
+  }
+})();
+</script>
+</body>
+</html>
