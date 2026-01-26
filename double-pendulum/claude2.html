@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>二重振り子</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            font-family: Arial, sans-serif;
+            color: white;
+            min-height: 100vh;
+        }
+        h1 {
+            margin: 0 0 20px 0;
+            font-size: 28px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        canvas {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            cursor: grab;
+        }
+        canvas:active {
+            cursor: grabbing;
+        }
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            backdrop-filter: blur(10px);
+        }
+        button:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+        .settings {
+            margin-top: 20px;
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+            max-width: 800px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .setting-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            gap: 15px;
+        }
+        .setting-row label {
+            min-width: 140px;
+            font-size: 14px;
+        }
+        .setting-row input[type="range"] {
+            flex: 1;
+            min-width: 150px;
+        }
+        .setting-row input[type="number"] {
+            width: 70px;
+            padding: 5px;
+            border: none;
+            border-radius: 3px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            text-align: center;
+        }
+        .setting-row span {
+            min-width: 60px;
+            text-align: right;
+            font-family: monospace;
+        }
+        .info {
+            margin-top: 15px;
+            text-align: center;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <h1>二重振り子シミュレーション</h1>
+    <canvas id="canvas" width="800" height="600"></canvas>
+    <div class="controls">
+        <button onclick="reset()">リセット</button>
+        <button onclick="toggleTrace()">軌跡: <span id="traceStatus">ON</span></button>
+        <button onclick="togglePause()"><span id="pauseStatus">一時停止</span></button>
+    </div>
+    
+    <div class="settings">
+        <div class="setting-row">
+            <label>シミュレーション速度:</label>
+            <input type="range" id="speed" min="0.1" max="3" step="0.1" value="1" oninput="updateSpeed(this.value)">
+            <span id="speedValue">1.0x</span>
+        </div>
+        <div class="setting-row">
+            <label>重力 (g):</label>
+            <input type="range" id="gravity" min="1" max="20" step="0.5" value="9.81" oninput="updateGravity(this.value)">
+            <span id="gravityValue">9.81</span>
+        </div>
+        <div class="setting-row">
+            <label>第一振り子の長さ:</label>
+            <input type="range" id="length1" min="50" max="250" step="10" value="150" oninput="updateLength1(this.value)">
+            <span id="length1Value">150</span>
+        </div>
+        <div class="setting-row">
+            <label>第二振り子の長さ:</label>
+            <input type="range" id="length2" min="50" max="250" step="10" value="150" oninput="updateLength2(this.value)">
+            <span id="length2Value">150</span>
+        </div>
+        <div class="setting-row">
+            <label>第一おもりの質量:</label>
+            <input type="range" id="mass1" min="1" max="30" step="1" value="10" oninput="updateMass1(this.value)">
+            <span id="mass1Value">10</span>
+        </div>
+        <div class="setting-row">
+            <label>第二おもりの質量:</label>
+            <input type="range" id="mass2" min="1" max="30" step="1" value="10" oninput="updateMass2(this.value)">
+            <span id="mass2Value">10</span>
+        </div>
+        <div class="setting-row">
+            <label>第一振り子の初期角度:</label>
+            <input type="range" id="angle1" min="0" max="360" step="5" value="90" oninput="updateAngle1(this.value)">
+            <span id="angle1Value">90°</span>
+        </div>
+        <div class="setting-row">
+            <label>第二振り子の初期角度:</label>
+            <input type="range" id="angle2" min="0" max="360" step="5" value="90" oninput="updateAngle2(this.value)">
+            <span id="angle2Value">90°</span>
+        </div>
+        <div class="setting-row">
+            <label>減衰係数:</label>
+            <input type="range" id="damping" min="0.99" max="1" step="0.0001" value="0.9995" oninput="updateDamping(this.value)">
+            <span id="dampingValue">0.9995</span>
+        </div>
+    </div>
+    
+    <div class="info">
+        ドラッグして振り子を動かせます | パラメータを変えてカオスの変化を観察してください
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // 物理パラメータ
+        let g = 9.81;
+        const originX = canvas.width / 2;
+        const originY = 100;
+        
+        let m1 = 10;
+        let m2 = 10;
+        let l1 = 150;
+        let l2 = 150;
+        let a1 = Math.PI / 2;
+        let a2 = Math.PI / 2;
+        let a1_v = 0;
+        let a2_v = 0;
+        let damping = 0.9995;
+        let speed = 1.0;
+        
+        let initialA1 = Math.PI / 2;
+        let initialA2 = Math.PI / 2;
+        
+        let trace = [];
+        let showTrace = true;
+        let paused = false;
+        let dragging = null;
+        
+        // パラメータ更新関数
+        function updateSpeed(val) {
+            speed = parseFloat(val);
+            document.getElementById('speedValue').textContent = val + 'x';
+        }
+        
+        function updateGravity(val) {
+            g = parseFloat(val);
+            document.getElementById('gravityValue').textContent = val;
+        }
+        
+        function updateLength1(val) {
+            l1 = parseFloat(val);
+            document.getElementById('length1Value').textContent = val;
+        }
+        
+        function updateLength2(val) {
+            l2 = parseFloat(val);
+            document.getElementById('length2Value').textContent = val;
+        }
+        
+        function updateMass1(val) {
+            m1 = parseFloat(val);
+            document.getElementById('mass1Value').textContent = val;
+        }
+        
+        function updateMass2(val) {
+            m2 = parseFloat(val);
+            document.getElementById('mass2Value').textContent = val;
+        }
+        
+        function updateAngle1(val) {
+            initialA1 = parseFloat(val) * Math.PI / 180;
+            document.getElementById('angle1Value').textContent = val + '°';
+        }
+        
+        function updateAngle2(val) {
+            initialA2 = parseFloat(val) * Math.PI / 180;
+            document.getElementById('angle2Value').textContent = val + '°';
+        }
+        
+        function updateDamping(val) {
+            damping = parseFloat(val);
+            document.getElementById('dampingValue').textContent = val;
+        }
+        
+        function reset() {
+            a1 = initialA1;
+            a2 = initialA2;
+            a1_v = 0;
+            a2_v = 0;
+            trace = [];
+        }
+        
+        function toggleTrace() {
+            showTrace = !showTrace;
+            if (!showTrace) trace = [];
+            document.getElementById('traceStatus').textContent = showTrace ? 'ON' : 'OFF';
+        }
+        
+        function togglePause() {
+            paused = !paused;
+            document.getElementById('pauseStatus').textContent = paused ? '再開' : '一時停止';
+        }
+        
+        // マウスイベント
+        canvas.addEventListener('mousedown', e => {
+            const rect = canvas.getBoundingClientRect();
+            const mx = e.clientX - rect.left;
+            const my = e.clientY - rect.top;
+            
+            const x1 = originX + l1 * Math.sin(a1);
+            const y1 = originY + l1 * Math.cos(a1);
+            const x2 = x1 + l2 * Math.sin(a2);
+            const y2 = y1 + l2 * Math.cos(a2);
+            
+            if (Math.hypot(mx - x1, my - y1) < 20) {
+                dragging = 1;
+            } else if (Math.hypot(mx - x2, my - y2) < 20) {
+                dragging = 2;
+            }
+        });
+        
+        canvas.addEventListener('mousemove', e => {
+            if (dragging) {
+                const rect = canvas.getBoundingClientRect();
+                const mx = e.clientX - rect.left;
+                const my = e.clientY - rect.top;
+                
+                if (dragging === 1) {
+                    a1 = Math.atan2(mx - originX, my - originY);
+                    a1_v = 0;
+                } else if (dragging === 2) {
+                    const x1 = originX + l1 * Math.sin(a1);
+                    const y1 = originY + l1 * Math.cos(a1);
+                    a2 = Math.atan2(mx - x1, my - y1);
+                    a2_v = 0;
+                }
+                trace = [];
+            }
+        });
+        
+        canvas.addEventListener('mouseup', () => {
+            dragging = null;
+        });
+        
+        function updatePhysics() {
+            if (paused || dragging) return;
+            
+            const num1 = -g * (2 * m1 + m2) * Math.sin(a1);
+            const num2 = -m2 * g * Math.sin(a1 - 2 * a2);
+            const num3 = -2 * Math.sin(a1 - a2) * m2;
+            const num4 = a2_v * a2_v * l2 + a1_v * a1_v * l1 * Math.cos(a1 - a2);
+            const den = l1 * (2 * m1 + m2 - m2 * Math.cos(2 * a1 - 2 * a2));
+            const a1_a = (num1 + num2 + num3 * num4) / den;
+            
+            const num5 = 2 * Math.sin(a1 - a2);
+            const num6 = a1_v * a1_v * l1 * (m1 + m2);
+            const num7 = g * (m1 + m2) * Math.cos(a1);
+            const num8 = a2_v * a2_v * l2 * m2 * Math.cos(a1 - a2);
+            const den2 = l2 * (2 * m1 + m2 - m2 * Math.cos(2 * a1 - 2 * a2));
+            const a2_a = (num5 * (num6 + num7 + num8)) / den2;
+            
+            const dt = 0.01 * speed;
+            a1_v += a1_a * dt;
+            a2_v += a2_a * dt;
+            a1 += a1_v * dt;
+            a2 += a2_v * dt;
+            
+            // 減衰
+            a1_v *= damping;
+            a2_v *= damping;
+        }
+        
+        function draw() {
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            const x1 = originX + l1 * Math.sin(a1);
+            const y1 = originY + l1 * Math.cos(a1);
+            const x2 = x1 + l2 * Math.sin(a2);
+            const y2 = y1 + l2 * Math.cos(a2);
+            
+            // 軌跡
+            if (showTrace) {
+                trace.push({x: x2, y: y2});
+                if (trace.length > 500) trace.shift();
+                
+                ctx.strokeStyle = 'rgba(255, 0, 100, 0.3)';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                for (let i = 0; i < trace.length; i++) {
+                    if (i === 0) ctx.moveTo(trace[i].x, trace[i].y);
+                    else ctx.lineTo(trace[i].x, trace[i].y);
+                }
+                ctx.stroke();
+            }
+            
+            // 第一振り子
+            ctx.strokeStyle = '#2c3e50';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(originX, originY);
+            ctx.lineTo(x1, y1);
+            ctx.stroke();
+            
+            // 第二振り子
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+            
+            // 支点
+            ctx.fillStyle = '#34495e';
+            ctx.beginPath();
+            ctx.arc(originX, originY, 8, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // おもり1（サイズを質量に応じて変更）
+            const r1 = Math.sqrt(m1) * 3 + 5;
+            ctx.fillStyle = '#3498db';
+            ctx.beginPath();
+            ctx.arc(x1, y1, r1, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#2980b9';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // おもり2（サイズを質量に応じて変更）
+            const r2 = Math.sqrt(m2) * 3 + 5;
+            ctx.fillStyle = '#e74c3c';
+            ctx.beginPath();
+            ctx.arc(x2, y2, r2, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#c0392b';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+        
+        function animate() {
+            updatePhysics();
+            draw();
+            requestAnimationFrame(animate);
+        }
+        
+        animate();
+    </script>
+</body>
+</html>

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>二重振り子</title>
+<style>
+  body { margin: 0; background: #111; }
+  canvas { display: block; margin: auto; background: #000; }
+</style>
+</head>
+<body>
+<canvas id="canvas" width="600" height="600"></canvas>
+
+<script>
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+const g = 9.81;
+
+// 振り子パラメータ
+const m1 = 10;
+const m2 = 10;
+const l1 = 150;
+const l2 = 150;
+
+let a1 = Math.PI / 2;
+let a2 = Math.PI / 2;
+let a1_v = 0;
+let a2_v = 0;
+
+function update() {
+  // 運動方程式
+  const num1 = -g * (2 * m1 + m2) * Math.sin(a1);
+  const num2 = -m2 * g * Math.sin(a1 - 2 * a2);
+  const num3 = -2 * Math.sin(a1 - a2) * m2;
+  const num4 = a2_v * a2_v * l2 + a1_v * a1_v * l1 * Math.cos(a1 - a2);
+  const den = l1 * (2 * m1 + m2 - m2 * Math.cos(2 * a1 - 2 * a2));
+  const a1_a = (num1 + num2 + num3 * num4) / den;
+
+  const num5 = 2 * Math.sin(a1 - a2);
+  const num6 = a1_v * a1_v * l1 * (m1 + m2);
+  const num7 = g * (m1 + m2) * Math.cos(a1);
+  const num8 = a2_v * a2_v * l2 * m2 * Math.cos(a1 - a2);
+  const den2 = l2 * (2 * m1 + m2 - m2 * Math.cos(2 * a1 - 2 * a2));
+  const a2_a = (num5 * (num6 + num7 + num8)) / den2;
+
+  a1_v += a1_a;
+  a2_v += a2_a;
+  a1 += a1_v;
+  a2 += a2_v;
+
+  a1_v *= 0.999;
+  a2_v *= 0.999;
+}
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  const ox = canvas.width / 2;
+  const oy = 150;
+
+  const x1 = ox + l1 * Math.sin(a1);
+  const y1 = oy + l1 * Math.cos(a1);
+
+  const x2 = x1 + l2 * Math.sin(a2);
+  const y2 = y1 + l2 * Math.cos(a2);
+
+  ctx.strokeStyle = "white";
+  ctx.lineWidth = 2;
+
+  ctx.beginPath();
+  ctx.moveTo(ox, oy);
+  ctx.lineTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.stroke();
+
+  ctx.fillStyle = "red";
+  ctx.beginPath();
+  ctx.arc(x1, y1, 8, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = "cyan";
+  ctx.beginPath();
+  ctx.arc(x2, y2, 8, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function animate() {
+  update();
+  draw();
+  requestAnimationFrame(animate);
+}
+
+animate();
+</script>
+</body>
+</html>
