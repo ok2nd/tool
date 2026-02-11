@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>タクシー料金計算アプリ</title>
+<style>
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+}
+body {
+	font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+	min-height: 100vh;
+	padding: 10px;
+	display: flex;
+	justify-content: center;
+	align-items: flex-start;
+	padding-top: 20px;
+}
+.container {
+	background: white;
+	border-radius: 15px;
+	box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+	padding: 16px;
+	max-width: 500px;
+	width: 100%;
+}
+h1 {
+	color: #333;
+	margin-bottom: 8px;
+	font-size: 24px;
+	text-align: center;
+}
+.notice {
+	background: #fff3cd;
+	border-left: 4px solid #ffc107;
+	padding: 8px 10px;
+	margin-bottom: 15px;
+	border-radius: 4px;
+	font-size: 12px;
+	color: #856404;
+}
+.section {
+	margin-bottom: 15px;
+}
+.section-title {
+	color: #667eea;
+	font-size: 15px;
+	font-weight: 600;
+	margin-bottom: 8px;
+	padding-bottom: 5px;
+	border-bottom: 2px solid #667eea;
+}
+.input-group {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 6px;
+	margin-bottom: 10px;
+}
+.input-field {
+	display: flex;
+	flex-direction: column;
+}
+label {
+	font-size: 18px;
+	color: #555;
+	margin-bottom: 4px;
+	font-weight: 500;
+}
+input {
+	padding: 6px 4px;
+	border: 1px solid #e0e0e0;
+	border-radius: 4px;
+	font-size: 20px;
+	transition: all 0.3s;
+	width: 100%;
+}
+input:focus {
+	outline: none;
+	border-color: #667eea;
+	box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+}
+.full-width {
+	grid-column: 1 / -1;
+}
+.calculate-btn {
+	width: 100%;
+	padding: 12px;
+	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+	color: white;
+	border: none;
+	border-radius: 10px;
+	font-size: 16px;
+	font-weight: 600;
+	cursor: pointer;
+	transition: transform 0.2s, box-shadow 0.2s;
+	margin-top: 5px;
+}
+.calculate-btn:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+}
+.calculate-btn:active {
+	transform: translateY(0);
+}
+.result {
+	margin-top: 15px;
+	padding: 15px;
+	background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+	border-radius: 12px;
+	display: none;
+}
+.result.show {
+	display: block;
+	animation: slideIn 0.4s ease-out;
+}
+@keyframes slideIn {
+	from {
+		opacity: 0;
+		transform: translateY(-20px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+.result-title {
+	font-size: 14px;
+	color: #555;
+	margin-bottom: 8px;
+}
+.result-amount {
+	font-size: 36px;
+	font-weight: 700;
+	color: #667eea;
+	text-align: center;
+}
+.result-details {
+	margin-top: 12px;
+	padding-top: 12px;
+	border-top: 2px solid rgba(102, 126, 234, 0.2);
+	font-size: 13px;
+	color: #666;
+}
+.result-details div {
+	margin-bottom: 6px;
+	display: flex;
+	justify-content: space-between;
+}
+@media (max-width: 600px) {
+	.container {
+		padding: 12px;
+	}
+	h1 {
+		font-size: 18px;
+		margin-bottom: 6px;
+	}
+	.result-amount {
+		font-size: 32px;
+	}
+	input {
+		padding: 6px 4px;
+		font-size: 22px;
+	}
+	label {
+		font-size: 18px;
+		margin-bottom: 3px;
+	}
+	.notice {
+		font-size: 14px;
+		padding: 6px 8px;
+		margin-bottom: 12px;
+	}
+	.section {
+		margin-bottom: 12px;
+	}
+	.section-title {
+		font-size: 14px;
+		margin-bottom: 6px;
+	}
+}
+</style>
+</head>
+<body>
+<div class="container">
+	<h1>🚖 タクシー料金計算 &nbsp;<a href="https://www.taxisite.com/far/" target="_blank" style="font-size:14px; color: #667eea;">タクシー料金確認</a></h1>
+	<div class="notice">
+		<!--⚠️ -->時間距離併用制運賃は考慮されていません
+	</div>
+	<div class="section">
+		<div class="section-title">初乗運賃</div>
+		<div class="input-group">
+			<div class="input-field">
+				<label for="baseDistance">距離（メートル）</label>
+				<input type="number" id="baseDistance" value="1300" min="0" step="1">
+			</div>
+			<div class="input-field">
+				<label for="baseFare">料金（円）</label>
+				<input type="number" id="baseFare" value="700" min="0" step="10">
+			</div>
+		</div>
+	</div>
+	<div class="section">
+		<div class="section-title">加算運賃</div>
+		<div class="input-group">
+			<div class="input-field">
+				<label for="additionalDistance">距離（メートル）</label>
+				<input type="number" id="additionalDistance" value="225" min="0" step="1">
+			</div>
+			<div class="input-field">
+				<label for="additionalFare">料金（円）</label>
+				<input type="number" id="additionalFare" value="100" min="0" step="10">
+			</div>
+		</div>
+	</div>
+	<div class="section">
+		<div class="section-title">乗車予定距離</div>
+		<div class="input-group">
+			<div class="input-field full-width">
+				<label for="rideDistance">距離（キロメートル）</label>
+				<input type="number" id="rideDistance" value="" min="0" step="0.1">
+			</div>
+		</div>
+	</div>
+	<button class="calculate-btn" onclick="calculateFare()">料金を計算</button>
+	<div class="result" id="result">
+		<div class="result-title">予想料金</div>
+		<div class="result-amount" id="fareAmount">¥0</div>
+		<div class="result-details" id="details"></div>
+	</div>
+</div>
+<script>
+function calculateFare() {
+	// 入力値を取得
+	const baseDistance = parseFloat(document.getElementById('baseDistance').value);
+	const baseFare = parseFloat(document.getElementById('baseFare').value);
+	const additionalDistance = parseFloat(document.getElementById('additionalDistance').value);
+	const additionalFare = parseFloat(document.getElementById('additionalFare').value);
+	const rideDistance = parseFloat(document.getElementById('rideDistance').value);
+	// バリデーション
+	if (isNaN(baseDistance) || isNaN(baseFare) || isNaN(additionalDistance) || 
+		isNaN(additionalFare) || isNaN(rideDistance)) {
+		alert('すべての項目を正しく入力してください');
+		return;
+	}
+	if (baseDistance <= 0 || additionalDistance <= 0) {
+		alert('距離は0より大きい値を入力してください');
+		return;
+	}
+	if (rideDistance < 0) {
+		alert('乗車予定距離は0以上の値を入力してください');
+		return;
+	}
+	// 距離をメートルに変換
+	const rideDistanceMeters = rideDistance * 1000;
+	let totalFare = 0;
+	let additionalCount = 0;
+	// 初乗距離以内の場合
+	if (rideDistanceMeters <= baseDistance) {
+		totalFare = baseFare;
+	} else {
+		// 初乗運賃
+		totalFare = baseFare;
+		// 初乗距離を超えた分の距離
+		const extraDistance = rideDistanceMeters - baseDistance;
+		// 加算運賃の回数を計算
+		additionalCount = Math.ceil(extraDistance / additionalDistance);
+		// 加算運賃を追加
+		totalFare += additionalCount * additionalFare;
+	}
+	// 結果を表示
+	document.getElementById('fareAmount').textContent = '¥' + totalFare.toLocaleString();
+	const detailsHtml = `
+		<div><span>乗車距離:</span><span>${rideDistance.toLocaleString()} km</span></div>
+		<div><span>初乗運賃:</span><span>¥${baseFare.toLocaleString()}</span></div>
+		${additionalCount > 0 ? `<div><span>加算回数:</span><span>${additionalCount}回</span></div>` : ''}
+		${additionalCount > 0 ? `<div><span>加算運賃:</span><span>¥${(additionalCount * additionalFare).toLocaleString()}</span></div>` : ''}
+	`;
+	document.getElementById('details').innerHTML = detailsHtml;
+	document.getElementById('result').classList.add('show');
+}
+// Enterキーで計算実行
+document.addEventListener('keypress', function(event) {
+	if (event.key === 'Enter') {
+		calculateFare();
+	}
+});
+</script>
+</body>
+</html>
