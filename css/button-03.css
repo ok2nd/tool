@@ -4,17 +4,16 @@
 }
 body {
 	font-family: sans-serif;
-	line-height: 1.2;
 }
 button,
 input[type=button],
 input[type=reset],
 input[type=submit] {
-	margin: 2px 0;
+	margin: 0;
 	padding: 0 5px;
 	height: 28px;
 	font-size: 14px;
-	line-height: 1.2;
+	line-height: 1;
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
