@@ -11,6 +11,7 @@ input[type=submit] {
 	background-image: linear-gradient(to bottom, #ffffff, #e1e1e1);
 	border: 1px solid #dadada;
 	border-bottom-color: #a9a9a9;
+	cursor: pointer;
 }
 .btn-blue {
 	background-image: linear-gradient(to bottom, #e0f7ff, #c4f1ff);
