@@ -1,0 +1,79 @@
+*, *::before, *::after {
+	box-sizing: border-box;
+	/* font-family: inherit; はここではなく、必要な要素にのみ適用するのが一般的です */
+}
+
+body {
+	font-family: sans-serif;
+	font-size: 14px;
+	line-height: 1.5;
+	/* フォントのレンダリングを共通化 */
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+
+button,
+input[type="button"],
+input[type="reset"],
+input[type="submit"] {
+	/* 1. フォント・テキスト周りのリセット */
+	font-family: inherit;
+	font-size: 14px;
+	line-height: 1; /* または line-height: 1.2 程度が文字の切れを防げます */
+	text-align: center;
+	text-decoration: none;
+	text-shadow: 0 1px 0 #ffffff;
+	white-space: nowrap;
+	color: #000;
+
+	/* 2. ブラウザ固有スタイルの解除 */
+	-webkit-appearance: none;
+	-moz-appearance: none; /* Firefox用に追加 */
+	appearance: none;
+	
+	/* 3. Firefox特有の内側余白を消す (重要) */
+	&::-moz-focus-inner {
+		border: 0;
+		padding: 0;
+	}
+
+	/* 4. レイアウト（Flexbox） */
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	vertical-align: middle;
+
+	/* 5. サイズ設定の考え方 
+	   paddingとmin-heightが干渉しないよう、
+	   「高さ」か「上下パディング」のどちらかを主役にします */
+	padding: 0 12px; /* 上下を0にしてmin-heightに任せるか、高さを指定します */
+	min-height: 32px; /* 16px(font) + 4px*2(padding) = 24px なので、28px?32pxが妥当 */
+	
+	/* 6. 装飾 */
+	cursor: pointer;
+	outline: none;
+	margin: 0 0 4px 0;
+	border-radius: 4px;
+	background-color: #f3f3f3;
+	background-image: linear-gradient(to bottom, #ffffff, #e1e1e1);
+	border: 1px solid #dadada;
+	border-left-color: #d2d2d2;
+	border-right-color: #d2d2d2;
+	border-bottom-color: #a9a9a9;
+	box-shadow: 0 1px 0 rgba(0,0,0,0.15), inset 0 1px 1px 0 rgba(255,255,255,0.6);
+}
+.btn-blue {
+	background-image: linear-gradient(to bottom, #e0f7ff, #c4f1ff);
+}
+.btn-green {
+	background-image: linear-gradient(to bottom, #d0f2d0, #a8f4a8);
+}
+.btn-yellow {
+	background-image: linear-gradient(to bottom, #ffffe0, #ffff56);
+}
+.btn-orange {
+	background-image: linear-gradient(to bottom, #ffe7c9, #ffd7a0);
+}
+.btn-pink {
+	background-image: linear-gradient(to bottom, #ffe2eb, #ffccdc);
+}
