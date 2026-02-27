@@ -1,13 +1,13 @@
 *, *::before, *::after {
 	box-sizing: border-box;
-	/* font-family: inherit; ‚Í‚±‚±‚Å‚Í‚È‚­A•K—v‚È—v‘f‚É‚Ì‚İ“K—p‚·‚é‚Ì‚ªˆê”Ê“I‚Å‚· */
+	/* font-family: inherit; ã¯ã“ã“ã§ã¯ãªãã€å¿…è¦ãªè¦ç´ ã«ã®ã¿é©ç”¨ã™ã‚‹ã®ãŒä¸€èˆ¬çš„ã§ã™ */
 }
 
 body {
 	font-family: sans-serif;
 	font-size: 14px;
 	line-height: 1.5;
-	/* ƒtƒHƒ“ƒg‚ÌƒŒƒ“ƒ_ƒŠƒ“ƒO‚ğ‹¤’Ê‰» */
+	/* ãƒ•ã‚©ãƒ³ãƒˆã®ãƒ¬ãƒ³ãƒ€ãƒªãƒ³ã‚°ã‚’å…±é€šåŒ– */
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
 }
@@ -16,40 +16,40 @@ button,
 input[type="button"],
 input[type="reset"],
 input[type="submit"] {
-	/* 1. ƒtƒHƒ“ƒgEƒeƒLƒXƒgü‚è‚ÌƒŠƒZƒbƒg */
+	/* 1. ãƒ•ã‚©ãƒ³ãƒˆãƒ»ãƒ†ã‚­ã‚¹ãƒˆå‘¨ã‚Šã®ãƒªã‚»ãƒƒãƒˆ */
 	font-family: inherit;
 	font-size: 14px;
-	line-height: 1; /* ‚Ü‚½‚Í line-height: 1.2 ’ö“x‚ª•¶š‚ÌØ‚ê‚ğ–h‚°‚Ü‚· */
+	line-height: 1; /* ã¾ãŸã¯ line-height: 1.2 ç¨‹åº¦ãŒæ–‡å­—ã®åˆ‡ã‚Œã‚’é˜²ã’ã¾ã™ */
 	text-align: center;
 	text-decoration: none;
 	text-shadow: 0 1px 0 #ffffff;
 	white-space: nowrap;
 	color: #000;
 
-	/* 2. ƒuƒ‰ƒEƒUŒÅ—LƒXƒ^ƒCƒ‹‚Ì‰ğœ */
+	/* 2. ãƒ–ãƒ©ã‚¦ã‚¶å›ºæœ‰ã‚¹ã‚¿ã‚¤ãƒ«ã®è§£é™¤ */
 	-webkit-appearance: none;
-	-moz-appearance: none; /* Firefox—p‚É’Ç‰Á */
+	-moz-appearance: none; /* Firefoxç”¨ã«è¿½åŠ  */
 	appearance: none;
 	
-	/* 3. Firefox“Á—L‚Ì“à‘¤—]”’‚ğÁ‚· (d—v) */
+	/* 3. Firefoxç‰¹æœ‰ã®å†…å´ä½™ç™½ã‚’æ¶ˆã™ (é‡è¦) */
 	&::-moz-focus-inner {
 		border: 0;
 		padding: 0;
 	}
 
-	/* 4. ƒŒƒCƒAƒEƒgiFlexboxj */
+	/* 4. ãƒ¬ã‚¤ã‚¢ã‚¦ãƒˆï¼ˆFlexboxï¼‰ */
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
 	vertical-align: middle;
 
-	/* 5. ƒTƒCƒYİ’è‚Ìl‚¦•û 
-	   padding‚Æmin-height‚ªŠ±Â‚µ‚È‚¢‚æ‚¤A
-	   u‚‚³v‚©uã‰ºƒpƒfƒBƒ“ƒOv‚Ì‚Ç‚¿‚ç‚©‚ğå–ğ‚É‚µ‚Ü‚· */
-	padding: 0 12px; /* ã‰º‚ğ0‚É‚µ‚Ämin-height‚É”C‚¹‚é‚©A‚‚³‚ğw’è‚µ‚Ü‚· */
-	min-height: 32px; /* 16px(font) + 4px*2(padding) = 24px ‚È‚Ì‚ÅA28px?32px‚ª‘Ã“– */
+	/* 5. ã‚µã‚¤ã‚ºè¨­å®šã®è€ƒãˆæ–¹ 
+	   paddingã¨min-heightãŒå¹²æ¸‰ã—ãªã„ã‚ˆã†ã€
+	   ã€Œé«˜ã•ã€ã‹ã€Œä¸Šä¸‹ãƒ‘ãƒ‡ã‚£ãƒ³ã‚°ã€ã®ã©ã¡ã‚‰ã‹ã‚’ä¸»å½¹ã«ã—ã¾ã™ */
+	padding: 0 12px; /* ä¸Šä¸‹ã‚’0ã«ã—ã¦min-heightã«ä»»ã›ã‚‹ã‹ã€é«˜ã•ã‚’æŒ‡å®šã—ã¾ã™ */
+	min-height: 32px; /* 16px(font) + 4px*2(padding) = 24px ãªã®ã§ã€28px?32pxãŒå¦¥å½“ */
 	
-	/* 6. ‘•ü */
+	/* 6. è£…é£¾ */
 	cursor: pointer;
 	outline: none;
 	margin: 0 0 4px 0;
