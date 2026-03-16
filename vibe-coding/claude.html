@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>バイブコーディングとは？ — AIと感覚で作る新時代の開発スタイル</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=JetBrains+Mono:wght@400;700&family=Noto+Serif+JP:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d0d0d;
+      --surface: #141414;
+      --border: #222;
+      --accent: #b8f53c;
+      --accent-dim: #8ab82a;
+      --text: #e8e8e8;
+      --muted: #6b6b6b;
+      --highlight: #1a2200;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Noto Serif JP', serif;
+      line-height: 1.85;
+      font-size: 17px;
+      overflow-x: hidden;
+    }
+
+    /* ── GRAIN OVERLAY ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 1000;
+      opacity: 0.4;
+    }
+
+    /* ── HEADER ── */
+    header {
+      border-bottom: 1px solid var(--border);
+      padding: 1.2rem 2.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      background: rgba(13,13,13,0.92);
+      backdrop-filter: blur(12px);
+      z-index: 100;
+    }
+
+    .site-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      color: var(--accent);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .header-date {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.68rem;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 7rem 2.5rem 5rem;
+      position: relative;
+    }
+
+    .hero-eyebrow {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      letter-spacing: 0.18em;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-bottom: 2rem;
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+    }
+
+    .hero-eyebrow::before {
+      content: '';
+      display: inline-block;
+      width: 32px;
+      height: 1px;
+      background: var(--accent);
+    }
+
+    h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(2.8rem, 7vw, 5rem);
+      line-height: 1.08;
+      letter-spacing: -0.02em;
+      color: #fff;
+      margin-bottom: 2rem;
+    }
+
+    h1 em {
+      font-style: italic;
+      color: var(--accent);
+    }
+
+    .hero-lead {
+      font-size: 1.15rem;
+      color: #aaa;
+      max-width: 580px;
+      line-height: 1.9;
+      border-left: 2px solid var(--accent);
+      padding-left: 1.4rem;
+      margin-bottom: 3rem;
+    }
+
+    .hero-meta {
+      display: flex;
+      gap: 2rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.68rem;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+      flex-wrap: wrap;
+    }
+
+    .hero-meta span { display: flex; align-items: center; gap: 0.4rem; }
+
+    /* ── DECORATIVE LINE ── */
+    .divider {
+      max-width: 860px;
+      margin: 0 auto 5rem;
+      padding: 0 2.5rem;
+    }
+
+    .divider hr {
+      border: none;
+      border-top: 1px solid var(--border);
+    }
+
+    /* ── ARTICLE BODY ── */
+    article {
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 0 2.5rem 8rem;
+    }
+
+    h2 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.9rem;
+      color: #fff;
+      margin: 3.5rem 0 1.2rem;
+      line-height: 1.2;
+    }
+
+    h3 {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      color: var(--accent);
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      margin: 2.5rem 0 0.8rem;
+    }
+
+    p { margin-bottom: 1.5rem; color: #ccc; }
+
+    strong { color: #fff; font-weight: 600; }
+
+    a { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+
+    /* ── PULL QUOTE ── */
+    blockquote {
+      background: var(--highlight);
+      border-left: 3px solid var(--accent);
+      margin: 3rem 0;
+      padding: 2rem 2.5rem;
+      border-radius: 0 4px 4px 0;
+    }
+
+    blockquote p {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.35rem;
+      font-style: italic;
+      color: #e8e8e8;
+      margin-bottom: 0.6rem;
+      line-height: 1.6;
+    }
+
+    blockquote cite {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.68rem;
+      color: var(--accent);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      font-style: normal;
+    }
+
+    /* ── CODE BLOCK ── */
+    .code-block {
+      background: #0a0a0a;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 1.6rem 1.8rem;
+      margin: 2rem 0;
+      overflow-x: auto;
+    }
+
+    .code-block pre {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.82rem;
+      color: #b8f53c;
+      line-height: 1.7;
+      white-space: pre-wrap;
+    }
+
+    .code-block .comment { color: #555; }
+    .code-block .keyword { color: #7dd3fc; }
+    .code-block .string  { color: #f9a8d4; }
+
+    /* ── FEATURE CARDS ── */
+    .cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin: 2.5rem 0;
+    }
+
+    @media (max-width: 560px) { .cards { grid-template-columns: 1fr; } }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 1.6rem;
+      transition: border-color 0.2s;
+    }
+
+    .card:hover { border-color: var(--accent-dim); }
+
+    .card-icon {
+      font-size: 1.5rem;
+      margin-bottom: 0.7rem;
+    }
+
+    .card h4 {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--accent);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+    }
+
+    .card p {
+      font-size: 0.88rem;
+      color: #999;
+      margin: 0;
+    }
+
+    /* ── PROS / CONS ── */
+    .pros-cons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin: 2.5rem 0;
+    }
+
+    @media (max-width: 560px) { .pros-cons { grid-template-columns: 1fr; } }
+
+    .pros, .cons {
+      border-radius: 6px;
+      padding: 1.6rem;
+    }
+
+    .pros {
+      background: #0e1a00;
+      border: 1px solid #2a4500;
+    }
+
+    .cons {
+      background: #1a0a00;
+      border: 1px solid #3a1a00;
+    }
+
+    .pros h4 {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 1rem;
+    }
+
+    .cons h4 {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #f97316;
+      margin-bottom: 1rem;
+    }
+
+    .pros ul, .cons ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .pros li, .cons li {
+      font-size: 0.88rem;
+      color: #bbb;
+      padding: 0.4rem 0;
+      padding-left: 1.2rem;
+      position: relative;
+    }
+
+    .pros li::before {
+      content: '✓';
+      color: var(--accent);
+      position: absolute;
+      left: 0;
+      font-size: 0.8rem;
+    }
+
+    .cons li::before {
+      content: '×';
+      color: #f97316;
+      position: absolute;
+      left: 0;
+      font-size: 0.8rem;
+    }
+
+    /* ── CALLOUT BOX ── */
+    .callout {
+      background: #111;
+      border: 1px solid #2a2a2a;
+      border-top: 2px solid var(--accent);
+      border-radius: 0 0 6px 6px;
+      padding: 1.8rem 2rem;
+      margin: 2.5rem 0;
+    }
+
+    .callout-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem;
+      color: var(--accent);
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      margin-bottom: 0.8rem;
+    }
+
+    .callout p {
+      font-size: 0.9rem;
+      color: #aaa;
+      margin: 0;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 2.5rem;
+      text-align: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+    }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .hero-eyebrow { animation: fadeUp 0.5s ease both; }
+    h1             { animation: fadeUp 0.5s 0.1s ease both; }
+    .hero-lead     { animation: fadeUp 0.5s 0.2s ease both; }
+    .hero-meta     { animation: fadeUp 0.5s 0.3s ease both; }
+
+    /* ── SCROLL PROGRESS ── */
+    #progress {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 2px;
+      background: var(--accent);
+      z-index: 200;
+      transition: width 0.1s linear;
+    }
+  </style>
+</head>
+<body>
+
+<div id="progress"></div>
+
+<header>
+  <div class="site-tag">// Tech Column</div>
+  <div class="header-date">2026.03.16</div>
+</header>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-eyebrow">AI × 開発スタイル</div>
+  <h1>「バイブ<em>コーディング</em>」とは何か？</h1>
+  <p class="hero-lead">
+    コードを書かずにコードを作る。AIと感覚（vibe）で対話しながら開発する、2025年以降の新しいプログラミングスタイルを解説する。
+  </p>
+  <div class="hero-meta">
+    <span>📖 読了目安：約8分</span>
+    <span>🏷 キーワード：AI, LLM, 生成AI, 開発</span>
+  </div>
+</div>
+
+<div class="divider"><hr></div>
+
+<!-- ARTICLE -->
+<article>
+
+  <h2>そもそも「バイブコーディング」とは</h2>
+
+  <p>
+    <strong>バイブコーディング（Vibe Coding）</strong>とは、AIに自然言語で指示を出しながら、細かいコードの中身はほとんど気にせず「感覚（vibe）」でソフトウェアを作り上げる開発スタイルのことです。
+  </p>
+
+  <p>
+    この言葉は、OpenAIの共同創業者でもある<strong>アンドレイ・カルパシー（Andrej Karpathy）</strong>が2025年2月にX（旧Twitter）に投稿したことで急速に広まりました。
+  </p>
+
+  <blockquote>
+    <p>「コードを完全に諦め、バイブに身を任せる。AIに指示して、エラーをコピペして、だいたい動いたらOKにする」</p>
+    <cite>— Andrej Karpathy, 2025</cite>
+  </blockquote>
+
+  <p>
+    要するに、「自分でコードを書く」から「AIに書かせて、動くかどうかだけ確認する」というパラダイムシフトです。
+  </p>
+
+  <h2>どうやってやるのか</h2>
+
+  <p>実際のバイブコーディングの流れはこんな感じです。</p>
+
+  <div class="code-block">
+    <pre><span class="comment"># 従来のコーディング</span>
+<span class="keyword">def</span> calculate_tax(price, rate):
+    <span class="keyword">return</span> price * rate / 100
+
+<span class="comment">## ↑ 自分で考えて、構文を確認して、テストして……</span>
+
+<span class="comment">─────────────────────────────────────────</span>
+
+<span class="comment"># バイブコーディング</span>
+<span class="string">「消費税を計算する関数を作って。
+ 価格と税率を受け取って、税込み価格を返すやつ。
+ あと小数点以下は切り捨てで。」</span>
+
+<span class="comment">## ↑ これをAIに渡す。出てきたコードをそのまま使う。</span></pre>
+  </div>
+
+  <p>
+    使うツールは Claude、ChatGPT、Cursor、GitHub Copilot など。チャット形式でも、コードエディタ統合型でも、同じ発想です。「動いた、よし次」というサイクルを高速で回します。
+  </p>
+
+  <h3>典型的なバイブコーディングセッション</h3>
+
+  <div class="cards">
+    <div class="card">
+      <div class="card-icon">💬</div>
+      <h4>Step 1 — 要望を伝える</h4>
+      <p>やりたいことを日本語や英語で気軽に伝える。技術仕様は最小限でOK。</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">⚡</div>
+      <h4>Step 2 — AIが生成</h4>
+      <p>AIがコードを丸ごと書いてくれる。コピーしてエディタに貼るだけ。</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">🔍</div>
+      <h4>Step 3 — 動作確認</h4>
+      <p>実行して確認。エラーが出たらそのままAIに投げる。</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">🔁</div>
+      <h4>Step 4 — 繰り返す</h4>
+      <p>「もう少し〇〇な感じで」と修正を重ねる。感覚が頼り。</p>
+    </div>
+  </div>
+
+  <h2>なぜ注目されているのか</h2>
+
+  <p>
+    バイブコーディングが話題になった背景には、LLM（大規模言語モデル）の急速な進化があります。2024〜2025年ごろから、AIが生成するコードの品質が「だいたい動く」レベルを超え、「本番でも使えることがある」水準に達してきました。
+  </p>
+
+  <p>
+    それに伴い、プログラミングの「参入障壁」が劇的に下がりました。コードの書き方を知らなくても、アイデアさえあればWebアプリやツールを作れる時代が来つつあるのです。
+  </p>
+
+  <blockquote>
+    <p>「ソフトウェアのほとんどは人間が書くのではなく、AIが生成するものになる。プログラマーの役割は "AIのレビュアー" に変わる」</p>
+    <cite>— 業界での議論より</cite>
+  </blockquote>
+
+  <h2>メリットとデメリット</h2>
+
+  <div class="pros-cons">
+    <div class="pros">
+      <h4>✦ メリット</h4>
+      <ul>
+        <li>開発速度が桁違いに速い</li>
+        <li>非エンジニアでも作れる</li>
+        <li>プロトタイプ制作に最適</li>
+        <li>ボイラープレートを書かなくていい</li>
+        <li>「試してみる」コストが激減</li>
+      </ul>
+    </div>
+    <div class="cons">
+      <h4>✦ デメリット</h4>
+      <ul>
+        <li>コードの品質が保証されない</li>
+        <li>セキュリティリスクを見落とす</li>
+        <li>大規模開発には不向き</li>
+        <li>技術的負債が溜まりやすい</li>
+        <li>何が動いているか理解しにくい</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>誰に向いているのか</h2>
+
+  <p>バイブコーディングが特に威力を発揮するシーンがあります。</p>
+
+  <div class="cards">
+    <div class="card">
+      <div class="card-icon">🚀</div>
+      <h4>スタートアップ / 個人開発</h4>
+      <p>「まず動くものを作る」が最優先なフェーズ。MVPの爆速構築に向いている。</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">🎨</div>
+      <h4>デザイナー / 非エンジニア</h4>
+      <p>自分のアイデアをコードに落とし込むのに、エンジニアを待たずに済む。</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">🔬</div>
+      <h4>研究者 / 分析者</h4>
+      <p>データ処理スクリプトやBIツールの小物を自力で作れるようになる。</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">🛠</div>
+      <h4>熟練エンジニア</h4>
+      <p>退屈な定型作業をAIに任せ、設計・判断など高次の作業に集中する。</p>
+    </div>
+  </div>
+
+  <h2>本物のコーディングとの違い</h2>
+
+  <p>
+    バイブコーディングは「プログラミングの代替」ではなく、<strong>「プログラミングの入り口の拡張」</strong>と考えるのが正確です。
+  </p>
+
+  <p>
+    本番システム、大規模チーム開発、セキュリティが重要な領域では、依然として「コードを理解するエンジニア」が不可欠です。AIが生成したコードをレビューし、設計判断を下し、責任を持てる人間の存在は今もって重要です。
+  </p>
+
+  <div class="callout">
+    <div class="callout-label">📌 ポイント</div>
+    <p>バイブコーディングとは、「コーディングが不要になった」のではなく、「コーディングをせずに価値を生み出せる場面が増えた」ということ。使い分けが重要です。</p>
+  </div>
+
+  <h2>これからどうなる？</h2>
+
+  <p>
+    2026年現在、バイブコーディングはもはや「バズワード」を超え、実際の開発現場に浸透しつつあります。CursorやWindsurf、GitHub Copilot Workspaceなど、バイブコーディング的な体験を前提としたツールが次々と登場しています。
+  </p>
+
+  <p>
+    一方で「AIが書いたコードを誰が責任を持つのか」という問いも浮上しています。コードの著作権、セキュリティの担保、技術的負債の管理。これらはバイブコーディングが普及するほど重要になる課題です。
+  </p>
+
+  <p>
+    プログラマーの仕事がなくなるわけではありません。ただ、その<strong>仕事の内容と求められるスキルは、確実に変わりつつあります。</strong>
+  </p>
+
+  <blockquote>
+    <p>「未来のエンジニアは、コードを書く人ではなく、AIと会話してシステムを設計する人になる」</p>
+    <cite>— 業界の見方</cite>
+  </blockquote>
+
+  <h2>まとめ</h2>
+
+  <p>バイブコーディングを一言でまとめるとすれば、こうなります。</p>
+
+  <div class="callout">
+    <div class="callout-label">📌 定義</div>
+    <p><strong>バイブコーディングとは</strong>、AIに自然言語で指示を出しながら、コードの詳細を深追いせず「感覚と反復」でソフトウェアを組み上げる開発スタイル。スピードと実験性を最大化し、完璧なコード品質よりも「とにかく動く」を優先する。</p>
+  </div>
+
+  <p>
+    難しいことは考えずに、AIと一緒に何かを作ってみる。その最初の一歩こそが、バイブコーディングの本質かもしれません。
+  </p>
+
+</article>
+
+<footer>
+  © 2026 Tech Column — Generated with Claude &nbsp;|&nbsp; AI × 開発文化の最前線をお届けします
+</footer>
+
+<script>
+  const bar = document.getElementById('progress');
+  window.addEventListener('scroll', () => {
+    const total = document.body.scrollHeight - window.innerHeight;
+    bar.style.width = (window.scrollY / total * 100) + '%';
+  });
+</script>
+
+</body>
+</html>
