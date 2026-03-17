@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Character Genesis</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d0d12;--surface:#15151f;--surface2:#1c1c2a;
+  --border:rgba(200,170,100,0.18);--border-h:rgba(200,170,100,0.4);
+  --gold:#c8aa64;--gold-l:#e8cc84;--gold-d:rgba(200,170,100,0.5);
+  --txt:#e8e0d0;--txt-m:#8a8070;--txt-d:#5a5448;
+  --accent:#7b5ea7;--accent2:#3d7a6e;
+  --font-t:'Georgia',serif;--font-b:system-ui,sans-serif;
+}
+body{font-family:var(--font-b);background:var(--bg);color:var(--txt);min-height:100vh;
+  background-image:radial-gradient(ellipse 60% 40% at 20% 10%,rgba(123,94,167,0.08) 0%,transparent 60%),
+  radial-gradient(ellipse 40% 30% at 80% 80%,rgba(61,122,110,0.06) 0%,transparent 60%)}
+.wrap{max-width:1080px;margin:0 auto;padding:1.5rem}
+header{text-align:center;margin-bottom:2rem}
+.orn{display:flex;align-items:center;justify-content:center;gap:.75rem;margin-bottom:.75rem}
+.orn-line{flex:1;max-width:100px;height:1px;background:linear-gradient(to right,transparent,var(--gold-d))}
+.orn-line.r{background:linear-gradient(to left,transparent,var(--gold-d))}
+.orn-dia{width:7px;height:7px;background:var(--gold);transform:rotate(45deg);opacity:.7}
+h1{font-family:var(--font-t);font-size:clamp(1.1rem,2.5vw,1.6rem);color:var(--gold);letter-spacing:.08em;text-shadow:0 0 30px rgba(200,170,100,.25)}
+.sub{font-size:.7rem;color:var(--txt-m);letter-spacing:.15em;margin-top:.4rem;text-transform:uppercase}
+.main{display:grid;grid-template-columns:340px 1fr;gap:1.25rem;align-items:start}
+@media(max-width:750px){.main{grid-template-columns:1fr}}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:1.25rem;position:relative}
+.panel::before{content:'';position:absolute;inset:0;border-radius:4px;background:linear-gradient(135deg,rgba(200,170,100,.03) 0%,transparent 50%);pointer-events:none}
+.pc{position:absolute;width:10px;height:10px;border-color:var(--gold-d);border-style:solid}
+.pc.tl{top:-1px;left:-1px;border-width:2px 0 0 2px}
+.pc.tr{top:-1px;right:-1px;border-width:2px 2px 0 0}
+.pc.bl{bottom:-1px;left:-1px;border-width:0 0 2px 2px}
+.pc.br{bottom:-1px;right:-1px;border-width:0 2px 2px 0}
+.ptitle{font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-bottom:1rem;display:flex;align-items:center;gap:.5rem}
+.ptitle::after{content:'';flex:1;height:1px;background:var(--border)}
+.field{margin-bottom:1.1rem}
+label{display:block;font-size:.68rem;color:var(--txt-m);letter-spacing:.1em;text-transform:uppercase;margin-bottom:.4rem}
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.chip{padding:4px 10px;border:1px solid var(--border);border-radius:2px;font-size:.75rem;color:var(--txt-m);cursor:pointer;background:transparent;font-family:var(--font-b);transition:all .15s}
+.chip:hover{border-color:var(--gold-d);color:var(--txt)}
+.chip.on{border-color:var(--gold);color:var(--gold);background:rgba(200,170,100,.08)}
+textarea{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:2px;color:var(--txt);font-family:var(--font-b);font-size:.82rem;padding:.65rem;resize:vertical;min-height:72px;outline:none;transition:border-color .2s}
+textarea:focus{border-color:var(--gold-d)}
+textarea::placeholder{color:var(--txt-d)}
+.btn{width:100%;padding:.85rem;background:transparent;border:1px solid var(--gold);color:var(--gold);font-family:var(--font-t);font-size:.75rem;letter-spacing:.15em;cursor:pointer;border-radius:2px;margin-top:.4rem;transition:all .2s;position:relative;overflow:hidden}
+.btn:hover{background:rgba(200,170,100,.1);box-shadow:0 0 18px rgba(200,170,100,.12)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:380px;color:var(--txt-d);gap:.75rem}
+.big-o{font-family:var(--font-t);font-size:2.5rem;color:var(--gold);opacity:.18}
+.empty p{font-size:.75rem;letter-spacing:.08em;text-align:center;line-height:1.8}
+.loader{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:380px;gap:1.25rem}
+.loader.on{display:flex}
+.spinner{width:44px;height:44px;border:1px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin 1.2s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.lt{font-size:.7rem;color:var(--txt-m);letter-spacing:.2em;text-transform:uppercase;animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+.card{display:none}
+.card.on{display:block;animation:fadeIn .5s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.cname{font-family:var(--font-t);font-size:clamp(1.4rem,3vw,2rem);color:var(--gold-l);line-height:1.2;margin-bottom:.2rem}
+.creading{font-size:.72rem;color:var(--txt-m);letter-spacing:.12em;margin-bottom:.9rem}
+.ctags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:1.1rem}
+.tag{font-size:.65rem;padding:2px 9px;border-radius:2px;letter-spacing:.04em}
+.tg{background:rgba(123,94,167,.2);color:#b095d0;border:1px solid rgba(123,94,167,.3)}
+.tr{background:rgba(61,122,110,.2);color:#7ecabc;border:1px solid rgba(61,122,110,.3)}
+.tc{background:rgba(200,170,100,.1);color:var(--gold);border:1px solid var(--border)}
+.div{height:1px;background:var(--border);margin:1rem 0;position:relative}
+.div::before{content:'◆';position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:7px;color:var(--gold-d);background:var(--surface);padding:0 8px}
+.slabel{font-size:.58rem;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);margin-bottom:.4rem;display:flex;align-items:center;gap:7px}
+.slabel::after{content:'';flex:1;height:1px;background:var(--border)}
+.sblock{margin-bottom:1.1rem}
+.stext{font-family:var(--font-t);font-size:.88rem;line-height:1.8;color:var(--txt);font-style:italic}
+.qblock{border-left:2px solid var(--gold-d);padding:.65rem .9rem;margin-top:.6rem;background:rgba(200,170,100,.04);border-radius:0 2px 2px 0}
+.qblock p{font-family:var(--font-t);font-style:italic;font-size:.95rem;color:var(--gold-l);line-height:1.7}
+.secret{background:rgba(160,80,80,.08);border:1px solid rgba(160,80,80,.22);border-radius:2px;padding:.65rem .9rem;margin-top:.4rem}
+.secret p{font-size:.82rem;line-height:1.7;color:#d09090;font-family:var(--font-t);font-style:italic}
+.relgrid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:.4rem}
+.relitem{background:var(--surface2);border:1px solid var(--border);border-radius:2px;padding:.55rem .7rem}
+.relname{font-size:.72rem;font-weight:500;color:var(--txt);margin-bottom:2px}
+.reldesc{font-size:.67rem;color:var(--txt-m);line-height:1.5}
+.abils{display:flex;flex-wrap:wrap;gap:5px;margin-top:.4rem}
+.abil{font-size:.68rem;padding:3px 9px;background:rgba(61,122,110,.12);border:1px solid rgba(61,122,110,.25);border-radius:2px;color:#7ecabc}
+.catch{background:rgba(200,170,100,.06);border:1px solid var(--gold-d);border-radius:2px;padding:.75rem 1rem}
+.catch p{font-family:var(--font-t);font-style:italic;font-size:1rem;color:var(--gold-l);line-height:1.7}
+.errmsg{display:none;color:#d09090;font-size:.78rem;text-align:center;padding:.75rem;margin-top:.5rem;background:rgba(160,80,80,.08);border:1px solid rgba(160,80,80,.2);border-radius:2px;line-height:1.6}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="orn">
+    <div class="orn-line"></div>
+    <div class="orn-dia"></div>
+    <div class="orn-line r"></div>
+  </div>
+  <h1>Character Genesis</h1>
+  <p class="sub">AI キャラクター設定ジェネレーター</p>
+</header>
+
+<div class="main">
+  <!-- 左パネル：入力フォーム -->
+  <div class="panel">
+    <div class="pc tl"></div><div class="pc tr"></div>
+    <div class="pc bl"></div><div class="pc br"></div>
+    <div class="ptitle">設定入力</div>
+
+    <div class="field">
+      <label>世界観 / ジャンル</label>
+      <div class="chips" id="genreG">
+        <button class="chip on" data-v="ファンタジー">ファンタジー</button>
+        <button class="chip" data-v="SF">SF</button>
+        <button class="chip" data-v="現代">現代</button>
+        <button class="chip" data-v="ホラー">ホラー</button>
+        <button class="chip" data-v="歴史・時代劇">歴史・時代劇</button>
+        <button class="chip" data-v="異世界転生">異世界転生</button>
+        <button class="chip" data-v="サイバーパンク">サイバーパンク</button>
+        <button class="chip" data-v="和風ファンタジー">和風ファンタジー</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>役割 / ポジション</label>
+      <div class="chips" id="roleG">
+        <button class="chip on" data-v="主人公">主人公</button>
+        <button class="chip" data-v="ラスボス">ラスボス</button>
+        <button class="chip" data-v="ライバル">ライバル</button>
+        <button class="chip" data-v="師匠 / メンター">師匠・メンター</button>
+        <button class="chip" data-v="仲間 / 相棒">仲間・相棒</button>
+        <button class="chip" data-v="謎の人物">謎の人物</button>
+        <button class="chip" data-v="ヒロイン">ヒロイン</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>性格のキーワード（任意）</label>
+      <textarea id="traitIn" placeholder="例：クールで無口、でも仲間には熱い。過去に大切なものを失っている。"></textarea>
+    </div>
+
+    <div class="field">
+      <label>追加リクエスト（任意）</label>
+      <textarea id="extraIn" placeholder="例：左目に眼帯。口癖は「…ふん」。魔法は使えないが剣技が天才的。" style="min-height:56px"></textarea>
+    </div>
+
+    <button class="btn" id="genBtn" onclick="generate()">✦ キャラクターを召喚する ✦</button>
+    <div class="errmsg" id="err"></div>
+  </div>
+
+  <!-- 右パネル：結果表示 -->
+  <div class="panel">
+    <div class="pc tl"></div><div class="pc tr"></div>
+    <div class="pc bl"></div><div class="pc br"></div>
+    <div class="ptitle">キャラクター設定書</div>
+
+    <div class="empty" id="empty">
+      <div class="big-o">✦</div>
+      <p>左のパネルで設定を選び<br>「召喚する」を押してください</p>
+    </div>
+
+    <div class="loader" id="ldr">
+      <div class="spinner"></div>
+      <div class="lt">Creating character...</div>
+    </div>
+
+    <div class="card" id="card">
+      <div class="cname" id="cName"></div>
+      <div class="creading" id="cReading"></div>
+      <div class="ctags">
+        <span class="tag tg" id="cGenre"></span>
+        <span class="tag tr" id="cRole"></span>
+        <span class="tag tc" id="cRace"></span>
+      </div>
+      <div class="div"></div>
+      <div class="sblock"><div class="slabel">出自・背景</div><div class="stext" id="cBg"></div></div>
+      <div class="sblock"><div class="slabel">性格</div><div class="stext" id="cPer"></div></div>
+      <div class="sblock">
+        <div class="slabel">口調・話し方</div>
+        <div class="stext" id="cSp"></div>
+        <div class="qblock"><p id="cQ"></p></div>
+      </div>
+      <div class="sblock"><div class="slabel">能力・特技</div><div class="abils" id="cAb"></div></div>
+      <div class="sblock"><div class="slabel">隠された秘密</div><div class="secret"><p id="cSec"></p></div></div>
+      <div class="sblock"><div class="slabel">人物関係</div><div class="relgrid" id="cRel"></div></div>
+      <div class="div"></div>
+      <div class="sblock"><div class="slabel">名台詞</div><div class="catch"><p id="cCat"></p></div></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+// チップ選択（ラジオボタン的な動作）
+['genreG','roleG'].forEach(id => {
+  document.getElementById(id).addEventListener('click', e => {
+    const c = e.target.closest('.chip');
+    if (!c) return;
+    document.querySelectorAll('#' + id + ' .chip').forEach(x => x.classList.remove('on'));
+    c.classList.add('on');
+  });
+});
+
+// 選択中チップの値を取得
+function getSel(id) {
+  const el = document.querySelector('#' + id + ' .chip.on');
+  return el ? el.dataset.v : '';
+}
+
+// キャラクター生成メイン処理
+async function generate() {
+  const genre  = getSel('genreG');
+  const role   = getSel('roleG');
+  const traits = document.getElementById('traitIn').value.trim();
+  const extra  = document.getElementById('extraIn').value.trim();
+
+  // UI: ローディング開始
+  document.getElementById('empty').style.display = 'none';
+  document.getElementById('card').classList.remove('on');
+  document.getElementById('ldr').classList.add('on');
+  document.getElementById('err').style.display = 'none';
+  document.getElementById('genBtn').disabled = true;
+
+  // プロンプト構築
+  const prompt = `あなたはプロの小説家です。以下の条件でキャラクター設定を日本語で作り、JSONのみ返してください（説明・コードブロック不要）。
+
+条件:
+- 世界観/ジャンル: ${genre}
+- 役割: ${role}
+${traits ? `- 性格キーワード: ${traits}` : ''}
+${extra  ? `- 追加リクエスト: ${extra}`  : ''}
+
+JSONスキーマ（全フィールド必須）:
+{
+  "name": "キャラクター名",
+  "reading": "よみがな または サブタイトル（例：孤独の剣聖）",
+  "race": "種族または出身",
+  "background": "出自・生い立ち（3〜5文）",
+  "personality": "性格（3〜4文、矛盾や複雑さを含む）",
+  "speech": "話し方・口調（2〜3文）",
+  "sampleQuote": "口調を示すセリフ（カギ括弧付き）",
+  "abilities": ["能力1", "能力2", "能力3"],
+  "secret": "隠された秘密（2〜3文、ドラマチックに）",
+  "relations": [
+    {"name": "人物名", "relation": "関係の説明"},
+    {"name": "人物名", "relation": "関係の説明"},
+    {"name": "人物名", "relation": "関係の説明"}
+  ],
+  "catchphrase": "このキャラを象徴する名台詞（1文）"
+}`;
+
+  try {
+    // Anthropic API 呼び出し
+    // ※ ローカルHTMLから直接呼ぶとCORSエラーになります。
+    //   Claude.aiのアーティファクト内、またはバックエンドProxyを経由して使用してください。
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1000,
+        messages: [{ role: "user", content: prompt }]
+      })
+    });
+
+    const data = await res.json();
+    const raw  = data.content.map(b => b.text || '').join('');
+    const clean = raw.replace(/```json|```/g, '').trim();
+    const ch = JSON.parse(clean);
+
+    // 結果をDOMに反映
+    document.getElementById('cName').textContent    = ch.name        || '—';
+    document.getElementById('cReading').textContent = ch.reading     || '';
+    document.getElementById('cGenre').textContent   = genre;
+    document.getElementById('cRole').textContent    = role;
+    document.getElementById('cRace').textContent    = ch.race        || '—';
+    document.getElementById('cBg').textContent      = ch.background  || '—';
+    document.getElementById('cPer').textContent     = ch.personality || '—';
+    document.getElementById('cSp').textContent      = ch.speech      || '—';
+    document.getElementById('cQ').textContent       = ch.sampleQuote || '—';
+    document.getElementById('cSec').textContent     = ch.secret      || '—';
+    document.getElementById('cCat').textContent     = ch.catchphrase || '—';
+
+    // 能力タグ生成
+    const ab = document.getElementById('cAb');
+    ab.innerHTML = '';
+    (ch.abilities || []).forEach(a => {
+      ab.innerHTML += `<span class="abil">${a}</span>`;
+    });
+
+    // 人物関係カード生成
+    const rl = document.getElementById('cRel');
+    rl.innerHTML = '';
+    (ch.relations || []).forEach(r => {
+      rl.innerHTML += `<div class="relitem">
+        <div class="relname">${r.name}</div>
+        <div class="reldesc">${r.relation}</div>
+      </div>`;
+    });
+
+    document.getElementById('ldr').classList.remove('on');
+    document.getElementById('card').classList.add('on');
+
+  } catch (e) {
+    document.getElementById('ldr').classList.remove('on');
+    document.getElementById('empty').style.display = 'flex';
+    const err = document.getElementById('err');
+    err.style.display = 'block';
+    err.textContent = 'エラーが発生しました。再度お試しください。\n（ローカルで開いた場合はCORSエラーの可能性があります）';
+    console.error(e);
+  }
+
+  document.getElementById('genBtn').disabled = false;
+}
+</script>
+</body>
+</html>
