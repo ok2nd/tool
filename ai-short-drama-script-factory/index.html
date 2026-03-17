@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AIショートドラマ脚本工場</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&family=Noto+Sans+JP:wght@300;400;500;700&family=Special+Elite&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0d0f;
+    --surface: #16161a;
+    --surface2: #1e1e24;
+    --gold: #c9a84c;
+    --gold-light: #e8c96a;
+    --gold-dim: #7a6230;
+    --red: #c0392b;
+    --text: #e8e4da;
+    --text-muted: #8a8478;
+    --text-dim: #4a4842;
+    --border: #2a2a30;
+    --script-bg: #f5f0e8;
+    --script-text: #1a1a1a;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans JP', sans-serif;
+    min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* Film grain overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.6;
+  }
+
+  /* Sprocket holes */
+  .filmstrip-top, .filmstrip-bottom {
+    position: fixed;
+    left: 0; right: 0;
+    height: 36px;
+    background: #0a0a0c;
+    border-bottom: 1px solid #222;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 0;
+    overflow: hidden;
+  }
+  .filmstrip-bottom {
+    top: auto;
+    bottom: 0;
+    border-bottom: none;
+    border-top: 1px solid #222;
+  }
+  .sprocket {
+    width: 20px;
+    height: 14px;
+    background: #1a1a1a;
+    border: 1.5px solid #333;
+    border-radius: 3px;
+    flex-shrink: 0;
+    margin: 0 14px;
+  }
+
+  .main-content {
+    position: relative;
+    z-index: 1;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 60px 24px 80px;
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    margin-bottom: 48px;
+  }
+  .clapperboard {
+    display: inline-block;
+    margin-bottom: 20px;
+  }
+  .clap-body {
+    background: var(--surface2);
+    border: 2px solid var(--border);
+    border-radius: 4px;
+    padding: 8px 20px;
+    position: relative;
+  }
+  .clap-stripes {
+    height: 12px;
+    background: repeating-linear-gradient(
+      105deg,
+      var(--text-dim) 0px,
+      var(--text-dim) 8px,
+      var(--bg) 8px,
+      var(--bg) 16px
+    );
+    border-radius: 2px;
+    margin-bottom: 6px;
+  }
+  .clap-label {
+    font-family: 'Special Elite', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.2em;
+    text-align: center;
+  }
+  .header h1 {
+    font-family: 'Special Elite', monospace;
+    font-size: clamp(28px, 5vw, 46px);
+    font-weight: 400;
+    color: var(--gold);
+    letter-spacing: 0.05em;
+    line-height: 1.2;
+    text-shadow: 0 0 40px rgba(201,168,76,0.3);
+  }
+  .header-sub {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 8px;
+    letter-spacing: 0.1em;
+    font-weight: 300;
+  }
+
+  /* Divider */
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 32px 0;
+  }
+  .divider-line { flex: 1; height: 1px; background: var(--border); }
+  .divider-icon {
+    width: 6px;
+    height: 6px;
+    background: var(--gold-dim);
+    transform: rotate(45deg);
+    flex-shrink: 0;
+  }
+
+  /* Form panel */
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 28px;
+    margin-bottom: 20px;
+  }
+  .panel-title {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--gold-dim);
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .panel-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .form-grid .full { grid-column: 1 / -1; }
+
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field label {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-muted);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+  .field input, .field select, .field textarea {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 14px;
+    padding: 10px 14px;
+    transition: border-color 0.2s;
+    outline: none;
+    resize: none;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus {
+    border-color: var(--gold-dim);
+  }
+  .field select {
+    appearance: none;
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238a8478' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    padding-right: 36px;
+  }
+  .field select option { background: var(--surface2); }
+
+  /* Tone chips */
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text-muted);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .chip:hover { border-color: var(--gold-dim); color: var(--text); }
+  .chip.selected { border-color: var(--gold); background: rgba(201,168,76,0.12); color: var(--gold-light); }
+
+  /* Generate button */
+  .generate-btn {
+    width: 100%;
+    padding: 16px;
+    background: var(--gold);
+    color: #0d0d0f;
+    border: none;
+    border-radius: 8px;
+    font-family: 'Special Elite', monospace;
+    font-size: 16px;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+    margin-top: 8px;
+  }
+  .generate-btn:hover { background: var(--gold-light); transform: translateY(-1px); }
+  .generate-btn:active { transform: translateY(0); }
+  .generate-btn:disabled {
+    background: var(--gold-dim);
+    cursor: not-allowed;
+    transform: none;
+    color: rgba(0,0,0,0.5);
+  }
+
+  /* Loading */
+  .loading-bar {
+    display: none;
+    margin: 16px 0;
+  }
+  .loading-bar.visible { display: block; }
+  .loading-bar-inner {
+    height: 2px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .loading-bar-fill {
+    height: 100%;
+    background: var(--gold);
+    border-radius: 2px;
+    animation: progress 1.8s ease-in-out infinite;
+    transform-origin: left;
+  }
+  @keyframes progress {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(200%); }
+  }
+  .loading-text {
+    font-size: 12px;
+    color: var(--text-muted);
+    text-align: center;
+    margin-top: 8px;
+    letter-spacing: 0.1em;
+  }
+
+  /* Script output */
+  .output-panel {
+    display: none;
+    background: var(--script-bg);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 0 60px rgba(201,168,76,0.08);
+  }
+  .output-panel.visible { display: block; }
+
+  .output-header {
+    background: #1a1a1a;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .output-header-title {
+    font-family: 'Special Elite', monospace;
+    font-size: 13px;
+    color: var(--gold);
+    letter-spacing: 0.15em;
+  }
+  .copy-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 11px;
+    padding: 5px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    letter-spacing: 0.1em;
+    transition: all 0.2s;
+    font-family: 'Noto Sans JP', sans-serif;
+  }
+  .copy-btn:hover { border-color: var(--gold-dim); color: var(--gold); }
+
+  .script-body {
+    padding: 40px 60px;
+    font-family: 'Courier New', 'Noto Serif JP', monospace;
+    font-size: 14px;
+    line-height: 1.9;
+    color: var(--script-text);
+    white-space: pre-wrap;
+    word-break: break-word;
+    min-height: 200px;
+  }
+
+  /* Script formatting */
+  .script-body .scene-heading {
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 1.5em 0 0.5em;
+    color: #111;
+  }
+  .script-body .character {
+    margin-left: 160px;
+    font-weight: bold;
+    margin-top: 1.2em;
+    color: #222;
+  }
+  .script-body .dialogue {
+    margin-left: 100px;
+    margin-right: 100px;
+    color: #1a1a1a;
+  }
+  .script-body .direction {
+    margin-left: 60px;
+    margin-right: 60px;
+    color: #555;
+    font-style: italic;
+  }
+  .script-body .title-block {
+    text-align: center;
+    margin-bottom: 3em;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 2em;
+  }
+
+  /* Error */
+  .error-msg {
+    display: none;
+    background: rgba(192,57,43,0.1);
+    border: 1px solid rgba(192,57,43,0.3);
+    border-radius: 6px;
+    padding: 12px 16px;
+    font-size: 13px;
+    color: #e07060;
+    margin-top: 12px;
+  }
+  .error-msg.visible { display: block; }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    .form-grid { grid-template-columns: 1fr; }
+    .script-body { padding: 24px 20px; }
+    .script-body .character { margin-left: 60px; }
+    .script-body .dialogue { margin-left: 20px; margin-right: 20px; }
+    .script-body .direction { margin-left: 10px; margin-right: 10px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="filmstrip-top" id="filmTop"></div>
+<div class="filmstrip-bottom" id="filmBottom"></div>
+
+<div class="main-content">
+  <div class="header">
+    <div class="clapperboard">
+      <div class="clap-body">
+        <div class="clap-stripes"></div>
+        <div class="clap-label">AI DRAMA FACTORY · TAKE 1</div>
+      </div>
+    </div>
+    <h1>AIショートドラマ<br>脚本工場</h1>
+    <p class="header-sub">POWERED BY CLAUDE · SCREENPLAY GENERATOR</p>
+  </div>
+
+  <div class="divider"><div class="divider-line"></div><div class="divider-icon"></div><div class="divider-line"></div></div>
+
+  <!-- INPUT FORM -->
+  <div class="panel">
+    <div class="panel-title">シーン設定</div>
+    <div class="form-grid">
+
+      <div class="field">
+        <label>ジャンル</label>
+        <select id="genre">
+          <option value="恋愛・ロマンス">恋愛・ロマンス</option>
+          <option value="サスペンス・ミステリー">サスペンス・ミステリー</option>
+          <option value="コメディ">コメディ</option>
+          <option value="ヒューマンドラマ">ヒューマンドラマ</option>
+          <option value="ホラー">ホラー</option>
+          <option value="SF・ファンタジー">SF・ファンタジー</option>
+          <option value="青春・学園">青春・学園</option>
+          <option value="歴史・時代劇">歴史・時代劇</option>
+          <option value="家族ドラマ">家族ドラマ</option>
+          <option value="バイオレンス・クライム">バイオレンス・クライム</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>尺・長さ</label>
+        <select id="length">
+          <option value="超短編（1〜2分）">超短編（1〜2分）</option>
+          <option value="短編（3〜5分）" selected>短編（3〜5分）</option>
+          <option value="中編（8〜10分）">中編（8〜10分）</option>
+          <option value="TikTok向け（60秒以内）">TikTok向け（60秒以内）</option>
+        </select>
+      </div>
+
+      <div class="field full">
+        <label>舞台設定（場所・時代・状況）</label>
+        <input type="text" id="setting" placeholder="例：深夜の東京・コンビニ。雨の夜。" />
+      </div>
+
+      <div class="field full">
+        <label>登場人物</label>
+        <input type="text" id="characters" placeholder="例：田中（30代・会社員）、山田（20代・フリーター）" />
+      </div>
+
+      <div class="field full">
+        <label>テーマ・葛藤・あらすじのヒント</label>
+        <textarea id="theme" rows="3" placeholder="例：偶然再会した元恋人。言えなかった秘密を今夜打ち明けるかどうか迷う。"></textarea>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">トーン・スタイル</div>
+    <div class="chips" id="toneChips">
+      <div class="chip selected" data-tone="リアリスティック">リアリスティック</div>
+      <div class="chip" data-tone="詩的・文学的">詩的・文学的</div>
+      <div class="chip" data-tone="テンポよく軽快">テンポよく軽快</div>
+      <div class="chip" data-tone="重厚・シリアス">重厚・シリアス</div>
+      <div class="chip" data-tone="ユーモア混じり">ユーモア混じり</div>
+      <div class="chip" data-tone="ミニマル・静的">ミニマル・静的</div>
+      <div class="chip" data-tone="演劇的・舞台風">演劇的・舞台風</div>
+      <div class="chip" data-tone="実験的・前衛的">実験的・前衛的</div>
+    </div>
+  </div>
+
+  <button class="generate-btn" id="generateBtn" onclick="generateScript()">
+    🎬 &nbsp; 脚本を生成する
+  </button>
+
+  <div class="loading-bar" id="loadingBar">
+    <div class="loading-bar-inner"><div class="loading-bar-fill"></div></div>
+    <div class="loading-text" id="loadingText">カメラ準備中…</div>
+  </div>
+
+  <div class="error-msg" id="errorMsg"></div>
+
+  <div class="divider" style="margin-top:24px;"><div class="divider-line"></div><div class="divider-icon"></div><div class="divider-line"></div></div>
+
+  <!-- SCRIPT OUTPUT -->
+  <div class="output-panel" id="outputPanel">
+    <div class="output-header">
+      <span class="output-header-title">📜 &nbsp; 生成された脚本</span>
+      <button class="copy-btn" onclick="copyScript()">コピー</button>
+    </div>
+    <div class="script-body" id="scriptBody"></div>
+  </div>
+
+</div>
+
+<script>
+// Sprocket holes
+function buildFilmstrip(id) {
+  const el = document.getElementById(id);
+  const count = Math.ceil(window.innerWidth / 48) + 2;
+  for (let i = 0; i < count; i++) {
+    const s = document.createElement('div');
+    s.className = 'sprocket';
+    el.appendChild(s);
+  }
+}
+buildFilmstrip('filmTop');
+buildFilmstrip('filmBottom');
+
+// Tone chip selection (single select)
+document.querySelectorAll('.chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+    chip.classList.add('selected');
+  });
+});
+
+const loadingMessages = [
+  'カメラ準備中…',
+  'キャストを召集中…',
+  '照明を調整中…',
+  'ディレクターが考え中…',
+  'セリフを紡いでいます…',
+  'シーンを組み立て中…',
+  '本番間近…'
+];
+let loadingInterval;
+
+async function generateScript() {
+  const genre = document.getElementById('genre').value;
+  const length = document.getElementById('length').value;
+  const setting = document.getElementById('setting').value.trim();
+  const characters = document.getElementById('characters').value.trim();
+  const theme = document.getElementById('theme').value.trim();
+  const tone = document.querySelector('.chip.selected')?.dataset.tone || 'リアリスティック';
+
+  if (!setting || !characters) {
+    showError('「舞台設定」と「登場人物」は必須です。');
+    return;
+  }
+
+  hideError();
+  setLoading(true);
+  document.getElementById('outputPanel').classList.remove('visible');
+
+  const prompt = `あなたはプロの日本人脚本家です。以下の条件でショートドラマの脚本を執筆してください。
+
+【ジャンル】${genre}
+【尺】${length}
+【舞台設定】${setting}
+【登場人物】${characters}
+【テーマ・葛藤・ヒント】${theme || '（特になし）'}
+【トーン・スタイル】${tone}
+
+## 出力形式のルール（厳守）
+- 冒頭にタイトル（全角で表記）と簡単な概要（2〜3行）を入れる
+- シーン見出しは「INT./EXT. 場所 - 昼/夜/夕方」の形式
+- 登場人物名は大文字（フルネームまたは苗字）でセリフ前に記載
+- ト書きは（　）で囲む
+- 会話はテンポよく、現代的かつ自然な日本語で
+- 尺に合った適切なページ数で（1分≈1ページ目安）
+- 脚本以外の解説・注釈は一切入れない
+- 末尾に「FIN.」で締める
+
+今すぐ脚本を書いてください。`;
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 2000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error?.message || `APIエラー: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const text = data.content?.[0]?.text || '';
+    displayScript(text);
+
+  } catch (e) {
+    showError('脚本の生成に失敗しました: ' + e.message);
+  } finally {
+    setLoading(false);
+  }
+}
+
+function displayScript(text) {
+  const output = document.getElementById('outputPanel');
+  const body = document.getElementById('scriptBody');
+  body.textContent = text;
+  output.classList.add('visible');
+  output.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function copyScript() {
+  const text = document.getElementById('scriptBody').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.querySelector('.copy-btn');
+    const orig = btn.textContent;
+    btn.textContent = '✓ コピー完了';
+    btn.style.color = '#6db86d';
+    setTimeout(() => { btn.textContent = orig; btn.style.color = ''; }, 2000);
+  });
+}
+
+function setLoading(on) {
+  const bar = document.getElementById('loadingBar');
+  const btn = document.getElementById('generateBtn');
+  if (on) {
+    bar.classList.add('visible');
+    btn.disabled = true;
+    btn.textContent = '生成中…';
+    let i = 0;
+    const txt = document.getElementById('loadingText');
+    txt.textContent = loadingMessages[0];
+    loadingInterval = setInterval(() => {
+      i = (i + 1) % loadingMessages.length;
+      txt.textContent = loadingMessages[i];
+    }, 1800);
+  } else {
+    bar.classList.remove('visible');
+    btn.disabled = false;
+    btn.innerHTML = '🎬 &nbsp; 脚本を生成する';
+    clearInterval(loadingInterval);
+  }
+}
+
+function showError(msg) {
+  const el = document.getElementById('errorMsg');
+  el.textContent = msg;
+  el.classList.add('visible');
+}
+function hideError() {
+  document.getElementById('errorMsg').classList.remove('visible');
+}
+</script>
+</body>
+</html>
