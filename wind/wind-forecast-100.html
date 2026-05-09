@@ -153,27 +153,17 @@ const pinIcon = L.divIcon({
 const params = new URLSearchParams(location.search);
 const initLat = parseFloat(params.get('lat'));
 const initLng = parseFloat(params.get('lng'));
-const initZoom = parseInt(params.get('z'), 10);
 if (!isNaN(initLat) && !isNaN(initLng)) {
   document.getElementById('header-coords').textContent = `lat: ${initLat.toFixed(4)}  lng: ${initLng.toFixed(4)}`;
   setTimeout(() => {
     map.invalidateSize();
     setTimeout(() => {
-      const zoom = !isNaN(initZoom) ? initZoom : 8;
-      map.setView([initLat, initLng], zoom);
+      map.setView([initLat, initLng], 8);
       marker = L.marker([initLat, initLng], { icon: pinIcon }).addTo(map);
       fetchAndRender(initLat, initLng, true);
     }, 0);
   }, 100);
 }
-
-function updateUrlZoom() {
-  const url = new URL(location.href);
-  url.searchParams.set('z', map.getZoom());
-  history.replaceState(null, '', url.toString());
-}
-
-map.on('zoomend', updateUrlZoom);
 
 map.on('click', (e) => {
   const lat = e.latlng.lat, lng = e.latlng.lng;
@@ -181,7 +171,6 @@ map.on('click', (e) => {
   const url = new URL(location.href);
   url.searchParams.set('lat', lat.toFixed(4));
   url.searchParams.set('lng', lng.toFixed(4));
-  url.searchParams.set('z', map.getZoom());
   history.replaceState(null, '', url.toString());
   fetchAndRender(lat, lng);
 });
