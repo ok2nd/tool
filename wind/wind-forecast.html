@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>風速・波高予報マップ</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0b0f1a; --surface: #131929; --surface2: #1a2235;
+  --border: rgba(100,160,255,0.15);
+  --accent: #4a9eff; --accent2: #00d4aa; --accent3: #a78bfa;
+  --text: #e8eef8; --text2: #8ca0c0;
+}
+html, body {
+  height: 100%; overflow: hidden;
+  background: var(--bg); color: var(--text);
+  font-family: 'Courier New', monospace;
+}
+body { display: flex; flex-direction: column; }
+
+header {
+  flex-shrink: 0;
+  padding: 0.6rem 1.2rem;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 10px;
+}
+.logo {
+  width: 28px; height: 28px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 14px;
+}
+header h1 { font-size: 13px; font-weight: normal; letter-spacing: 0.12em; text-transform: uppercase; }
+header .sub { font-size: 10px; color: var(--text2); margin-left: auto; letter-spacing: 0.06em; }
+
+#main { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+
+#map { flex: 2; min-height: 0; }
+.leaflet-container { background: #f0f0f0; }
+
+#charts {
+  flex: 3; min-height: 0;
+  display: flex; flex-direction: column;
+}
+
+.chart-wrap {
+  flex: 1; min-height: 0;
+  display: flex; flex-direction: column;
+  background: var(--surface); padding: 6px 12px 4px;
+  border-top: 1px solid var(--border);
+}
+.chart-header {
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 3px;
+}
+.chart-title { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text2); }
+.legend-row { display: flex; gap: 14px; }
+.legend-item { display: flex; align-items: center; gap: 5px; font-size: 10px; color: var(--text2); }
+.ld { width: 10px; height: 3px; border-radius: 2px; }
+
+.ccw { flex: 1; min-height: 0; position: relative; }
+
+.wave-na {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  font-size: 11px; color: var(--text2); letter-spacing: 0.06em;
+}
+
+#loading {
+  display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%);
+  background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
+  padding: 1.2rem 2rem; text-align: center; color: var(--text2); font-size: 11px;
+  letter-spacing: 0.1em; z-index: 9999;
+}
+.spinner {
+  width: 24px; height: 24px;
+  border: 2px solid var(--border); border-top-color: var(--accent);
+  border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 8px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.leaflet-popup-content-wrapper {
+  background: #131929 !important; border: 1px solid rgba(74,158,255,0.4) !important;
+  border-radius: 6px !important; color: #e8eef8 !important;
+}
+.leaflet-popup-tip { background: #131929 !important; }
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">🌬</div>
+  <h1>Wind &amp; Wave Forecast</h1>
+  <span class="sub" id="header-coords">地図をクリックして地点を選択</span>
+</header>
+
+<div id="main">
+  <div id="map"></div>
+
+  <div id="charts" style="display:none">
+    <!-- Wind -->
+    <div class="chart-wrap">
+      <div class="chart-header">
+        <span class="chart-title">風速予報（10m高度・7日間）</span>
+        <div class="legend-row">
+          <div class="legend-item"><div class="ld" style="background:#4a9eff"></div>風速</div>
+          <div class="legend-item"><div class="ld" style="border-top:2px dashed #00d4aa;background:none"></div>突風</div>
+        </div>
+      </div>
+      <div class="ccw">
+        <canvas id="windChart" role="img" aria-label="7日間風速予報"></canvas>
+      </div>
+    </div>
+
+    <!-- Wave -->
+    <div class="chart-wrap">
+      <div class="chart-header">
+        <span class="chart-title">波高予報（7日間）</span>
+        <div class="legend-row" id="wave-legend">
+          <div class="legend-item"><div class="ld" style="background:#a78bfa"></div>有義波高</div>
+        </div>
+      </div>
+      <div class="ccw" id="wave-ccw">
+        <canvas id="waveChart" role="img" aria-label="7日間波高予報"></canvas>
+      </div>
+      <div class="wave-na" id="wave-na" style="display:none">
+        ⚠ この地点の波高データは取得できません（内陸部または対応エリア外）
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="loading"><div class="spinner"></div>データ取得中...</div>
+
+<script>
+const map = L.map('map').setView([36.5, 136], 5);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+  attribution: '&copy; OpenStreetMap &copy; CARTO', maxZoom: 19, subdomains: 'abcd'
+}).addTo(map);
+
+let marker = null, windChart = null, waveChart = null;
+
+const pinIcon = L.divIcon({
+  className: '',
+  html: '<div style="width:14px;height:14px;background:#4a9eff;border-radius:50%;border:2px solid #fff;box-shadow:0 0 8px rgba(74,158,255,0.8)"></div>',
+  iconSize: [14,14], iconAnchor: [7,7]
+});
+
+// Read URL params on load
+const params = new URLSearchParams(location.search);
+const initLat = parseFloat(params.get('lat'));
+const initLng = parseFloat(params.get('lng'));
+if (!isNaN(initLat) && !isNaN(initLng)) {
+  map.setView([initLat, initLng], 8);
+  // Fetch after map is ready
+  setTimeout(() => fetchAndRender(initLat, initLng), 100);
+}
+
+map.on('click', (e) => {
+  const lat = e.latlng.lat, lng = e.latlng.lng;
+  // Update URL without reload
+  const url = new URL(location.href);
+  url.searchParams.set('lat', lat.toFixed(4));
+  url.searchParams.set('lng', lng.toFixed(4));
+  history.replaceState(null, '', url.toString());
+  fetchAndRender(lat, lng);
+});
+
+async function fetchAndRender(lat, lng) {
+  if (marker) map.removeLayer(marker);
+  marker = L.marker([lat, lng], { icon: pinIcon }).addTo(map);
+  document.getElementById('charts').style.display = 'none';
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('header-coords').textContent = `lat: ${lat.toFixed(4)}  lng: ${lng.toFixed(4)}`;
+
+  try {
+    const [wdRes, wvRes] = await Promise.all([
+      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat.toFixed(4)}&longitude=${lng.toFixed(4)}&hourly=windspeed_10m,windgusts_10m,winddirection_10m&wind_speed_unit=ms&timezone=Asia%2FTokyo&forecast_days=7`),
+      fetch(`https://marine-api.open-meteo.com/v1/marine?latitude=${lat.toFixed(4)}&longitude=${lng.toFixed(4)}&hourly=wave_height&timezone=Asia%2FTokyo&forecast_days=7`)
+    ]);
+    const [wd, wv] = await Promise.all([wdRes.json(), wvRes.json()]);
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('charts').style.display = 'flex';
+    renderCharts(wd, wv);
+  } catch(err) {
+    document.getElementById('loading').style.display = 'none';
+    alert('データの取得に失敗しました: ' + err.message);
+  }
+}
+
+function buildLabels(times) {
+  return times.map(t => { const d = new Date(t); return d.getHours() % 6 === 0 ? `${d.getHours()}:00` : ''; });
+}
+
+function dayBounds(times) {
+  return times.reduce((acc, t, i) => {
+    if (i > 0 && new Date(t).getHours() === 0) {
+      const d = new Date(t);
+      acc.push({ index: i, label: `${d.getMonth()+1}/${d.getDate()}（${'日月火水木金土'[d.getDay()]}）` });
+    }
+    return acc;
+  }, []);
+}
+
+function makeDayPlugin(bounds) {
+  return {
+    id: 'dayBands',
+    beforeDraw(chart) {
+      const { ctx, chartArea: ca, scales } = chart;
+      if (!ca) return;
+      ctx.save();
+      bounds.forEach(({ index, label }) => {
+        const x = scales.x.getPixelForValue(index);
+        ctx.strokeStyle = 'rgba(60,80,120,0.3)'; ctx.lineWidth = 1;
+        ctx.setLineDash([4,3]);
+        ctx.beginPath(); ctx.moveTo(x, ca.top); ctx.lineTo(x, ca.bottom); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.font = '9px "Courier New",monospace';
+        const bw = ctx.measureText(label).width + 10, bh = 15;
+        const bx = x + 3, by = ca.top + 3;
+        ctx.fillStyle = 'rgba(30,60,120,0.8)';
+        ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, 2); ctx.fill();
+        ctx.fillStyle = '#cfe0ff'; ctx.textBaseline = 'middle';
+        ctx.fillText(label, bx + 5, by + bh / 2);
+      });
+      ctx.restore();
+    }
+  };
+}
+
+function tooltipTitle(times) {
+  return (items) => {
+    const t = new Date(times[items[0].dataIndex]);
+    return `${t.getMonth()+1}/${t.getDate()}（${'日月火水木金土'[t.getDay()]}） ${String(t.getHours()).padStart(2,'0')}:00`;
+  };
+}
+
+function baseOpts(times, yCb, labelCb) {
+  return {
+    responsive: true, maintainAspectRatio: false,
+    animation: false,
+    interaction: { intersect: false, mode: 'index' },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: '#1a2235', borderColor: 'rgba(74,158,255,0.4)', borderWidth: 1,
+        titleColor: '#8ca0c0', bodyColor: '#e8eef8', padding: 8,
+        titleFont: { family: 'Courier New', size: 10 },
+        bodyFont: { family: 'Courier New', size: 11 },
+        callbacks: { title: tooltipTitle(times), label: labelCb }
+      }
+    },
+    scales: {
+      x: {
+        grid: { color: 'rgba(100,160,255,0.06)', drawTicks: false },
+        border: { color: 'rgba(100,160,255,0.15)' },
+        ticks: { color: '#8ca0c0', font: { family: 'Courier New', size: 9 }, maxRotation: 0, autoSkip: false }
+      },
+      y: {
+        grid: { color: 'rgba(100,160,255,0.08)' },
+        border: { color: 'rgba(100,160,255,0.15)', dash: [4,4] },
+        ticks: { color: '#8ca0c0', font: { family: 'Courier New', size: 9 }, callback: yCb },
+        min: 0
+      }
+    }
+  };
+}
+
+function gradientBg(chart, r, g, b) {
+  const ca = chart.chartArea;
+  if (!ca) return `rgba(${r},${g},${b},0.1)`;
+  const gr = chart.ctx.createLinearGradient(0, ca.top, 0, ca.bottom);
+  gr.addColorStop(0, `rgba(${r},${g},${b},0.28)`);
+  gr.addColorStop(1, `rgba(${r},${g},${b},0)`);
+  return gr;
+}
+
+function renderCharts(wd, wv) {
+  const times = wd.hourly.time;
+  const speeds = wd.hourly.windspeed_10m;
+  const gusts = wd.hourly.windgusts_10m;
+  const dirs = wd.hourly.winddirection_10m;
+  const labels = buildLabels(times);
+  const bounds = dayBounds(times);
+
+  if (windChart) windChart.destroy();
+  windChart = new Chart(document.getElementById('windChart'), {
+    type: 'line',
+    plugins: [makeDayPlugin(bounds)],
+    data: { labels, datasets: [
+      {
+        label: '風速', data: speeds, borderColor: '#4a9eff', borderWidth: 1.5, fill: true, tension: 0.3,
+        pointRadius: 0, pointHoverRadius: 3, pointHoverBackgroundColor: '#4a9eff',
+        backgroundColor: (ctx) => gradientBg(ctx.chart, 74, 158, 255)
+      },
+      {
+        label: '突風', data: gusts, borderColor: '#00d4aa', borderWidth: 1.2, borderDash: [5,4],
+        backgroundColor: 'transparent', fill: false, tension: 0.3,
+        pointRadius: 0, pointHoverRadius: 3
+      }
+    ]},
+    options: baseOpts(times, v => v.toFixed(0) + 'm/s', (item) => {
+      if (item.datasetIndex === 0) return ` 風速 ${item.parsed.y.toFixed(1)}m/s  ${degToDir(dirs[item.dataIndex])}`;
+      return ` 突風 ${item.parsed.y.toFixed(1)}m/s`;
+    })
+  });
+
+  const hasWave = wv && wv.hourly && Array.isArray(wv.hourly.wave_height) && wv.hourly.wave_height.some(v => v !== null);
+  if (hasWave) {
+    document.getElementById('wave-ccw').style.display = 'block';
+    document.getElementById('wave-na').style.display = 'none';
+    document.getElementById('wave-legend').style.display = 'flex';
+    const wvTimes = wv.hourly.time;
+    if (waveChart) waveChart.destroy();
+    waveChart = new Chart(document.getElementById('waveChart'), {
+      type: 'line',
+      plugins: [makeDayPlugin(dayBounds(wvTimes))],
+      data: { labels: buildLabels(wvTimes), datasets: [{
+        label: '有義波高', data: wv.hourly.wave_height, borderColor: '#a78bfa', borderWidth: 1.5, fill: true, tension: 0.3,
+        pointRadius: 0, pointHoverRadius: 3, pointHoverBackgroundColor: '#a78bfa',
+        backgroundColor: (ctx) => gradientBg(ctx.chart, 167, 139, 250)
+      }]},
+      options: baseOpts(wvTimes, v => v.toFixed(1) + 'm', (item) => ` 波高 ${item.parsed.y.toFixed(2)}m`)
+    });
+  } else {
+    document.getElementById('wave-ccw').style.display = 'none';
+    document.getElementById('wave-na').style.display = 'flex';
+    document.getElementById('wave-legend').style.display = 'none';
+    if (waveChart) { waveChart.destroy(); waveChart = null; }
+  }
+}
+
+function degToDir(deg) {
+  return '北 北北東 北東 東北東 東 東南東 南東 南南東 南 南南西 南西 西南西 西 西北西 北西 北北西'.split(' ')[Math.round(deg/22.5)%16];
+}
+</script>
+</body>
+</html>
