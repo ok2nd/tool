@@ -154,15 +154,9 @@ const params = new URLSearchParams(location.search);
 const initLat = parseFloat(params.get('lat'));
 const initLng = parseFloat(params.get('lng'));
 if (!isNaN(initLat) && !isNaN(initLng)) {
-  document.getElementById('header-coords').textContent = `lat: ${initLat.toFixed(4)}  lng: ${initLng.toFixed(4)}`;
-  setTimeout(() => {
-    map.invalidateSize();
-    setTimeout(() => {
-      map.setView([initLat, initLng], 8);
-      marker = L.marker([initLat, initLng], { icon: pinIcon }).addTo(map);
-      fetchAndRender(initLat, initLng, true);
-    }, 0);
-  }, 100);
+  map.setView([initLat, initLng], 8);
+  // Fetch after map is ready
+  setTimeout(() => fetchAndRender(initLat, initLng), 100);
 }
 
 map.on('click', (e) => {
@@ -175,11 +169,9 @@ map.on('click', (e) => {
   fetchAndRender(lat, lng);
 });
 
-async function fetchAndRender(lat, lng, skipMarker = false) {
-  if (!skipMarker) {
-    if (marker) map.removeLayer(marker);
-    marker = L.marker([lat, lng], { icon: pinIcon }).addTo(map);
-  }
+async function fetchAndRender(lat, lng) {
+  if (marker) map.removeLayer(marker);
+  marker = L.marker([lat, lng], { icon: pinIcon }).addTo(map);
   document.getElementById('charts').style.display = 'none';
   document.getElementById('loading').style.display = 'block';
   document.getElementById('header-coords').textContent = `lat: ${lat.toFixed(4)}  lng: ${lng.toFixed(4)}`;
@@ -192,9 +184,6 @@ async function fetchAndRender(lat, lng, skipMarker = false) {
     const [wd, wv] = await Promise.all([wdRes.json(), wvRes.json()]);
     document.getElementById('loading').style.display = 'none';
     document.getElementById('charts').style.display = 'flex';
-    // Map height changed when charts appeared — recalculate and re-center
-    map.invalidateSize();
-    map.panTo([lat, lng]);
     renderCharts(wd, wv);
   } catch(err) {
     document.getElementById('loading').style.display = 'none';

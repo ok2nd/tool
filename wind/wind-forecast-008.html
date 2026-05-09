@@ -192,9 +192,6 @@ async function fetchAndRender(lat, lng, skipMarker = false) {
     const [wd, wv] = await Promise.all([wdRes.json(), wvRes.json()]);
     document.getElementById('loading').style.display = 'none';
     document.getElementById('charts').style.display = 'flex';
-    // Map height changed when charts appeared — recalculate and re-center
-    map.invalidateSize();
-    map.panTo([lat, lng]);
     renderCharts(wd, wv);
   } catch(err) {
     document.getElementById('loading').style.display = 'none';
