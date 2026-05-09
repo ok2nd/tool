@@ -115,23 +115,6 @@ h1 a {
   text-decoration: none;
   color: #fff;
 }
-/* グラフ On/Off ボタン */
-.chart-toggle-btn {
-  display: flex !important; align-items: center; gap: 4px;
-  padding: 0 10px !important; height: 30px !important;
-  background: #0d1e3a !important;
-  border: 1px solid rgba(74,158,255,0.7) !important;
-  border-radius: 4px !important; color: #4a9eff !important;
-  font-family: 'Courier New', monospace; font-size: 10px; letter-spacing: 0.07em;
-  white-space: nowrap; text-decoration: none !important;
-  transition: background 0.15s, border-color 0.15s, color 0.15s;
-}
-.chart-toggle-btn:hover { background: #1a2235 !important; border-color: rgba(74,158,255,1) !important; }
-.chart-toggle-btn.is-off {
-  background: #131929 !important;
-  border-color: rgba(100,160,255,0.2) !important;
-  color: #8ca0c0 !important;
-}
 </style>
 </head>
 <body>
@@ -218,32 +201,6 @@ L.tileLayer('https://tile.openstreetmap.jp/styles/osm-bright/512/{z}/{x}/{y}.png
 
 let marker = null, windChart = null, waveChart = null;
 let windRect = null, waveRect = null, gridPopup = null;
-
-// ─── グラフ表示状態 & On/Off コントロール ────────────────────────────────────
-let chartsVisible = true;
-const ChartToggle = L.Control.extend({
-  options: { position: 'topright' },
-  onAdd() {
-    const c = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
-    const btn = L.DomUtil.create('a', 'chart-toggle-btn', c);
-    btn.href = '#'; btn.title = 'グラフ表示切替';
-    this._btn = btn; this._render();
-    L.DomEvent.disableClickPropagation(c);
-    L.DomEvent.on(btn, 'click', L.DomEvent.stop);
-    L.DomEvent.on(btn, 'click', () => {
-      chartsVisible = !chartsVisible;
-      document.getElementById('charts').style.display = chartsVisible ? 'flex' : 'none';
-      if (chartsVisible) map.invalidateSize();
-      this._render();
-    });
-    return c;
-  },
-  _render() {
-    this._btn.textContent = chartsVisible ? '📊 グラフ ON' : '📊 グラフ OFF';
-    this._btn.classList.toggle('is-off', !chartsVisible);
-  }
-});
-const toggleBtn = new ChartToggle().addTo(map);
 
 const pinIcon = L.divIcon({
   className: '',
@@ -346,11 +303,7 @@ async function fetchAndRender(lat, lng, skipMarker = false) {
   // Draw grid rectangles immediately (before fetch completes)
   const windSnap = drawWindGrid(lat, lng);
   const waveSnap = drawWaveGrid(lat, lng);
-  // ポップアップは表示しない
-
-  // 地点クリック時は必ずグラフOnに戻す
-  chartsVisible = true;
-  toggleBtn._render();
+  showGridPopup(lat, lng, windSnap, waveSnap);
 
   document.getElementById('charts').style.display = 'none';
   document.getElementById('loading').style.display = 'block';

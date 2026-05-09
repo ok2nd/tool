@@ -116,22 +116,33 @@ h1 a {
   color: #fff;
 }
 /* グラフ On/Off ボタン */
+.chart-toggle-ctrl { margin-top: 10px !important; }
 .chart-toggle-btn {
-  display: flex !important; align-items: center; gap: 4px;
-  padding: 0 10px !important; height: 30px !important;
-  background: #0d1e3a !important;
-  border: 1px solid rgba(74,158,255,0.7) !important;
-  border-radius: 4px !important; color: #4a9eff !important;
-  font-family: 'Courier New', monospace; font-size: 10px; letter-spacing: 0.07em;
-  white-space: nowrap; text-decoration: none !important;
-  transition: background 0.15s, border-color 0.15s, color 0.15s;
-}
-.chart-toggle-btn:hover { background: #1a2235 !important; border-color: rgba(74,158,255,1) !important; }
-.chart-toggle-btn.is-off {
+  display: flex !important;
+  align-items: center; gap: 5px;
+  padding: 0 10px !important;
+  height: 30px !important;
   background: #131929 !important;
-  border-color: rgba(100,160,255,0.2) !important;
   color: #8ca0c0 !important;
+  font-family: 'Courier New', monospace;
+  font-size: 10px; letter-spacing: 0.07em;
+  white-space: nowrap;
+  text-decoration: none !important;
+  border-radius: 4px !important;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  border: 1px solid rgba(100,160,255,0.2) !important;
 }
+.chart-toggle-btn:hover {
+  background: #1a2235 !important;
+  border-color: rgba(74,158,255,0.5) !important;
+  color: #e8eef8 !important;
+}
+.chart-toggle-btn.is-on {
+  background: #0d1e3a !important;
+  border-color: rgba(74,158,255,0.7) !important;
+  color: #4a9eff !important;
+}
+.chart-toggle-btn span { pointer-events: none; }
 </style>
 </head>
 <body>
@@ -218,32 +229,42 @@ L.tileLayer('https://tile.openstreetmap.jp/styles/osm-bright/512/{z}/{x}/{y}.png
 
 let marker = null, windChart = null, waveChart = null;
 let windRect = null, waveRect = null, gridPopup = null;
+let chartsVisible = false; // グラフ表示状態（初期は非表示）
+let cachedWd = null, cachedWv = null; // On切替時の再描画用キャッシュ
 
-// ─── グラフ表示状態 & On/Off コントロール ────────────────────────────────────
-let chartsVisible = true;
+// ─── グラフ表示On/Offコントロール（地図右上）────────────────────────────────
 const ChartToggle = L.Control.extend({
   options: { position: 'topright' },
   onAdd() {
-    const c = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+    const c = L.DomUtil.create('div', 'leaflet-bar leaflet-control chart-toggle-ctrl');
     const btn = L.DomUtil.create('a', 'chart-toggle-btn', c);
     btn.href = '#'; btn.title = 'グラフ表示切替';
-    this._btn = btn; this._render();
+    this._btn = btn;
+    this._update();
     L.DomEvent.disableClickPropagation(c);
     L.DomEvent.on(btn, 'click', L.DomEvent.stop);
     L.DomEvent.on(btn, 'click', () => {
       chartsVisible = !chartsVisible;
-      document.getElementById('charts').style.display = chartsVisible ? 'flex' : 'none';
-      if (chartsVisible) map.invalidateSize();
-      this._render();
+      this._update();
+      const el = document.getElementById('charts');
+      // visibility切替のみ。地図のresize/panは行わない
+      if (chartsVisible && cachedWd) {
+        el.style.display = 'flex';
+        renderCharts(cachedWd, cachedWv);
+      } else {
+        el.style.display = 'none';
+      }
     });
     return c;
   },
-  _render() {
-    this._btn.textContent = chartsVisible ? '📊 グラフ ON' : '📊 グラフ OFF';
-    this._btn.classList.toggle('is-off', !chartsVisible);
+  _update() {
+    this._btn.innerHTML = chartsVisible
+      ? '📊<span>グラフ ON</span>'
+      : '📊<span>グラフ OFF</span>';
+    this._btn.classList.toggle('is-on', chartsVisible);
   }
 });
-const toggleBtn = new ChartToggle().addTo(map);
+new ChartToggle().addTo(map);
 
 const pinIcon = L.divIcon({
   className: '',
@@ -348,10 +369,6 @@ async function fetchAndRender(lat, lng, skipMarker = false) {
   const waveSnap = drawWaveGrid(lat, lng);
   // ポップアップは表示しない
 
-  // 地点クリック時は必ずグラフOnに戻す
-  chartsVisible = true;
-  toggleBtn._render();
-
   document.getElementById('charts').style.display = 'none';
   document.getElementById('loading').style.display = 'block';
   document.getElementById('header-coords').textContent = `lat: ${lat.toFixed(4)}  lng: ${lng.toFixed(4)}`;
@@ -366,10 +383,12 @@ async function fetchAndRender(lat, lng, skipMarker = false) {
       fetch(`https://marine-api.open-meteo.com/v1/marine?latitude=${vLat}&longitude=${vLng}&hourly=wave_height&timezone=Asia%2FTokyo&forecast_days=7`)
     ]);
     const [wd, wv] = await Promise.all([wdRes.json(), wvRes.json()]);
+    cachedWd = wd; cachedWv = wv;
     document.getElementById('loading').style.display = 'none';
-    document.getElementById('charts').style.display = 'flex';
-    map.invalidateSize();
-    map.panTo([lat, lng]);
+    if (chartsVisible) {
+      document.getElementById('charts').style.display = 'flex';
+    }
+    // 地図のresize/panは行わない
     renderCharts(wd, wv);
   } catch(err) {
     document.getElementById('loading').style.display = 'none';
