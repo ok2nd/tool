@@ -137,9 +137,8 @@ header .sub { font-size: 10px; color: var(--text2); margin-left: auto; letter-sp
 
 <script>
 const map = L.map('map').setView([36.5, 136], 5);
-L.tileLayer('https://tile.openstreetmap.jp/styles/osm-bright/512/{z}/{x}/{y}.png', {
-  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-  maxZoom: 18, tileSize: 512, zoomOffset: -1
+L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+  attribution: '&copy; OpenStreetMap &copy; CARTO', maxZoom: 19, subdomains: 'abcd'
 }).addTo(map);
 
 let marker = null, windChart = null, waveChart = null;
