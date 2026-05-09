@@ -233,8 +233,7 @@ const ChartToggle = L.Control.extend({
     L.DomEvent.on(btn, 'click', () => {
       chartsVisible = !chartsVisible;
       document.getElementById('charts').style.display = chartsVisible ? 'flex' : 'none';
-      // display変更後、DOMレイアウト確定を待ってからサイズ再計算
-      requestAnimationFrame(() => map.invalidateSize());
+      if (chartsVisible) map.invalidateSize();
       this._render();
     });
     return c;
