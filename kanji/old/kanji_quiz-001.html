@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>漢字読みクイズ</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic UI", "Meiryo", sans-serif; background: #f5f4f0; min-height: 100vh; display: flex; align-items: flex-start; justify-content: center; padding: 2rem 1rem; }
+#app { width: 100%; max-width: 600px; }
+.screen { display: none; }
+.screen.active { display: block; }
+
+.progress-wrap { display: flex; align-items: center; gap: 12px; margin-bottom: 1.5rem; }
+.progress-bar-bg { flex: 1; height: 4px; background: #ddd; border-radius: 9px; overflow: hidden; }
+.progress-bar-fill { height: 100%; background: #222; border-radius: 9px; transition: width .4s ease; }
+.progress-label { font-size: 12px; color: #888; min-width: 48px; text-align: right; }
+
+.score-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1.25rem; }
+.q-num { font-size: 13px; color: #888; }
+.score-now { font-size: 13px; color: #888; }
+
+.kanji-card { background: #fff; border-radius: 14px; padding: 2.25rem 1.5rem 1.75rem; text-align: center; margin-bottom: 1.5rem; border: 1px solid #e8e8e4; }
+.kanji-display { font-size: 72px; font-weight: 500; font-family: "Yu Mincho", "Hiragino Mincho ProN", serif; line-height: 1; color: #111; margin-bottom: 0.5rem; }
+.kanji-hint { font-size: 13px; color: #999; }
+
+.choices { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 1.25rem; }
+.choice-btn {
+  background: #fff;
+  border: 1px solid #d8d8d4;
+  border-radius: 10px;
+  padding: 14px 12px;
+  font-size: 20px;
+  font-family: "Yu Mincho", "Hiragino Mincho ProN", serif;
+  color: #111;
+  cursor: pointer;
+  transition: background .15s, border-color .15s, transform .1s;
+  line-height: 1.2;
+}
+.choice-btn:hover:not(:disabled) { background: #f5f4f0; border-color: #aaa; }
+.choice-btn:active:not(:disabled) { transform: scale(0.97); }
+.choice-btn.correct { background: #EAF3DE; border-color: #639922; color: #3B6D11; }
+.choice-btn.wrong { background: #FCEBEB; border-color: #A32D2D; color: #791F1F; }
+.choice-btn:disabled { cursor: default; }
+
+.feedback-area { min-height: 60px; margin-bottom: 1.25rem; }
+.feedback-msg { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+.feedback-msg.ok { color: #3B6D11; }
+.feedback-msg.ng { color: #A32D2D; }
+.feedback-sub { font-size: 13px; color: #777; }
+
+.next-btn {
+  width: 100%;
+  background: #111;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 14px;
+  font-size: 15px;
+  font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic UI", sans-serif;
+  cursor: pointer;
+  transition: opacity .15s, transform .1s;
+}
+.next-btn:hover { opacity: 0.82; }
+.next-btn:active { transform: scale(0.98); }
+.next-btn:disabled { opacity: .3; cursor: default; }
+
+/* Result */
+.result-wrap { text-align: center; padding: 1rem 0; }
+.rank-circle {
+  width: 120px; height: 120px; border-radius: 50%;
+  background: #f0efeb;
+  border: 1px solid #ddd;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 1.25rem;
+  font-size: 56px; font-family: "Yu Mincho", serif; font-weight: 500;
+}
+.rank-circle.s { background: #FAEEDA; color: #633806; border-color: #EF9F27; }
+.rank-circle.a { background: #EAF3DE; color: #27500A; border-color: #639922; }
+.rank-circle.b { background: #E6F1FB; color: #0C447C; border-color: #378ADD; }
+.rank-circle.c { background: #EEEDFE; color: #3C3489; border-color: #7F77DD; }
+.rank-circle.d { background: #FCEBEB; color: #791F1F; border-color: #E24B4A; }
+.result-score { font-size: 28px; font-weight: 600; color: #111; margin-bottom: 8px; }
+.result-msg { font-size: 14px; color: #777; margin-bottom: 2rem; }
+.result-btns { display: flex; gap: 10px; }
+.result-btns button { flex: 1; border-radius: 10px; padding: 13px; font-size: 14px; font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic UI", sans-serif; cursor: pointer; transition: opacity .15s; border: 1px solid #d8d8d4; }
+.result-btns button:hover { opacity: .78; }
+.btn-retry { background: #111; color: #fff; border-color: transparent !important; }
+.btn-review { background: #fff; color: #111; }
+
+/* Review */
+.review-item { border-bottom: 1px solid #eee; padding: 14px 0; display: flex; align-items: flex-start; gap: 14px; }
+.review-kanji { font-size: 30px; font-family: "Yu Mincho", serif; min-width: 60px; text-align: center; color: #111; }
+.review-info { flex: 1; }
+.review-correct-label { font-size: 12px; color: #3B6D11; font-weight: 600; margin-bottom: 2px; }
+.review-correct { font-size: 17px; font-family: "Yu Mincho", serif; color: #111; }
+.review-your { font-size: 12px; color: #888; margin-top: 4px; }
+.tag-ok { display: inline-block; background: #EAF3DE; color: #3B6D11; font-size: 11px; padding: 2px 8px; border-radius: 9px; margin-right: 6px; }
+.tag-ng { display: inline-block; background: #FCEBEB; color: #A32D2D; font-size: 11px; padding: 2px 8px; border-radius: 9px; margin-right: 6px; }
+.back-btn { font-size: 13px; color: #888; background: none; border: none; cursor: pointer; padding: 0 0 1rem; text-decoration: underline; font-family: inherit; }
+.review-title { font-size: 17px; font-weight: 600; color: #111; margin-bottom: 1.25rem; }
+</style>
+</head>
+<body>
+<div id="app">
+
+<div id="screen-quiz" class="screen active">
+  <div class="progress-wrap">
+    <div class="progress-bar-bg"><div class="progress-bar-fill" id="prog-fill" style="width:0%"></div></div>
+    <span class="progress-label" id="prog-label">0 / 20</span>
+  </div>
+  <div class="score-row">
+    <span class="q-num" id="q-num">第 1 問</span>
+    <span class="score-now" id="score-now">正解: 0</span>
+  </div>
+  <div class="kanji-card">
+    <div class="kanji-display" id="kanji-disp"></div>
+    <div class="kanji-hint">この漢字の正しい読みを選んでください</div>
+  </div>
+  <div class="choices" id="choices"></div>
+  <div class="feedback-area">
+    <div class="feedback-msg" id="fb-msg"></div>
+    <div class="feedback-sub" id="fb-sub"></div>
+  </div>
+  <button class="next-btn" id="next-btn" disabled>次の問題</button>
+</div>
+
+<div id="screen-result" class="screen">
+  <div class="result-wrap">
+    <div class="rank-circle" id="rank-circle"></div>
+    <div class="result-score" id="result-score"></div>
+    <div class="result-msg" id="result-msg"></div>
+    <div class="result-btns">
+      <button class="btn-retry" onclick="startGame()">もう一度</button>
+      <button class="btn-review" onclick="showReview()">復習する</button>
+    </div>
+  </div>
+</div>
+
+<div id="screen-review" class="screen">
+  <button class="back-btn" onclick="showScreen('screen-result')">← 結果に戻る</button>
+  <div class="review-title" id="review-title"></div>
+  <div id="review-list"></div>
+</div>
+
+</div>
+<script>
+const KANJI = [
+  {k:"貼付",c:"てんぷ",w:["ちょうふ","はりつけ","てきふ"]},
+  {k:"続柄",c:"つづきがら",w:["ぞくがら","つながら","つづきばら"]},
+  {k:"依存",c:"いそん",w:["いぞん","えそん","いしょん"]},
+  {k:"雰囲気",c:"ふんいき",w:["ふいんき","ふんき","ふにんき"]},
+  {k:"早急",c:"さっきゅう",w:["そうきゅう","はやきゅう","そっきゅう"]},
+  {k:"重複",c:"ちょうふく",w:["じゅうふく","かさふく","ちょうぼく"]},
+  {k:"代替",c:"だいたい",w:["だいがえ","かわりたい","だいたえ"]},
+  {k:"消耗",c:"しょうもう",w:["しょうこう","しょうひ","けしもう"]},
+  {k:"出納",c:"すいとう",w:["でのう","しゅつのう","でいれ"]},
+  {k:"相殺",c:"そうさい",w:["あいさつ","そうさつ","あいさい"]},
+  {k:"堪能",c:"たんのう",w:["かんのう","たえのう","たんなう"]},
+  {k:"固執",c:"こしつ",w:["こしゅう","こじつ","かたじつ"]},
+  {k:"漏洩",c:"ろうえい",w:["もれよう","ろうもれ","ろうせつ"]},
+  {k:"招聘",c:"しょうへい",w:["しょうせい","まねい","しょうへき"]},
+  {k:"憂鬱",c:"ゆううつ",w:["ゆうめつ","うれいうつ","ゆうこつ"]},
+  {k:"脆弱",c:"ぜいじゃく",w:["きじゃく","もろじゃく","ぜいよわ"]},
+  {k:"進捗",c:"しんちょく",w:["しんぽ","しんはか","しんちょ"]},
+  {k:"破綻",c:"はたん",w:["はじょう","やぶれたん","はじれつ"]},
+  {k:"瑕疵",c:"かし",w:["きず","かじ","けっし"]},
+  {k:"齟齬",c:"そご",w:["ぎょご","しょご","くいちがい"]},
+  {k:"捺印",c:"なついん",w:["おしいん","なつし","さついん"]},
+  {k:"遵守",c:"じゅんしゅ",w:["そんしゅ","じゅんまもる","ずんしゅ"]},
+  {k:"逼迫",c:"ひっぱく",w:["きんぱく","せまりはく","ひきはく"]},
+  {k:"乖離",c:"かいり",w:["そむきり","こうり","かいはなれ"]},
+  {k:"牽引",c:"けんいん",w:["けいいん","ひきいん","けんびき"]},
+  {k:"稚拙",c:"ちせつ",w:["わかへた","じせつ","ちしつ"]},
+  {k:"貪欲",c:"どんよく",w:["たんよく","むさぼりよく","どんにん"]},
+  {k:"諮問",c:"しもん",w:["はかりもん","じもん","しかもん"]},
+  {k:"遺憾",c:"いかん",w:["いざん","のこかん","いごん"]},
+  {k:"跋扈",c:"ばっこ",w:["はびこり","ばつこ","はっこ"]},
+  {k:"逐次",c:"ちくじ",w:["おいおいじ","たくじ","ちゅくじ"]},
+  {k:"払拭",c:"ふっしょく",w:["はらいふく","ふっし","はらいしき"]},
+  {k:"精緻",c:"せいち",w:["せいちゅう","くわしち","せいじ"]},
+  {k:"斬新",c:"ざんしん",w:["きりしん","さんしん","ざんきん"]},
+  {k:"矜持",c:"きょうじ",w:["ほこりじ","きんじ","きょうち"]},
+  {k:"詭弁",c:"きべん",w:["ごまかしべん","ぎべん","きべ"]},
+  {k:"捏造",c:"ねつぞう",w:["でつぞう","こねつぞう","ねつくり"]},
+  {k:"歪曲",c:"わいきょく",w:["いがみきょく","おうきょく","わいくつ"]},
+  {k:"剽窃",c:"ひょうせつ",w:["ぬすみせつ","ひょうたつ","びょうせつ"]},
+  {k:"蹂躙",c:"じゅうりん",w:["ふみにじり","ぞうりん","じゅうにん"]},
+  {k:"嗚咽",c:"おえつ",w:["なきじゃくり","おいつ","あえつ"]},
+  {k:"逡巡",c:"しゅんじゅん",w:["ためらい","じゅんしゅん","せんじゅん"]},
+  {k:"蹉跌",c:"さてつ",w:["つまずきてつ","しゃてつ","さくてつ"]},
+  {k:"喧噪",c:"けんそう",w:["かまびすそう","かんそう","けんざつ"]},
+  {k:"忸怩",c:"じくじ",w:["はじはじ","にくに","じゅくじ"]},
+  {k:"辟易",c:"へきえき",w:["うんざり","かへき","ひきえき"]},
+  {k:"懊悩",c:"おうのう",w:["なやみのう","あおのう","おうなや"]},
+  {k:"紐帯",c:"ちゅうたい",w:["ひもたい","じゅうたい","つながりたい"]},
+  {k:"贖罪",c:"しょくざい",w:["かうざい","ぞくざい","しょくつみ"]},
+  {k:"慄然",c:"りつぜん",w:["ぶるぜん","おそれぜん","りつねん"]},
+  {k:"葛藤",c:"かっとう",w:["くずふじ","かつどう","かっとん"]},
+  {k:"刹那",c:"せつな",w:["さつな","しゃとな","くさり"]},
+  {k:"所謂",c:"いわゆる",w:["しょきん","しょい","ところがい"]},
+  {k:"即ち",c:"すなわち",w:["そくち","つまり","ただち"]},
+  {k:"概ね",c:"おおむね",w:["がいね","だいたい","かいね"]},
+  {k:"殊に",c:"ことに",w:["しゅに","とくに","べつに"]},
+  {k:"頗る",c:"すこぶる",w:["はなはだ","たいへん","さかんに"]},
+  {k:"何卒",c:"なにとぞ",w:["なにそつ","どうか","なんとぞ"]},
+  {k:"尤も",c:"もっとも",w:["ゆうも","ただし","まこと"]},
+  {k:"若しくは",c:"もしくは",w:["わかしくは","じゃくしくは","にゃくしくは"]},
+  {k:"彷徨う",c:"さまよう",w:["ほうこう","うろつく","まよう"]},
+  {k:"慄く",c:"おののく",w:["りつく","ふるえく","おそれく"]},
+  {k:"躊躇う",c:"ためらう",w:["ちゅうちょう","とまどう","まよう"]},
+  {k:"嗜む",c:"たしなむ",w:["しむ","このむ","うしなむ"]},
+  {k:"逞しい",c:"たくましい",w:["ていしい","つよしい","ちからしい"]},
+  {k:"窺う",c:"うかがう",w:["けいう","のぞきう","うかう"]},
+  {k:"蔑む",c:"さげすむ",w:["べつむ","みくだむ","いやしむ"]},
+  {k:"憚る",c:"はばかる",w:["たんる","えんりょる","かたる"]},
+  {k:"艶やか",c:"つややか",w:["えんやか","なまめやか","あでやか"]},
+  {k:"暢気",c:"のんき",w:["ちょうき","のびき","ゆっくり"]},
+  {k:"弄ぶ",c:"もてあそぶ",w:["ろうぶ","いじぶ","ひねぶ"]},
+  {k:"贖う",c:"あがなう",w:["かうう","つぐのう","かえす"]},
+  {k:"霞む",c:"かすむ",w:["えんむ","もやむ","うすむ"]},
+  {k:"諦める",c:"あきらめる",w:["ていめる","すてめる","やめる"]},
+  {k:"恣意",c:"しい",w:["じい","ほしいい","しき"]},
+  {k:"稀有",c:"けう",w:["まれゆう","きゆう","まれう"]},
+  {k:"執拗",c:"しつよう",w:["ねばりよう","じゅうよう","しつしつ"]},
+  {k:"蔑視",c:"べっし",w:["さげすみし","みくだし","へいし"]},
+  {k:"杞憂",c:"きゆう",w:["むだゆう","きうれい","もきゆう"]},
+  {k:"悠然",c:"ゆうぜん",w:["のんびりぜん","ゆっくりぜん","ゆうねん"]},
+  {k:"慈悲",c:"じひ",w:["いつくしみ","なさけひ","じび"]},
+  {k:"施策",c:"しさく",w:["せさく","とりさく","せいさく"]},
+  {k:"漸次",c:"ぜんじ",w:["じょじ","せんじ","ぜんつぎ"]},
+  {k:"凡例",c:"はんれい",w:["ぼんれい","ぼんたとえ","はんたとえ"]},
+  {k:"輸入",c:"ゆにゅう",w:["しゅにゅう","ゆいれ","てにゅう"]},
+  {k:"頑迷",c:"がんめい",w:["がんくら","かためい","がんまい"]},
+  {k:"懸案",c:"けんあん",w:["かかりあん","けいあん","けんおん"]},
+  {k:"兎も角",c:"ともかく",w:["うさぎかく","とりあえず","ともかど"]},
+  {k:"桎梏",c:"しっこく",w:["てかせ","じっこく","しっかく"]},
+  {k:"蓋然",c:"がいぜん",w:["ふたぜん","かいぜん","がいねん"]},
+  {k:"諦観",c:"ていかん",w:["あきらめかん","ちかん","たいかん"]},
+  {k:"忌憚",c:"きたん",w:["いみたん","きいじ","きだん"]},
+  {k:"危惧",c:"きぐ",w:["あぶくれ","きお","きく"]},
+  {k:"疎外",c:"そがい",w:["うとがい","しょがい","そとがい"]},
+  {k:"豁然",c:"かつぜん",w:["ひろぜん","とつぜん","かっぜん"]},
+  {k:"慄然",c:"りつぜん",w:["ぶるぜん","おそれぜん","りつねん"]},
+  {k:"錯綜",c:"さくそう",w:["まじれそう","さくしょう","さっそう"]},
+  {k:"逃避",c:"とうひ",w:["にげひ","とうし","のがれひ"]},
+];
+
+const TOTAL = 20;
+let questions = [], idx = 0, score = 0, answered = false, history = [];
+
+function shuffle(a) { return [...a].sort(() => Math.random() - .5); }
+
+function startGame() {
+  questions = shuffle(KANJI).slice(0, TOTAL);
+  idx = 0; score = 0; answered = false; history = [];
+  showScreen('screen-quiz');
+  renderQ();
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function renderQ() {
+  const q = questions[idx];
+  answered = false;
+  document.getElementById('prog-fill').style.width = (idx / TOTAL * 100) + '%';
+  document.getElementById('prog-label').textContent = idx + ' / ' + TOTAL;
+  document.getElementById('q-num').textContent = '第 ' + (idx + 1) + ' 問';
+  document.getElementById('score-now').textContent = '正解: ' + score;
+  document.getElementById('kanji-disp').textContent = q.k;
+  document.getElementById('fb-msg').textContent = '';
+  document.getElementById('fb-sub').textContent = '';
+  document.getElementById('next-btn').disabled = true;
+  document.getElementById('next-btn').textContent = idx + 1 >= TOTAL ? '結果を見る' : '次の問題';
+
+  const choices = shuffle([q.c, ...q.w.slice(0, 3)]);
+  const wrap = document.getElementById('choices');
+  wrap.innerHTML = '';
+  choices.forEach(ch => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.textContent = ch;
+    btn.onclick = () => checkAnswer(ch, q);
+    wrap.appendChild(btn);
+  });
+}
+
+function checkAnswer(chosen, q) {
+  if (answered) return;
+  answered = true;
+  document.querySelectorAll('.choice-btn').forEach(b => {
+    b.disabled = true;
+    if (b.textContent === q.c) b.classList.add('correct');
+    else if (b.textContent === chosen && chosen !== q.c) b.classList.add('wrong');
+  });
+  const ok = chosen === q.c;
+  if (ok) score++;
+  history.push({ k: q.k, c: q.c, chosen, ok });
+  const fbMsg = document.getElementById('fb-msg');
+  fbMsg.className = 'feedback-msg ' + (ok ? 'ok' : 'ng');
+  fbMsg.textContent = ok ? '正解！' : '不正解…';
+  document.getElementById('fb-sub').textContent = ok
+    ? '「' + q.k + '」の読みは「' + q.c + '」です。'
+    : '正解は「' + q.c + '」でした。';
+  document.getElementById('score-now').textContent = '正解: ' + score;
+  document.getElementById('next-btn').disabled = false;
+}
+
+document.getElementById('next-btn').onclick = () => {
+  idx++;
+  if (idx >= TOTAL) showResult();
+  else renderQ();
+};
+
+function showResult() {
+  document.getElementById('prog-fill').style.width = '100%';
+  document.getElementById('prog-label').textContent = TOTAL + ' / ' + TOTAL;
+  showScreen('screen-result');
+  const pct = Math.round(score / TOTAL * 100);
+  let rank, msg;
+  if (pct >= 90) { rank = 'S'; msg = '漢字マスター！完璧な成績です。'; }
+  else if (pct >= 70) { rank = 'A'; msg = '素晴らしい！よく読めています。'; }
+  else if (pct >= 50) { rank = 'B'; msg = 'まずまずの成績。もう一度挑戦！'; }
+  else if (pct >= 30) { rank = 'C'; msg = 'もっと練習が必要です。'; }
+  else { rank = 'D'; msg = 'これを機に漢字を勉強しましょう！'; }
+  const rc = document.getElementById('rank-circle');
+  rc.className = 'rank-circle ' + rank.toLowerCase();
+  rc.textContent = rank;
+  document.getElementById('result-score').textContent = score + ' / ' + TOTAL + ' 問正解（' + pct + '%）';
+  document.getElementById('result-msg').textContent = msg;
+}
+
+function showReview() {
+  showScreen('screen-review');
+  const wrong = history.filter(h => !h.ok);
+  document.getElementById('review-title').textContent = wrong.length === 0
+    ? '全問正解！復習する問題はありません。'
+    : '間違えた問題：' + wrong.length + ' 問';
+  const list = document.getElementById('review-list');
+  list.innerHTML = '';
+  history.forEach(h => {
+    const div = document.createElement('div');
+    div.className = 'review-item';
+    const tag = h.ok ? '<span class="tag-ok">正解</span>' : '<span class="tag-ng">不正解</span>';
+    div.innerHTML = `
+      <div class="review-kanji">${h.k}</div>
+      <div class="review-info">
+        <div class="review-correct-label">正しい読み</div>
+        <div class="review-correct">${h.c}</div>
+        <div class="review-your">${tag}${h.ok ? '' : 'あなたの答え：' + h.chosen}</div>
+      </div>`;
+    list.appendChild(div);
+  });
+}
+
+startGame();
+</script>
+</body>
+</html>

@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>脳活トレーニング</title>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;700;900&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface2: #21262d;
+    --border: rgba(255,255,255,0.08);
+    --text: #e6edf3;
+    --text-muted: #7d8590;
+    --accent: #58a6ff;
+    --accent2: #3fb950;
+    --accent3: #f0883e;
+    --accent4: #bc8cff;
+    --danger: #f85149;
+    --gold: #ffd700;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* HEADER */
+  header {
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--surface);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo {
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    font-weight: 900;
+    font-size: 1.5rem;
+    background: linear-gradient(135deg, var(--accent), var(--accent4));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -0.02em;
+  }
+  .score-bar {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+  }
+  .score-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+  .score-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; }
+  .score-val { font-size: 1.1rem; font-weight: 700; color: var(--gold); }
+
+  /* MAIN */
+  main { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+  /* MENU */
+  .menu-title {
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    font-size: 2rem;
+    font-weight: 900;
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.03em;
+  }
+  .menu-sub { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 2rem; }
+
+  .game-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+  .game-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .game-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    border-radius: 16px 16px 0 0;
+  }
+  .game-card.blue::before { background: var(--accent); }
+  .game-card.green::before { background: var(--accent2); }
+  .game-card.orange::before { background: var(--accent3); }
+  .game-card.purple::before { background: var(--accent4); }
+  .game-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(255,255,255,0.2);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+  .game-icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+  .game-name {
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 0.4rem;
+  }
+  .game-desc { font-size: 0.8rem; color: var(--text-muted); line-height: 1.5; }
+  .game-tag {
+    display: inline-block;
+    margin-top: 0.75rem;
+    font-size: 0.7rem;
+    padding: 3px 10px;
+    border-radius: 20px;
+    background: rgba(255,255,255,0.07);
+    color: var(--text-muted);
+    letter-spacing: 0.05em;
+  }
+
+  /* GAME AREA */
+  .game-area { display: none; }
+  .game-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .back-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 0.4rem 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-family: 'Noto Sans JP', sans-serif;
+    transition: all 0.15s;
+  }
+  .back-btn:hover { background: var(--surface2); }
+  .game-title-bar {
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 700;
+  }
+  .game-stats {
+    margin-left: auto;
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+  }
+  .stat { display: flex; flex-direction: column; align-items: center; }
+  .stat-l { font-size: 9px; color: var(--text-muted); letter-spacing: 0.08em; }
+  .stat-v { font-size: 1rem; font-weight: 700; }
+
+  /* GAME CONTAINER */
+  .game-container {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2rem;
+    min-height: 400px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+
+  /* BUTTONS */
+  .btn {
+    padding: 0.7rem 2rem;
+    border-radius: 10px;
+    border: none;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-primary { background: var(--accent); color: #000; }
+  .btn-primary:hover { opacity: 0.85; transform: scale(1.03); }
+  .btn-success { background: var(--accent2); color: #000; }
+  .btn-danger { background: var(--danger); color: #fff; }
+
+  /* RESULT OVERLAY */
+  .result-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .result-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 2.5rem;
+    text-align: center;
+    max-width: 360px;
+    width: 90%;
+  }
+  .result-emoji { font-size: 3rem; margin-bottom: 0.5rem; }
+  .result-title {
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 900;
+    margin-bottom: 0.5rem;
+  }
+  .result-score { color: var(--gold); font-size: 2.5rem; font-weight: 700; margin: 0.5rem 0; }
+  .result-msg { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem; }
+  .result-btns { display: flex; gap: 0.75rem; justify-content: center; }
+
+  /* ========== GAME 1: COLOR MATCH ========== */
+  #colorMatch .color-word {
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    font-size: 4rem;
+    font-weight: 900;
+    margin: 1rem 0 0.5rem;
+    letter-spacing: -0.05em;
+    transition: all 0.15s;
+  }
+  #colorMatch .question-text {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin-bottom: 1.5rem;
+  }
+  #colorMatch .choice-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    width: 100%;
+    max-width: 320px;
+  }
+  #colorMatch .choice-btn {
+    padding: 0.9rem;
+    border-radius: 12px;
+    border: 2px solid transparent;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: 'Noto Sans JP', sans-serif;
+  }
+  #colorMatch .choice-btn:hover { transform: scale(1.04); }
+  #colorMatch .feedback {
+    height: 28px;
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-top: 0.5rem;
+    transition: all 0.15s;
+  }
+  #colorMatch .progress-bar {
+    width: 100%;
+    max-width: 320px;
+    height: 6px;
+    background: var(--surface2);
+    border-radius: 4px;
+    margin-top: 1rem;
+    overflow: hidden;
+  }
+  #colorMatch .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 4px;
+    transition: width 0.3s;
+  }
+
+  /* ========== GAME 2: NUMBER MEMORY ========== */
+  #numberMemory .num-display {
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    font-size: 3.5rem;
+    font-weight: 900;
+    letter-spacing: 0.15em;
+    color: var(--accent);
+    min-height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #numberMemory .num-input {
+    font-size: 2rem;
+    font-weight: 700;
+    text-align: center;
+    background: var(--surface2);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    color: var(--text);
+    padding: 0.5rem 1rem;
+    width: 100%;
+    max-width: 280px;
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    letter-spacing: 0.15em;
+    margin: 1rem 0;
+  }
+  #numberMemory .num-input:focus { outline: none; border-color: var(--accent); }
+  #numberMemory .phase-text { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.5rem; }
+  #numberMemory .level-badge {
+    background: var(--accent4);
+    color: #000;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 3px 12px;
+    border-radius: 20px;
+    margin-bottom: 1rem;
+  }
+
+  /* ========== GAME 3: MATH SPEED ========== */
+  #mathSpeed .math-expr {
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    font-size: 3.5rem;
+    font-weight: 900;
+    margin: 0.5rem 0 1rem;
+    color: var(--accent3);
+  }
+  #mathSpeed .math-answers {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.6rem;
+    max-width: 300px;
+    width: 100%;
+  }
+  #mathSpeed .ans-btn {
+    padding: 0.8rem;
+    border-radius: 10px;
+    border: 2px solid var(--border);
+    background: var(--surface2);
+    color: var(--text);
+    font-size: 1.3rem;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    transition: all 0.12s;
+  }
+  #mathSpeed .ans-btn:hover { border-color: var(--accent3); background: rgba(240,136,62,0.15); }
+  #mathSpeed .timer-ring {
+    width: 64px;
+    height: 64px;
+    margin-bottom: 0.5rem;
+  }
+  #mathSpeed .combo-badge {
+    background: rgba(240,136,62,0.2);
+    color: var(--accent3);
+    border-radius: 20px;
+    padding: 3px 12px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    margin-top: 0.5rem;
+    min-height: 26px;
+  }
+
+  /* ========== GAME 4: WORD CHAIN ========== */
+  #wordChain .chain-display {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: center;
+    max-width: 480px;
+    margin: 0.5rem 0 1rem;
+    min-height: 40px;
+  }
+  #wordChain .chain-word {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+  }
+  #wordChain .chain-word.current {
+    background: rgba(188, 140, 255, 0.2);
+    border-color: var(--accent4);
+    color: var(--accent4);
+    font-weight: 700;
+  }
+  #wordChain .word-input {
+    font-size: 1.4rem;
+    text-align: center;
+    background: var(--surface2);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    color: var(--text);
+    padding: 0.6rem 1rem;
+    width: 100%;
+    max-width: 280px;
+    font-family: 'Noto Sans JP', sans-serif;
+    margin: 0.5rem 0;
+  }
+  #wordChain .word-input:focus { outline: none; border-color: var(--accent4); }
+  #wordChain .word-hint {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 0.5rem;
+  }
+  #wordChain .must-char {
+    color: var(--accent4);
+    font-weight: 700;
+    font-size: 1.1rem;
+  }
+  #wordChain .word-feedback {
+    height: 24px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--danger);
+  }
+
+  /* ANIMATIONS */
+  @keyframes pop { 0%{transform:scale(1)} 50%{transform:scale(1.2)} 100%{transform:scale(1)} }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-8px)} 75%{transform:translateX(8px)} }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+  .pop { animation: pop 0.2s ease; }
+  .shake { animation: shake 0.3s ease; }
+  .fadeIn { animation: fadeIn 0.3s ease; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🧠 脳活トレーニング</div>
+  <div class="score-bar">
+    <div class="score-item">
+      <span class="score-label">今日のPTS</span>
+      <span class="score-val" id="totalScore">0</span>
+    </div>
+    <div class="score-item">
+      <span class="score-label">プレイ数</span>
+      <span class="score-val" id="playCount">0</span>
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- MENU -->
+  <div id="menuArea">
+    <div class="menu-title">今日も脳を鍛えよう</div>
+    <div class="menu-sub">4つのゲームで記憶力・注意力・判断力・言語力をトレーニング</div>
+    <div class="game-grid">
+      <div class="game-card blue" onclick="startGame('colorMatch')">
+        <div class="game-icon">🎨</div>
+        <div class="game-name">色・言葉ストループ</div>
+        <div class="game-desc">表示された文字の「色」が何色かを素早く選ぼう。脳の切り替え能力を鍛えます。</div>
+        <span class="game-tag">注意力 / 抑制制御</span>
+      </div>
+      <div class="game-card green" onclick="startGame('numberMemory')">
+        <div class="game-icon">🔢</div>
+        <div class="game-name">数字記憶チャレンジ</div>
+        <div class="game-desc">数字を覚えて入力しよう。レベルが上がるほど桁数が増えていく。</div>
+        <span class="game-tag">短期記憶 / 集中力</span>
+      </div>
+      <div class="game-card orange" onclick="startGame('mathSpeed')">
+        <div class="game-icon">⚡</div>
+        <div class="game-name">計算スプリント</div>
+        <div class="game-desc">制限時間内に正しい答えを選ぼう。連続正解でコンボボーナス！</div>
+        <span class="game-tag">処理速度 / 計算力</span>
+      </div>
+      <div class="game-card purple" onclick="startGame('wordChain')">
+        <div class="game-icon">💬</div>
+        <div class="game-name">しりとりチャレンジ</div>
+        <div class="game-desc">しりとりで繋げよう。使った言葉は使えない。時間内に何個続けられる?</div>
+        <span class="game-tag">語彙力 / 言語流暢性</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- GAME AREA -->
+  <div id="gameArea" class="game-area">
+    <div class="game-header">
+      <button class="back-btn" onclick="goMenu()">← メニュー</button>
+      <div class="game-title-bar" id="gameTitleBar">ゲーム</div>
+      <div class="game-stats">
+        <div class="stat">
+          <span class="stat-l">スコア</span>
+          <span class="stat-v" id="currentScore">0</span>
+        </div>
+        <div class="stat">
+          <span class="stat-l">残り</span>
+          <span class="stat-v" id="gameTimer">60</span>
+        </div>
+      </div>
+    </div>
+    <div class="game-container">
+      <!-- COLOR MATCH -->
+      <div id="colorMatch" style="width:100%; display:flex; flex-direction:column; align-items:center;">
+        <div class="question-text">文字の<strong>「色」</strong>はどれ？（意味ではなく色）</div>
+        <div class="color-word" id="cmWord">あか</div>
+        <div class="choice-grid" id="cmChoices"></div>
+        <div class="feedback" id="cmFeedback"></div>
+        <div class="progress-bar"><div class="progress-fill" id="cmProgress" style="width:0%"></div></div>
+      </div>
+
+      <!-- NUMBER MEMORY -->
+      <div id="numberMemory" style="display:none; flex-direction:column; align-items:center; width:100%;">
+        <div class="level-badge" id="nmLevel">レベル 1（3桁）</div>
+        <div class="phase-text" id="nmPhase">数字を覚えよう！</div>
+        <div class="num-display" id="nmDisplay">—</div>
+        <input class="num-input" id="nmInput" type="number" placeholder="ここに入力" style="display:none;" inputmode="numeric">
+        <button class="btn btn-primary" id="nmBtn" onclick="nmAction()">スタート</button>
+      </div>
+
+      <!-- MATH SPEED -->
+      <div id="mathSpeed" style="display:none; flex-direction:column; align-items:center; width:100%;">
+        <svg class="timer-ring" viewBox="0 0 64 64" id="msRingSvg">
+          <circle cx="32" cy="32" r="28" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="5"/>
+          <circle cx="32" cy="32" r="28" fill="none" stroke="#f0883e" stroke-width="5"
+            stroke-dasharray="176" stroke-dashoffset="0" stroke-linecap="round"
+            transform="rotate(-90 32 32)" id="msRing"/>
+        </svg>
+        <div class="math-expr" id="msExpr">?</div>
+        <div class="math-answers" id="msAnswers"></div>
+        <div class="combo-badge" id="msCombo"></div>
+      </div>
+
+      <!-- WORD CHAIN -->
+      <div id="wordChain" style="display:none; flex-direction:column; align-items:center; width:100%;">
+        <div class="chain-display" id="wcChain"></div>
+        <div class="word-hint" id="wcHint">「<span class="must-char" id="wcMustChar">し</span>」で始まる言葉を入力</div>
+        <input class="word-input" id="wcInput" type="text" placeholder="ことば" maxlength="10">
+        <div class="word-feedback" id="wcFeedback"></div>
+        <button class="btn btn-primary" style="margin-top:0.75rem;" onclick="wcSubmit()">送る ↵</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- RESULT OVERLAY -->
+<div class="result-overlay" id="resultOverlay">
+  <div class="result-box fadeIn">
+    <div class="result-emoji" id="resEmoji">🎉</div>
+    <div class="result-title" id="resTitle">ゲーム終了</div>
+    <div class="result-score" id="resScore">0 pts</div>
+    <div class="result-msg" id="resMsg">お疲れ様でした！</div>
+    <div class="result-btns">
+      <button class="btn btn-primary" onclick="retryGame()">もう一度</button>
+      <button class="btn back-btn" onclick="goMenu()">メニューへ</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// GLOBAL STATE
+// ============================================================
+let totalScore = 0;
+let playCount = 0;
+let currentGame = null;
+let gameTimerInterval = null;
+let timeLeft = 60;
+let gameScore = 0;
+
+const colors = [
+  { name: 'あか', hex: '#f85149', label: 'あか' },
+  { name: 'あお', hex: '#58a6ff', label: 'あお' },
+  { name: 'みどり', hex: '#3fb950', label: 'みどり' },
+  { name: 'きいろ', hex: '#ffd700', label: 'きいろ' },
+];
+
+function $(id) { return document.getElementById(id); }
+
+function showMenu() {
+  $('menuArea').style.display = 'block';
+  $('gameArea').style.display = 'none';
+}
+function hideMenu() {
+  $('menuArea').style.display = 'none';
+  $('gameArea').style.display = 'block';
+}
+
+function updateGlobalScore() {
+  $('totalScore').textContent = totalScore;
+  $('playCount').textContent = playCount;
+}
+
+function startGameTimer(seconds, onEnd) {
+  timeLeft = seconds;
+  $('gameTimer').textContent = timeLeft;
+  clearInterval(gameTimerInterval);
+  gameTimerInterval = setInterval(() => {
+    timeLeft--;
+    $('gameTimer').textContent = timeLeft;
+    if (timeLeft <= 0) {
+      clearInterval(gameTimerInterval);
+      onEnd();
+    }
+  }, 1000);
+}
+
+function showResult(score, title, msg, emoji) {
+  clearInterval(gameTimerInterval);
+  playCount++;
+  totalScore += score;
+  updateGlobalScore();
+  $('resEmoji').textContent = emoji;
+  $('resTitle').textContent = title;
+  $('resScore').textContent = score + ' pts';
+  $('resMsg').textContent = msg;
+  $('resultOverlay').style.display = 'flex';
+}
+
+function retryGame() {
+  $('resultOverlay').style.display = 'none';
+  startGame(currentGame);
+}
+function goMenu() {
+  clearInterval(gameTimerInterval);
+  $('resultOverlay').style.display = 'none';
+  ['colorMatch','numberMemory','mathSpeed','wordChain'].forEach(id => {
+    const el = $(id);
+    if (el) el.style.display = 'none';
+  });
+  $('gameArea').style.display = 'none';
+  $('menuArea').style.display = 'block';
+}
+
+function startGame(gameId) {
+  currentGame = gameId;
+  gameScore = 0;
+  $('currentScore').textContent = 0;
+  hideMenu();
+  ['colorMatch','numberMemory','mathSpeed','wordChain'].forEach(id => {
+    const el = $(id);
+    if (el) el.style.display = 'none';
+  });
+  $(gameId).style.display = 'flex';
+  const titles = {
+    colorMatch: '🎨 色・言葉ストループ',
+    numberMemory: '🔢 数字記憶チャレンジ',
+    mathSpeed: '⚡ 計算スプリント',
+    wordChain: '💬 しりとりチャレンジ'
+  };
+  $('gameTitleBar').textContent = titles[gameId];
+  if (gameId === 'colorMatch') initColorMatch();
+  if (gameId === 'numberMemory') initNumberMemory();
+  if (gameId === 'mathSpeed') initMathSpeed();
+  if (gameId === 'wordChain') initWordChain();
+}
+
+// ============================================================
+// GAME 1: COLOR MATCH (Stroop)
+// ============================================================
+let cmCorrect = 0, cmTotal = 0;
+
+function initColorMatch() {
+  cmCorrect = 0;
+  cmTotal = 0;
+  gameScore = 0;
+  $('cmProgress').style.width = '0%';
+  generateColorQuestion();
+  startGameTimer(60, () => {
+    const pct = cmTotal > 0 ? Math.round(cmCorrect / cmTotal * 100) : 0;
+    const msg = `${cmTotal}問中 ${cmCorrect}問正解（正答率 ${pct}%）`;
+    const emoji = pct >= 80 ? '🏆' : pct >= 50 ? '👍' : '💪';
+    showResult(gameScore, 'ゲーム終了！', msg, emoji);
+  });
+}
+
+function generateColorQuestion() {
+  const wordColor = colors[Math.floor(Math.random() * colors.length)];
+  const inkColor = colors[Math.floor(Math.random() * colors.length)];
+  const word = $('cmWord');
+  word.textContent = wordColor.name;
+  word.style.color = inkColor.hex;
+  word.dataset.answer = inkColor.label;
+  word.classList.remove('pop');
+  void word.offsetWidth;
+  word.classList.add('pop');
+
+  // Shuffle choices
+  const shuffled = [...colors].sort(() => Math.random() - 0.5);
+  const grid = $('cmChoices');
+  grid.innerHTML = '';
+  shuffled.forEach(c => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.textContent = c.name;
+    btn.style.background = c.hex + '22';
+    btn.style.borderColor = c.hex;
+    btn.style.color = c.hex;
+    btn.onclick = () => checkColorAnswer(c.label);
+    grid.appendChild(btn);
+  });
+  $('cmFeedback').textContent = '';
+}
+
+function checkColorAnswer(chosen) {
+  const correct = $('cmWord').dataset.answer;
+  cmTotal++;
+  const fb = $('cmFeedback');
+  if (chosen === correct) {
+    cmCorrect++;
+    gameScore += 10;
+    fb.textContent = '✓ 正解！';
+    fb.style.color = '#3fb950';
+  } else {
+    fb.textContent = '✗ 不正解';
+    fb.style.color = '#f85149';
+  }
+  $('currentScore').textContent = gameScore;
+  $('cmProgress').style.width = (cmTotal % 10 * 10) + '%';
+  setTimeout(generateColorQuestion, 500);
+}
+
+// ============================================================
+// GAME 2: NUMBER MEMORY
+// ============================================================
+let nmLevel = 3, nmPhase = 'idle', nmTarget = '', nmAttempts = 0;
+
+function initNumberMemory() {
+  nmLevel = 3;
+  nmAttempts = 0;
+  gameScore = 0;
+  nmPhase = 'idle';
+  $('nmInput').style.display = 'none';
+  $('nmInput').value = '';
+  $('nmDisplay').textContent = '準備OK？';
+  $('nmBtn').textContent = 'スタート';
+  $('nmBtn').style.display = 'inline-block';
+  $('nmLevel').textContent = `レベル 1（${nmLevel}桁）`;
+  $('nmPhase').textContent = '数字を覚えよう！';
+  $('gameTimer').textContent = '∞';
+}
+
+function nmAction() {
+  if (nmPhase === 'idle') {
+    nmShowNumber();
+  } else if (nmPhase === 'input') {
+    nmCheck();
+  }
+}
+
+function nmShowNumber() {
+  nmPhase = 'showing';
+  nmTarget = '';
+  for (let i = 0; i < nmLevel; i++) nmTarget += Math.floor(Math.random() * 10);
+  $('nmDisplay').textContent = nmTarget;
+  $('nmDisplay').style.color = '#58a6ff';
+  $('nmBtn').style.display = 'none';
+  $('nmInput').style.display = 'none';
+  $('nmPhase').textContent = 'しっかり覚えよう！';
+
+  let count = Math.min(nmLevel + 1, 5);
+  $('gameTimer').textContent = count;
+  const t = setInterval(() => {
+    count--;
+    $('gameTimer').textContent = count;
+    if (count <= 0) {
+      clearInterval(t);
+      nmPhase = 'input';
+      $('nmDisplay').textContent = '?'.repeat(nmLevel);
+      $('nmDisplay').style.color = '#f0883e';
+      $('nmInput').style.display = 'block';
+      $('nmInput').value = '';
+      $('nmInput').focus();
+      $('nmBtn').textContent = '答える';
+      $('nmBtn').style.display = 'inline-block';
+      $('nmPhase').textContent = '入力してください';
+      $('gameTimer').textContent = '∞';
+    }
+  }, 1000);
+}
+
+function nmCheck() {
+  const ans = $('nmInput').value.trim();
+  if (ans === nmTarget) {
+    gameScore += nmLevel * 20;
+    $('currentScore').textContent = gameScore;
+    $('nmPhase').textContent = '✓ 正解！次のレベルへ…';
+    $('nmDisplay').textContent = '🎉';
+    nmLevel++;
+    $('nmAttempts') && ($('nmAttempts').textContent = '');
+    $('nmLevel').textContent = `レベル ${nmLevel - 2}（${nmLevel}桁）`;
+    if (nmLevel > 12) {
+      showResult(gameScore, '全レベルクリア！！', '12桁まで覚えた！脳が冴えてる！', '🏆');
+      return;
+    }
+    setTimeout(() => {
+      $('nmInput').style.display = 'none';
+      $('nmInput').value = '';
+      $('nmBtn').textContent = '次へ';
+      $('nmPhase').textContent = '次の数字を覚えよう！';
+      nmPhase = 'idle';
+    }, 1000);
+  } else {
+    nmAttempts++;
+    $('nmInput').classList.remove('shake');
+    void $('nmInput').offsetWidth;
+    $('nmInput').classList.add('shake');
+    $('nmPhase').textContent = `✗ 不正解（${2 - nmAttempts}回チャンスあり）`;
+    $('nmInput').value = '';
+    if (nmAttempts >= 3) {
+      const msg = `${nmLevel}桁でチャレンジ終了。スコア: ${gameScore}pts`;
+      showResult(gameScore, 'ゲーム終了', msg, '💪');
+    }
+  }
+}
+
+$('nmInput').addEventListener('keydown', e => { if (e.key === 'Enter') nmCheck(); });
+
+// ============================================================
+// GAME 3: MATH SPEED
+// ============================================================
+let msCombo = 0, msQuestionTimer = null;
+
+function initMathSpeed() {
+  msCombo = 0;
+  gameScore = 0;
+  $('msCombo').textContent = '';
+  generateMathQuestion();
+  startGameTimer(60, () => {
+    clearTimeout(msQuestionTimer);
+    const emoji = gameScore >= 500 ? '🏆' : gameScore >= 200 ? '⭐' : '💪';
+    showResult(gameScore, '時間切れ！', `計算スコア: ${gameScore}pts。コンボ最高記録を目指そう！`, emoji);
+  });
+}
+
+function generateMathQuestion() {
+  const ops = ['+', '-', '×'];
+  const op = ops[Math.floor(Math.random() * ops.length)];
+  let a, b, ans;
+  if (op === '+') { a = randInt(1,99); b = randInt(1,99); ans = a + b; }
+  else if (op === '-') { a = randInt(10,99); b = randInt(1, a); ans = a - b; }
+  else { a = randInt(2, 12); b = randInt(2, 12); ans = a * b; }
+  $('msExpr').textContent = `${a} ${op} ${b} = ?`;
+
+  const wrongs = new Set();
+  while (wrongs.size < 3) {
+    let w = ans + randInt(-15,15);
+    if (w !== ans && w >= 0) wrongs.add(w);
+  }
+  const choices = [ans, ...[...wrongs]].sort(() => Math.random() - 0.5);
+  const grid = $('msAnswers');
+  grid.innerHTML = '';
+  choices.forEach(c => {
+    const btn = document.createElement('button');
+    btn.className = 'ans-btn';
+    btn.textContent = c;
+    btn.onclick = () => checkMath(c, ans, btn);
+    grid.appendChild(btn);
+  });
+
+  // Per-question timer (ring)
+  let qTime = 8;
+  const ring = $('msRing');
+  const circum = 176;
+  ring.style.strokeDashoffset = 0;
+  clearTimeout(msQuestionTimer);
+  const qInterval = setInterval(() => {
+    qTime--;
+    ring.style.strokeDashoffset = circum * (1 - qTime / 8);
+    if (qTime <= 0) {
+      clearInterval(qInterval);
+      msCombo = 0;
+      $('msCombo').textContent = '';
+      generateMathQuestion();
+    }
+  }, 1000);
+  msQuestionTimer = qInterval;
+}
+
+function checkMath(chosen, correct, btn) {
+  clearInterval(msQuestionTimer);
+  const btns = $('msAnswers').querySelectorAll('.ans-btn');
+  btns.forEach(b => b.disabled = true);
+  if (chosen === correct) {
+    btn.style.background = 'rgba(63,185,80,0.3)';
+    btn.style.borderColor = '#3fb950';
+    msCombo++;
+    const bonus = msCombo >= 3 ? msCombo * 5 : 0;
+    gameScore += 15 + bonus;
+    $('currentScore').textContent = gameScore;
+    $('msCombo').textContent = msCombo >= 2 ? `🔥 ${msCombo}コンボ！ +${bonus}ボーナス` : '';
+  } else {
+    btn.style.background = 'rgba(248,81,73,0.3)';
+    btn.style.borderColor = '#f85149';
+    msCombo = 0;
+    $('msCombo').textContent = 'コンボ切れ…';
+  }
+  setTimeout(generateMathQuestion, 600);
+}
+
+function randInt(a, b) { return Math.floor(Math.random() * (b - a + 1)) + a; }
+
+// ============================================================
+// GAME 4: WORD CHAIN (Shiritori)
+// ============================================================
+const wordList = [
+  'しりとり','りんご','ごりら','らっこ','こあら','らくだ','だちょう','うみ','みかん',
+  'んがないことば','かに','にわとり','りす','すいか','かめ','めだか','かえる','るびー',
+  'びわ','わに','にんじん','んはだめ','じてんしゃ','やぎ','きつね','ねこ','こうもり',
+  'りりー','ももんが','がちょう','うさぎ','ぎたー','たぬき','きくらげ','げんき',
+  'きんぎょ','よろい','いるか','かたつむり','りゅう','うどん','んはだめ2','どんぐり',
+  'くも','もぐら','らいおん','んがつく','おにぎり','りす','すし','しか','かば','ばなな',
+  'なまず','ずわいがに','にし','しまうま','まぐろ','ろばた','たこ','こむぎ','ぎゅうにゅう',
+  'うなぎ','ぎょうざ','ざりがに','にんぎょ','ぎんが','がっき','きんかん','んは禁止','かるた',
+  'たまご','ごきぶり','りきし','しんかんせん','んはアウト','せみ','みつばち','ちょう',
+  'うぐいす','すずめ','めじろ','ろうそく','くりす','すまーとほん','ほたる','るびーぬ',
+  'ぬいぐるみ','みかづき','きもの','のりまき','きのこ','こぶた','たんぽぽ','ぽける',
+  'るーれっと','とっとこ','こもれび','びわこ','こたつ','つきみ','みずたまり'
+];
+
+let wcUsed = new Set(), wcCurrent = '';
+
+function initWordChain() {
+  wcUsed = new Set();
+  gameScore = 0;
+  $('wcInput').value = '';
+  $('wcFeedback').textContent = '';
+  const startWord = 'しりとり';
+  wcUsed.add(startWord);
+  const lastChar = startWord.slice(-1);
+  wcCurrent = lastChar;
+  $('wcMustChar').textContent = lastChar;
+  $('wcChain').innerHTML = `<span class="chain-word current">${startWord}</span>`;
+  $('wcInput').focus();
+  $('wcInput').addEventListener('keydown', wcKeyHandler);
+  startGameTimer(60, () => {
+    $('wcInput').removeEventListener('keydown', wcKeyHandler);
+    const cnt = wcUsed.size - 1;
+    const emoji = cnt >= 20 ? '🏆' : cnt >= 10 ? '⭐' : '💪';
+    showResult(gameScore, '時間切れ！', `${cnt}個のことばを繋げた！`, emoji);
+  });
+}
+
+function wcKeyHandler(e) {
+  if (e.key === 'Enter') wcSubmit();
+}
+
+function wcSubmit() {
+  const val = $('wcInput').value.trim();
+  if (!val) return;
+  const fb = $('wcFeedback');
+  if (!val.startsWith(wcCurrent)) {
+    fb.textContent = `「${wcCurrent}」で始まる言葉を入力してね`;
+    $('wcInput').classList.remove('shake'); void $('wcInput').offsetWidth; $('wcInput').classList.add('shake');
+    return;
+  }
+  const lastChar = val.slice(-1);
+  if (lastChar === 'ん') {
+    fb.textContent = '「ん」で終わる言葉は使えません！';
+    $('wcInput').classList.remove('shake'); void $('wcInput').offsetWidth; $('wcInput').classList.add('shake');
+    return;
+  }
+  if (wcUsed.has(val)) {
+    fb.textContent = 'その言葉はもう使いました！';
+    $('wcInput').classList.remove('shake'); void $('wcInput').offsetWidth; $('wcInput').classList.add('shake');
+    return;
+  }
+  wcUsed.add(val);
+  fb.textContent = '';
+  gameScore += val.length * 5;
+  $('currentScore').textContent = gameScore;
+  wcCurrent = lastChar;
+  $('wcMustChar').textContent = lastChar;
+
+  const chain = $('wcChain');
+  const prevCurrent = chain.querySelector('.current');
+  if (prevCurrent) prevCurrent.classList.remove('current');
+  const span = document.createElement('span');
+  span.className = 'chain-word current fadeIn';
+  span.textContent = val;
+  chain.appendChild(span);
+  chain.scrollLeft = chain.scrollWidth;
+  $('wcInput').value = '';
+  $('wcInput').focus();
+}
+
+// INIT
+showMenu();
+updateGlobalScore();
+</script>
+</body>
+</html>
