@@ -39,19 +39,14 @@ mark { background: gold; color: black; }
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.jsdelivr.net/g/mark.js(jquery.mark.min.js),datatables.mark.js"></script>
 <script>
-// URL引数からパラメータを取得する関数
-function getQueryParam(param) {
-	const urlParams = new URLSearchParams(window.location.search);
-	return urlParams.get(param);
-}
+// 表示する列のインデックス（0始まり）: 1列目=0, 2列目=1, 6列目=5
+const DISPLAY_COLUMNS = [0, 1, 5];
+
 // CSVを読み込んでテーブルに表示する関数
-async function loadCsvAndDisplay(csvFileName) {
+async function loadCsvAndDisplay() {
 	try {
-		if (!csvFileName) {
-			throw new Error("CSVファイル名が指定されていません。");
-		}
-		// CSVファイルを取得
-		const response = await fetch(csvFileName);
+		// CSVファイルを取得（固定パス）
+		const response = await fetch('csv/kanji_data.csv');
 		if (!response.ok) {
 			throw new Error(`HTTPエラー: ${response.status}`);
 		}
@@ -63,23 +58,23 @@ async function loadCsvAndDisplay(csvFileName) {
 		// HTMLテーブルを生成
 		const table = document.createElement('table');
 		table.id = 'dataTable';
-		// <thead>を生成
+		// <thead>を生成（指定列のみ）
 		const thead = document.createElement('thead');
 		const headerRow = document.createElement('tr');
-		tableData[0].forEach(header => {
+		DISPLAY_COLUMNS.forEach(colIdx => {
 			const th = document.createElement('th');
-			th.textContent = header.trim();
+			th.textContent = (tableData[0][colIdx] || '').trim();
 			headerRow.appendChild(th);
 		});
 		thead.appendChild(headerRow);
 		table.appendChild(thead);
-		// <tbody>を生成
+		// <tbody>を生成（指定列のみ）
 		const tbody = document.createElement('tbody');
 		for (let i = 1; i < tableData.length; i++) {
 			const row = document.createElement('tr');
-			tableData[i].forEach(cell => {
+			DISPLAY_COLUMNS.forEach(colIdx => {
 				const td = document.createElement('td');
-				td.textContent = cell.trim();
+				td.textContent = (tableData[i][colIdx] || '').trim();
 				row.appendChild(td);
 			});
 			tbody.appendChild(row);
@@ -102,9 +97,7 @@ async function loadCsvAndDisplay(csvFileName) {
 		document.getElementById('csv-table-container').textContent = `エラー: ${error.message}`;
 	}
 }
-// URL引数 "csv" からファイル名を取得してロード
-const csvFileName = getQueryParam('csv');
-loadCsvAndDisplay(csvFileName);
+loadCsvAndDisplay();
 </script>
 </body>
 </html>

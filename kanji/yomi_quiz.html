@@ -173,7 +173,7 @@ body { font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic UI", "Meiryo", sans-
 <script>
 
 async function loadKanji() {
-	const res = await fetch('kanji_data.csv');
+	const res = await fetch('csv/kanji_data.csv');
 	const text = await res.text();
 	const lines = text.trim().split('\n').slice(1); // skip header
 	return lines.map(line => {
