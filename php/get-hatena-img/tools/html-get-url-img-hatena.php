@@ -17,7 +17,7 @@
 	define("GET_URL_FILE_TYPE_SELECTS", "jpeg,jpg,gif,png,wmv,flv,avi,mpg,mov,mp4");
 	if ($_POST) {
 		if (isset($_POST['reset'])) {
-			$url = 'https://f.hatena.ne.jp/art2nd/Hatena%20Blog/';	// 'http://f.hatena.ne.jp/'
+			$url = 'https://f.hatena.ne.jp/{はてなID}/{ディレクトリ}/';
 		} else {
 			$url = str_replace(DIRECTORY_SEPARATOR, '/', form_str_filepath($_POST['url']));
 		}
