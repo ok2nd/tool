@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ノノグラム</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, -apple-system, sans-serif;
+    background: #f5f5f0;
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 24px 16px;
+  }
+  .container {
+    background: #fff;
+    border-radius: 16px;
+    padding: 28px 28px 24px;
+    max-width: 680px;
+    width: 100%;
+    border: 1px solid #e0e0d8;
+  }
+  h1 { font-size: 20px; font-weight: 600; color: #1a1a18; text-align: center; margin-bottom: 2px; }
+  .subtitle { font-size: 13px; color: #888780; text-align: center; margin-bottom: 20px; }
+
+  .toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+  .puzzle-sel { display: flex; gap: 6px; flex-wrap: wrap; }
+  .pz-btn {
+    padding: 5px 14px;
+    border-radius: 8px;
+    border: 1px solid #d0d0c8;
+    background: transparent;
+    font-size: 13px;
+    color: #444441;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.12s;
+  }
+  .pz-btn:hover { background: #f5f5f0; }
+  .pz-btn.active { background: #185FA5; border-color: #185FA5; color: #fff; font-weight: 500; }
+
+  .mode-btns { display: flex; gap: 6px; }
+  .mode-btn {
+    padding: 5px 14px;
+    border-radius: 8px;
+    border: 1px solid #d0d0c8;
+    background: transparent;
+    font-size: 13px;
+    color: #444441;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.12s;
+  }
+  .mode-btn:hover { background: #f5f5f0; }
+  .mode-btn.fill-mode { background: #1a1a18; border-color: #1a1a18; color: #fff; }
+  .mode-btn.cross-mode { background: #fff; border-color: #d0d0c8; color: #888780; }
+  .mode-btn.cross-mode.active-mode { background: #E24B4A; border-color: #E24B4A; color: #fff; }
+
+  .stats { display: flex; gap: 24px; justify-content: center; margin-bottom: 16px; }
+  .stat { text-align: center; }
+  .stat-val { font-size: 24px; font-weight: 600; color: #1a1a18; line-height: 1; }
+  .stat-label { font-size: 11px; color: #888780; margin-top: 2px; }
+
+  .board-scroll { overflow-x: auto; }
+  .board-outer { display: inline-block; min-width: 100%; }
+
+  table { border-collapse: collapse; margin: 0 auto; }
+
+  .hint-cell {
+    padding: 2px 4px;
+    text-align: center;
+    vertical-align: bottom;
+    font-size: 12px;
+    font-weight: 500;
+    color: #444441;
+    min-width: 28px;
+    line-height: 1.5;
+  }
+  .hint-cell.row-hint {
+    text-align: right;
+    vertical-align: middle;
+    padding-right: 6px;
+    white-space: nowrap;
+  }
+  .hint-cell .h-num { display: block; }
+  .hint-cell .h-num.done { color: #97C459; }
+
+  .game-cell {
+    width: 32px;
+    height: 32px;
+    border: 1px solid #c8c8c0;
+    background: #fff;
+    cursor: pointer;
+    transition: background 0.08s;
+    position: relative;
+  }
+  .game-cell:hover { background: #E6F1FB; }
+  .game-cell.filled { background: #1a1a18; border-color: #1a1a18; }
+  .game-cell.filled:hover { background: #444441; }
+  .game-cell.crossed { background: #fff; }
+  .game-cell.crossed::after {
+    content: '×';
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 600;
+    color: #E24B4A;
+    pointer-events: none;
+  }
+  .game-cell.error-hint { background: #FCEBEB !important; border-color: #E24B4A !important; }
+
+  .sep-right { border-right: 2px solid #888780 !important; }
+  .sep-bottom { border-bottom: 2px solid #888780 !important; }
+
+  .controls {
+    display: flex; gap: 10px; justify-content: center; margin-top: 18px; flex-wrap: wrap;
+  }
+  .ctrl {
+    padding: 9px 22px;
+    border-radius: 8px;
+    border: 1px solid #d0d0c8;
+    background: transparent;
+    font-size: 14px;
+    color: #444441;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.12s;
+  }
+  .ctrl:hover { background: #f5f5f0; }
+  .ctrl.primary { background: #185FA5; border-color: #185FA5; color: #fff; }
+  .ctrl.primary:hover { background: #0C447C; }
+
+  #message {
+    text-align: center;
+    font-size: 14px;
+    font-weight: 500;
+    min-height: 20px;
+    margin-top: 14px;
+    color: #3B6D11;
+  }
+  #message.info { color: #888780; font-weight: 400; }
+  #message.err { color: #A32D2D; }
+
+  .legend {
+    display: flex; gap: 16px; justify-content: center; margin-bottom: 14px; flex-wrap: wrap;
+  }
+  .legend-item {
+    display: flex; align-items: center; gap: 6px; font-size: 12px; color: #888780;
+  }
+  .legend-swatch {
+    width: 16px; height: 16px; border-radius: 3px; border: 1px solid #d0d0c8;
+    display: flex; align-items: center; justify-content: center;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>ノノグラム</h1>
+  <p class="subtitle">行と列のヒントを手がかりに、マスを塗りつぶそう</p>
+
+  <div class="toolbar">
+    <div class="puzzle-sel" id="puzzle-sel"></div>
+    <div class="mode-btns">
+      <button class="mode-btn fill-mode" id="btn-fill" onclick="setMode('fill')">塗る</button>
+      <button class="mode-btn cross-mode" id="btn-cross" onclick="setMode('cross')">×印</button>
+    </div>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item">
+      <div class="legend-swatch" style="background:#1a1a18;border-color:#1a1a18;"></div>
+      塗りつぶし
+    </div>
+    <div class="legend-item">
+      <div class="legend-swatch" style="color:#E24B4A;font-weight:700;font-size:13px;">×</div>
+      空きマス目印
+    </div>
+    <div class="legend-item">
+      <div class="legend-swatch" style="color:#97C459;font-weight:700;font-size:13px;">✓</div>
+      ヒント達成
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="stat-val" id="stat-moves">0</div><div class="stat-label">操作数</div></div>
+    <div class="stat"><div class="stat-val" id="stat-time">0:00</div><div class="stat-label">タイム</div></div>
+    <div class="stat"><div class="stat-val" id="stat-errors">0</div><div class="stat-label">ミス</div></div>
+  </div>
+
+  <div class="board-scroll">
+    <div class="board-outer">
+      <table id="board"></table>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button class="ctrl primary" onclick="resetPuzzle()">リセット</button>
+    <button class="ctrl" onclick="checkPuzzle()">チェック</button>
+    <button class="ctrl" onclick="giveHint()">ヒント</button>
+  </div>
+
+  <div id="message" class="info">左クリックで塗る、右クリックで×印</div>
+</div>
+
+<script>
+const PUZZLES = [
+  {
+    name: '星',
+    rows: [[2],[4],[1,1],[4],[2],[4],[1,1],[4],[2]],
+    cols: [[2],[4],[1,1],[4],[2],[4],[1,1],[4],[2]],
+    solution: [
+      [0,0,0,0,1,0,0,0,0],
+      [0,0,0,1,1,1,0,0,0],
+      [0,0,1,0,1,0,1,0,0],
+      [0,1,1,1,1,1,1,1,0],
+      [1,1,0,0,1,0,0,1,1],
+      [0,1,1,1,1,1,1,1,0],
+      [0,0,1,0,1,0,1,0,0],
+      [0,0,0,1,1,1,0,0,0],
+      [0,0,0,0,1,0,0,0,0],
+    ]
+  },
+  {
+    name: 'ハート',
+    rows: [[3,3],[5,5],[11],[9],[7],[5],[3],[1]],
+    cols: [[1],[3],[5],[7],[7],[8],[7],[7],[5],[3],[1]],
+    solution: [
+      [0,1,1,1,0,1,1,1,0,0,0],
+      [1,1,1,1,1,1,1,1,1,1,0],
+      [1,1,1,1,1,1,1,1,1,1,1],
+      [0,1,1,1,1,1,1,1,1,1,0],
+      [0,0,1,1,1,1,1,1,1,0,0],
+      [0,0,0,1,1,1,1,1,0,0,0],
+      [0,0,0,0,1,1,1,0,0,0,0],
+      [0,0,0,0,0,1,0,0,0,0,0],
+    ]
+  },
+  {
+    name: '家',
+    rows: [[3],[5],[7],[1,1],[7],[1,1],[1,1],[7]],
+    cols: [[2],[4],[4,1],[6],[6],[4,1],[4],[2]],
+    solution: [
+      [0,0,1,1,1,0,0,0],
+      [0,1,1,1,1,1,0,0],
+      [1,1,1,1,1,1,1,0],
+      [0,1,0,0,0,0,1,0],
+      [0,1,1,1,1,1,1,0],
+      [0,1,0,0,0,0,1,0],
+      [0,1,0,0,0,0,1,0],
+      [0,1,1,1,1,1,1,0],
+    ]
+  },
+  {
+    name: '魚',
+    rows: [[2,1],[2,3],[7],[1,5],[7],[2,3],[2,1]],
+    cols: [[1],[2],[3],[4],[5],[3,1],[3,1],[3],[1],[1],[1]],
+    solution: [
+      [1,1,0,0,0,0,0,0,0,0,1],
+      [0,1,1,0,0,0,0,0,1,1,1],
+      [0,0,1,1,1,1,1,1,1,0,0],
+      [1,0,1,1,1,1,1,1,1,1,0],
+      [0,0,1,1,1,1,1,1,1,0,0],
+      [0,1,1,0,0,0,0,0,1,1,1],
+      [1,1,0,0,0,0,0,0,0,0,1],
+    ]
+  },
+  {
+    name: '木',
+    rows: [[1],[3],[5],[7],[9],[3],[3],[3]],
+    cols: [[1],[2],[3],[5],[7],[5],[3],[2],[1]],
+    solution: [
+      [0,0,0,0,1,0,0,0,0],
+      [0,0,0,1,1,1,0,0,0],
+      [0,0,1,1,1,1,1,0,0],
+      [0,1,1,1,1,1,1,1,0],
+      [1,1,1,1,1,1,1,1,1],
+      [0,0,0,1,1,1,0,0,0],
+      [0,0,0,1,1,1,0,0,0],
+      [0,0,0,1,1,1,0,0,0],
+    ]
+  },
+  {
+    name: '数字',
+    rows: [[5],[1,1],[5],[1,1],[5],[],[5],[1,1],[5],[1,1],[5]],
+    cols: [[5,5],[1,1,1,1],[5,5],[1,1,1,1],[5,5]],
+    solution: [
+      [1,1,1,1,1],
+      [1,0,0,0,1],
+      [1,1,1,1,1],
+      [1,0,0,0,1],
+      [1,1,1,1,1],
+      [0,0,0,0,0],
+      [1,1,1,1,1],
+      [1,0,0,0,1],
+      [1,1,1,1,1],
+      [1,0,0,0,1],
+      [1,1,1,1,1],
+    ]
+  },
+];
+
+let curPuzzle = 0;
+let grid = [];
+let mode = 'fill';
+let moves = 0, errors = 0, seconds = 0;
+let timerInterval = null;
+let started = false;
+let solved = false;
+let isDragging = false;
+let dragValue = null;
+
+function setMode(m) {
+  mode = m;
+  document.getElementById('btn-fill').className = 'mode-btn fill-mode' + (m === 'fill' ? '' : '');
+  document.getElementById('btn-cross').className = 'mode-btn cross-mode' + (m === 'cross' ? ' active-mode' : '');
+  if (m === 'fill') {
+    document.getElementById('btn-fill').style.background = '#1a1a18';
+    document.getElementById('btn-fill').style.color = '#fff';
+    document.getElementById('btn-fill').style.borderColor = '#1a1a18';
+    document.getElementById('btn-cross').style.background = '';
+    document.getElementById('btn-cross').style.color = '#888780';
+    document.getElementById('btn-cross').style.borderColor = '#d0d0c8';
+  } else {
+    document.getElementById('btn-cross').style.background = '#E24B4A';
+    document.getElementById('btn-cross').style.color = '#fff';
+    document.getElementById('btn-cross').style.borderColor = '#E24B4A';
+    document.getElementById('btn-fill').style.background = '';
+    document.getElementById('btn-fill').style.color = '#444441';
+    document.getElementById('btn-fill').style.borderColor = '#d0d0c8';
+  }
+}
+
+function loadPuzzle(idx) {
+  curPuzzle = idx;
+  const p = PUZZLES[idx];
+  const R = p.solution.length;
+  const C = p.solution[0].length;
+  grid = Array.from({length: R}, () => new Array(C).fill(0));
+  moves = 0; errors = 0; seconds = 0; started = false; solved = false;
+  clearInterval(timerInterval); timerInterval = null;
+  updateStats();
+  renderPuzzleBtns();
+  renderBoard();
+  setMsg('左クリックで塗る、右クリックで×印', 'info');
+}
+
+function resetPuzzle() { loadPuzzle(curPuzzle); }
+
+function renderPuzzleBtns() {
+  const el = document.getElementById('puzzle-sel');
+  el.innerHTML = '';
+  PUZZLES.forEach((p, i) => {
+    const b = document.createElement('button');
+    b.className = 'pz-btn' + (i === curPuzzle ? ' active' : '');
+    b.textContent = p.name;
+    b.onclick = () => loadPuzzle(i);
+    el.appendChild(b);
+  });
+}
+
+function getClues(arr) {
+  const runs = [];
+  let cnt = 0;
+  for (const v of arr) {
+    if (v === 1) cnt++;
+    else if (cnt > 0) { runs.push(cnt); cnt = 0; }
+  }
+  if (cnt > 0) runs.push(cnt);
+  return runs.length ? runs : [0];
+}
+
+function renderBoard() {
+  const p = PUZZLES[curPuzzle];
+  const R = p.solution.length;
+  const C = p.solution[0].length;
+  const rowClues = p.rows;
+  const colClues = p.cols;
+
+  const maxRowClues = Math.max(...rowClues.map(r => r.length));
+  const maxColClues = Math.max(...colClues.map(c => c.length));
+
+  const table = document.getElementById('board');
+  table.innerHTML = '';
+
+  for (let hr = 0; hr < maxColClues; hr++) {
+    const tr = document.createElement('tr');
+    for (let hc = 0; hc < maxRowClues; hc++) {
+      const td = document.createElement('td');
+      td.className = 'hint-cell';
+      tr.appendChild(td);
+    }
+    for (let c = 0; c < C; c++) {
+      const td = document.createElement('td');
+      td.className = 'hint-cell';
+      const clue = colClues[c];
+      const offset = maxColClues - clue.length;
+      const numIdx = hr - offset;
+      if (numIdx >= 0 && numIdx < clue.length) {
+        const span = document.createElement('span');
+        span.className = 'h-num';
+        span.id = `ch-${c}-${numIdx}`;
+        span.textContent = clue[numIdx];
+        td.appendChild(span);
+      }
+      if (c % 5 === 4 && c < C - 1) td.classList.add('sep-right');
+      tr.appendChild(td);
+    }
+    table.appendChild(tr);
+  }
+
+  for (let r = 0; r < R; r++) {
+    const tr = document.createElement('tr');
+    const clue = rowClues[r];
+    for (let hc = 0; hc < maxRowClues; hc++) {
+      const td = document.createElement('td');
+      td.className = 'hint-cell row-hint';
+      const offset = maxRowClues - clue.length;
+      const numIdx = hc - offset;
+      if (numIdx >= 0 && numIdx < clue.length) {
+        const span = document.createElement('span');
+        span.className = 'h-num';
+        span.id = `rh-${r}-${numIdx}`;
+        span.textContent = clue[numIdx];
+        td.appendChild(span);
+      }
+      tr.appendChild(td);
+    }
+    for (let c = 0; c < C; c++) {
+      const td = document.createElement('td');
+      td.className = 'game-cell';
+      if (grid[r][c] === 1) td.classList.add('filled');
+      if (grid[r][c] === 2) td.classList.add('crossed');
+      if (c % 5 === 4 && c < C - 1) td.classList.add('sep-right');
+      if (r % 5 === 4 && r < R - 1) td.classList.add('sep-bottom');
+      td.dataset.r = r; td.dataset.c = c;
+      td.addEventListener('mousedown', onCellDown);
+      td.addEventListener('mouseover', onCellOver);
+      td.addEventListener('contextmenu', e => { e.preventDefault(); onCellRight(r, c); });
+      tr.appendChild(td);
+    }
+    table.appendChild(tr);
+  }
+
+  document.addEventListener('mouseup', () => { isDragging = false; dragValue = null; });
+  updateHints();
+}
+
+function onCellDown(e) {
+  e.preventDefault();
+  const r = +e.currentTarget.dataset.r, c = +e.currentTarget.dataset.c;
+  if (e.button === 2) { onCellRight(r, c); return; }
+  isDragging = true;
+  const cur = grid[r][c];
+  if (mode === 'fill') {
+    dragValue = cur === 1 ? 0 : 1;
+  } else {
+    dragValue = cur === 2 ? 0 : 2;
+  }
+  applyCell(r, c, dragValue);
+}
+
+function onCellOver(e) {
+  if (!isDragging || dragValue === null) return;
+  const r = +e.currentTarget.dataset.r, c = +e.currentTarget.dataset.c;
+  applyCell(r, c, dragValue);
+}
+
+function onCellRight(r, c) {
+  const cur = grid[r][c];
+  applyCell(r, c, cur === 2 ? 0 : 2);
+}
+
+function applyCell(r, c, val) {
+  if (solved) return;
+  if (grid[r][c] === val) return;
+  if (!started) {
+    started = true;
+    timerInterval = setInterval(() => { seconds++; updateStats(); }, 1000);
+  }
+  grid[r][c] = val;
+  moves++;
+  updateCellUI(r, c);
+  updateHints();
+  updateStats();
+  checkWin();
+}
+
+function updateCellUI(r, c) {
+  const p = PUZZLES[curPuzzle];
+  const maxRowClues = Math.max(...p.rows.map(x => x.length));
+  const maxColClues = Math.max(...p.cols.map(x => x.length));
+  const table = document.getElementById('board');
+  const row = table.rows[maxColClues + r];
+  if (!row) return;
+  const td = row.cells[maxRowClues + c];
+  if (!td) return;
+  td.className = td.className.replace(/\s*(filled|crossed|error-hint)/g, '');
+  if (c % 5 === 4 && c < p.solution[0].length - 1) td.classList.add('sep-right');
+  if (r % 5 === 4 && r < p.solution.length - 1) td.classList.add('sep-bottom');
+  td.classList.add('game-cell');
+  if (grid[r][c] === 1) td.classList.add('filled');
+  if (grid[r][c] === 2) td.classList.add('crossed');
+}
+
+function updateHints() {
+  const p = PUZZLES[curPuzzle];
+  const R = p.solution.length, C = p.solution[0].length;
+  for (let r = 0; r < R; r++) {
+    const filled = grid[r].map(v => v === 1 ? 1 : 0);
+    const cur = getClues(filled);
+    const clue = p.rows[r];
+    clue.forEach((num, i) => {
+      const el = document.getElementById(`rh-${r}-${i}`);
+      if (el) el.className = 'h-num' + (JSON.stringify(cur) === JSON.stringify(clue) ? ' done' : '');
+    });
+  }
+  for (let c = 0; c < C; c++) {
+    const col = grid.map(row => row[c] === 1 ? 1 : 0);
+    const cur = getClues(col);
+    const clue = p.cols[c];
+    clue.forEach((num, i) => {
+      const el = document.getElementById(`ch-${c}-${i}`);
+      if (el) el.className = 'h-num' + (JSON.stringify(cur) === JSON.stringify(clue) ? ' done' : '');
+    });
+  }
+}
+
+function checkWin() {
+  const p = PUZZLES[curPuzzle];
+  const R = p.solution.length, C = p.solution[0].length;
+  for (let r = 0; r < R; r++)
+    for (let c = 0; c < C; c++)
+      if ((grid[r][c] === 1 ? 1 : 0) !== p.solution[r][c]) return;
+  clearInterval(timerInterval);
+  solved = true;
+  setMsg('クリア！ ' + moves + '手 / ' + fmtTime(seconds), 'ok');
+}
+
+function checkPuzzle() {
+  const p = PUZZLES[curPuzzle];
+  const R = p.solution.length, C = p.solution[0].length;
+  const maxRowClues = Math.max(...p.rows.map(x => x.length));
+  const maxColClues = Math.max(...p.cols.map(x => x.length));
+  const table = document.getElementById('board');
+  let errCount = 0;
+  for (let r = 0; r < R; r++) {
+    for (let c = 0; c < C; c++) {
+      const cell = grid[r][c];
+      const sol = p.solution[r][c];
+      if (cell === 1 && sol === 0) {
+        errCount++;
+        errors++;
+        const td = table.rows[maxColClues + r]?.cells[maxRowClues + c];
+        if (td) {
+          td.classList.add('error-hint');
+          setTimeout(() => { td.classList.remove('error-hint'); }, 1000);
+        }
+        grid[r][c] = 0;
+        setTimeout(() => updateCellUI(r, c), 1050);
+      }
+    }
+  }
+  updateStats();
+  if (errCount > 0) setMsg(errCount + 'か所ミスがありました', 'err');
+  else if (!solved) setMsg('今のところ正解です！', 'info');
+}
+
+function giveHint() {
+  const p = PUZZLES[curPuzzle];
+  const R = p.solution.length, C = p.solution[0].length;
+  const candidates = [];
+  for (let r = 0; r < R; r++)
+    for (let c = 0; c < C; c++)
+      if (grid[r][c] === 0) candidates.push([r, c]);
+  if (!candidates.length) return;
+  const [r, c] = candidates[Math.floor(Math.random() * candidates.length)];
+  const val = p.solution[r][c] === 1 ? 1 : 2;
+  applyCell(r, c, val);
+  setMsg('ヒント: (' + (r+1) + '行' + (c+1) + '列) を' + (val === 1 ? '塗りました' : '×にしました'), 'info');
+}
+
+function updateStats() {
+  document.getElementById('stat-moves').textContent = moves;
+  document.getElementById('stat-time').textContent = fmtTime(seconds);
+  document.getElementById('stat-errors').textContent = errors;
+}
+
+function fmtTime(s) {
+  return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+}
+
+function setMsg(txt, type) {
+  const el = document.getElementById('message');
+  el.textContent = txt;
+  el.className = type === 'info' ? 'info' : type === 'err' ? 'err' : '';
+}
+
+loadPuzzle(0);
+</script>
+</body>
+</html>

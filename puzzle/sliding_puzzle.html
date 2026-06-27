@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>スライドパズル</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: system-ui, -apple-system, sans-serif;
+    background: #f5f5f0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .container {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 32px;
+    max-width: 480px;
+    width: 100%;
+    border: 1px solid #e0e0d8;
+  }
+
+  h1 {
+    font-size: 20px;
+    font-weight: 600;
+    color: #1a1a18;
+    margin-bottom: 4px;
+    text-align: center;
+  }
+
+  .subtitle {
+    font-size: 13px;
+    color: #888780;
+    text-align: center;
+    margin-bottom: 24px;
+  }
+
+  .stats {
+    display: flex;
+    justify-content: center;
+    gap: 32px;
+    margin-bottom: 24px;
+  }
+
+  .stat {
+    text-align: center;
+  }
+
+  .stat-val {
+    font-size: 28px;
+    font-weight: 600;
+    color: #1a1a18;
+    line-height: 1;
+  }
+
+  .stat-label {
+    font-size: 12px;
+    color: #888780;
+    margin-top: 4px;
+  }
+
+  .size-selector {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  .size-btn {
+    padding: 6px 16px;
+    border-radius: 8px;
+    border: 1px solid #d0d0c8;
+    background: transparent;
+    font-size: 13px;
+    color: #444441;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .size-btn:hover { background: #f5f5f0; }
+
+  .size-btn.active {
+    background: #185FA5;
+    border-color: #185FA5;
+    color: #ffffff;
+    font-weight: 500;
+  }
+
+  .board-wrap {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 24px;
+  }
+
+  #board {
+    display: grid;
+    gap: 6px;
+    background: #e8e8e0;
+    padding: 6px;
+    border-radius: 12px;
+  }
+
+  .tile {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.1s, background 0.1s;
+    user-select: none;
+    background: #ffffff;
+    border: 1px solid #e0e0d8;
+    color: #1a1a18;
+  }
+
+  .tile:hover:not(.empty):not(.correct) {
+    background: #E6F1FB;
+    border-color: #85B7EB;
+    color: #0C447C;
+  }
+
+  .tile:active:not(.empty) {
+    transform: scale(0.95);
+  }
+
+  .tile.empty {
+    background: #e8e8e0;
+    border-color: transparent;
+    cursor: default;
+  }
+
+  .tile.correct {
+    background: #EAF3DE;
+    border-color: #97C459;
+    color: #27500A;
+    cursor: default;
+  }
+
+  .tile.moving {
+    background: #E6F1FB;
+    border-color: #378ADD;
+    color: #185FA5;
+  }
+
+  .controls {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 16px;
+  }
+
+  button.ctrl {
+    padding: 10px 22px;
+    border-radius: 8px;
+    border: 1px solid #d0d0c8;
+    background: transparent;
+    font-size: 14px;
+    color: #444441;
+    cursor: pointer;
+    transition: background 0.15s;
+    font-family: inherit;
+  }
+
+  button.ctrl:hover { background: #f5f5f0; }
+
+  button.ctrl.primary {
+    background: #185FA5;
+    border-color: #185FA5;
+    color: #ffffff;
+  }
+
+  button.ctrl.primary:hover { background: #0C447C; }
+
+  #message {
+    text-align: center;
+    font-size: 15px;
+    font-weight: 500;
+    min-height: 22px;
+    color: #3B6D11;
+  }
+
+  #message.info { color: #888780; }
+
+  .best {
+    text-align: center;
+    font-size: 12px;
+    color: #888780;
+    margin-top: 8px;
+  }
+
+  .timer-running { color: #185FA5 !important; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>スライドパズル</h1>
+  <p class="subtitle">数字を順番に並べよう — 空きマスを使って動かす</p>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-val" id="moves">0</div>
+      <div class="stat-label">手数</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val" id="timer">0:00</div>
+      <div class="stat-label">タイム</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val" id="correct-count">0</div>
+      <div class="stat-label">正位置</div>
+    </div>
+  </div>
+
+  <div class="size-selector">
+    <button class="size-btn" onclick="setSize(3)">3×3</button>
+    <button class="size-btn active" onclick="setSize(4)">4×4</button>
+    <button class="size-btn" onclick="setSize(5)">5×5</button>
+  </div>
+
+  <div class="board-wrap">
+    <div id="board"></div>
+  </div>
+
+  <div class="controls">
+    <button class="ctrl primary" onclick="newGame()">シャッフル</button>
+    <button class="ctrl" onclick="solveStep()">ヒント</button>
+    <button class="ctrl" onclick="resetGame()">リセット</button>
+  </div>
+
+  <div id="message" class="info">タイルをクリックして動かそう</div>
+  <div class="best" id="best-label"></div>
+</div>
+
+<script>
+let N = 4;
+let tiles = [];
+let moveCount = 0;
+let seconds = 0;
+let timerInterval = null;
+let started = false;
+let solved = false;
+let bests = {};
+let initialTiles = [];
+
+function setSize(n) {
+  N = n;
+  document.querySelectorAll('.size-btn').forEach((b, i) => {
+    b.classList.toggle('active', [3,4,5][i] === n);
+  });
+  newGame();
+}
+
+function goalTiles() {
+  const arr = [];
+  for (let i = 1; i < N * N; i++) arr.push(i);
+  arr.push(0);
+  return arr;
+}
+
+function isSolvable(arr) {
+  let inv = 0;
+  const flat = arr.filter(x => x !== 0);
+  for (let i = 0; i < flat.length; i++)
+    for (let j = i + 1; j < flat.length; j++)
+      if (flat[i] > flat[j]) inv++;
+  const blankRow = Math.floor(arr.indexOf(0) / N);
+  if (N % 2 === 1) return inv % 2 === 0;
+  const rowFromBottom = N - blankRow;
+  return (rowFromBottom % 2 === 1) ? (inv % 2 === 0) : (inv % 2 === 1);
+}
+
+function shuffle() {
+  let arr = goalTiles();
+  do {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+  } while (!isSolvable(arr) || isGoal(arr));
+  return arr;
+}
+
+function isGoal(arr) {
+  const g = goalTiles();
+  return arr.every((v, i) => v === g[i]);
+}
+
+function newGame() {
+  clearInterval(timerInterval);
+  timerInterval = null;
+  moveCount = 0;
+  seconds = 0;
+  started = false;
+  solved = false;
+  tiles = shuffle();
+  initialTiles = [...tiles];
+  updateDisplay();
+  render();
+  setMsg('タイルをクリックして動かそう', true);
+  updateBestLabel();
+}
+
+function resetGame() {
+  clearInterval(timerInterval);
+  timerInterval = null;
+  moveCount = 0;
+  seconds = 0;
+  started = false;
+  solved = false;
+  tiles = [...initialTiles];
+  updateDisplay();
+  render();
+  setMsg('タイルをクリックして動かそう', true);
+}
+
+function updateDisplay() {
+  document.getElementById('moves').textContent = moveCount;
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  const el = document.getElementById('timer');
+  el.textContent = m + ':' + String(s).padStart(2, '0');
+  el.className = 'stat-val' + (started && !solved ? ' timer-running' : '');
+  const goal = goalTiles();
+  const correct = tiles.filter((v, i) => v !== 0 && v === goal[i]).length;
+  document.getElementById('correct-count').textContent = correct;
+}
+
+function render() {
+  const board = document.getElementById('board');
+  const tileSize = N === 3 ? 88 : N === 4 ? 78 : 64;
+  const fontSize = N === 3 ? 26 : N === 4 ? 22 : 18;
+  board.style.gridTemplateColumns = `repeat(${N}, ${tileSize}px)`;
+  board.innerHTML = '';
+  const goal = goalTiles();
+  tiles.forEach((val, idx) => {
+    const div = document.createElement('div');
+    div.className = 'tile';
+    div.style.width = tileSize + 'px';
+    div.style.height = tileSize + 'px';
+    div.style.fontSize = fontSize + 'px';
+    if (val === 0) {
+      div.classList.add('empty');
+    } else {
+      div.textContent = val;
+      if (val === goal[idx]) div.classList.add('correct');
+      div.onclick = () => moveTile(idx);
+    }
+    board.appendChild(div);
+  });
+}
+
+function moveTile(idx) {
+  if (solved) return;
+  const blankIdx = tiles.indexOf(0);
+  const r1 = Math.floor(idx / N), c1 = idx % N;
+  const r2 = Math.floor(blankIdx / N), c2 = blankIdx % N;
+  const dist = Math.abs(r1 - r2) + Math.abs(c1 - c2);
+  if (dist !== 1) return;
+
+  if (!started) {
+    started = true;
+    timerInterval = setInterval(() => {
+      seconds++;
+      updateDisplay();
+    }, 1000);
+  }
+
+  [tiles[idx], tiles[blankIdx]] = [tiles[blankIdx], tiles[idx]];
+  moveCount++;
+  updateDisplay();
+
+  if (isGoal(tiles)) {
+    clearInterval(timerInterval);
+    solved = true;
+    render();
+    const key = N + 'x' + N;
+    const prev = bests[key];
+    let msg = 'クリア！ ' + moveCount + '手 / ' + fmtTime(seconds);
+    if (!prev || moveCount < prev.moves || (moveCount === prev.moves && seconds < prev.sec)) {
+      bests[key] = { moves: moveCount, sec: seconds };
+      if (prev) msg += ' — 新記録！';
+    }
+    setMsg(msg, false);
+    updateBestLabel();
+    setTimeout(() => render(), 50);
+    return;
+  }
+
+  setMsg('', true);
+  render();
+}
+
+function fmtTime(s) {
+  return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+}
+
+function setMsg(txt, info) {
+  const el = document.getElementById('message');
+  el.textContent = txt;
+  el.className = info ? 'info' : '';
+}
+
+function updateBestLabel() {
+  const key = N + 'x' + N;
+  const b = bests[key];
+  document.getElementById('best-label').textContent = b
+    ? 'ベスト: ' + b.moves + '手 / ' + fmtTime(b.sec) : '';
+}
+
+function solveStep() {
+  if (solved) return;
+  const blankIdx = tiles.indexOf(0);
+  const goal = goalTiles();
+  const neighbors = getNeighbors(blankIdx);
+  let best = null, bestScore = Infinity;
+  for (const ni of neighbors) {
+    const copy = [...tiles];
+    [copy[ni], copy[blankIdx]] = [copy[blankIdx], copy[ni]];
+    const score = manhattan(copy, goal);
+    if (score < bestScore) { bestScore = score; best = ni; }
+  }
+  if (best !== null) {
+    const tileEl = document.getElementById('board').children[best];
+    if (tileEl) {
+      tileEl.classList.add('moving');
+      setTimeout(() => moveTile(best), 200);
+    } else {
+      moveTile(best);
+    }
+    setMsg('ヒント: このタイルを動かそう', true);
+  }
+}
+
+function getNeighbors(idx) {
+  const r = Math.floor(idx / N), c = idx % N;
+  const res = [];
+  if (r > 0) res.push(idx - N);
+  if (r < N-1) res.push(idx + N);
+  if (c > 0) res.push(idx - 1);
+  if (c < N-1) res.push(idx + 1);
+  return res;
+}
+
+function manhattan(arr, goal) {
+  let sum = 0;
+  for (let i = 0; i < arr.length; i++) {
+    if (arr[i] === 0) continue;
+    const gi = goal.indexOf(arr[i]);
+    sum += Math.abs(Math.floor(i/N) - Math.floor(gi/N)) + Math.abs(i%N - gi%N);
+  }
+  return sum;
+}
+
+newGame();
+</script>
+</body>
+</html>

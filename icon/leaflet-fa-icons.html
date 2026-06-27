@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Font Awesome × Leaflet アイコン一覧</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f5f6f8;
+    --surface: #ffffff;
+    --border: #e2e5ea;
+    --text: #1a1d23;
+    --text-muted: #6b7280;
+    --accent: #2563eb;
+    --accent-light: #eff6ff;
+    --accent-dark: #1d4ed8;
+    --tag-bg: #f0f4ff;
+    --tag-text: #3b5bdb;
+    --radius: 10px;
+    --shadow: 0 1px 4px rgba(0,0,0,0.08);
+    --icon-size: 1.6rem;
+    --icon-color: #2563eb;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 1.5rem 2rem 1rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+
+  header h1 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 0.75rem;
+  }
+
+  header h1 i {
+    color: var(--accent);
+    font-size: 1.1rem;
+  }
+
+  .controls {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .style-bar {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    align-items: center;
+    padding: 0.6rem 0.9rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-top: 0.6rem;
+  }
+
+  .style-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .style-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+    font-weight: 500;
+  }
+
+  #sizeSlider {
+    width: 100px;
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+
+  #sizeVal {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text);
+    min-width: 34px;
+  }
+
+  #colorPicker {
+    width: 34px;
+    height: 28px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 2px;
+    cursor: pointer;
+    background: var(--surface);
+  }
+
+  .preset-colors {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+  }
+
+  .preset-dot {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: transform 0.12s, border-color 0.12s;
+    flex-shrink: 0;
+  }
+
+  .preset-dot:hover { transform: scale(1.2); }
+  .preset-dot.active { border-color: var(--text); }
+
+  #search {
+    flex: 1;
+    min-width: 200px;
+    max-width: 320px;
+    padding: 0.5rem 1rem 0.5rem 2.4rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.875rem;
+    background: var(--bg);
+    color: var(--text);
+    position: relative;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  #search:focus { border-color: var(--accent); background: #fff; }
+
+  .search-wrap {
+    position: relative;
+  }
+  .search-wrap i {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    pointer-events: none;
+  }
+
+  .filter-btns {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .filter-btn {
+    padding: 0.4rem 0.85rem;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 500;
+    background: var(--surface);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+
+  .filter-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .filter-btn.active {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+
+  .stat {
+    margin-left: auto;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+    align-self: center;
+  }
+
+  main {
+    padding: 1.5rem 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .section {
+    margin-bottom: 2.5rem;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1.5px solid var(--border);
+  }
+
+  .section-header h2 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .section-badge {
+    font-size: 0.72rem;
+    background: var(--tag-bg);
+    color: var(--tag-text);
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 600;
+    margin-left: auto;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 8px;
+  }
+
+  .icon-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem 0.5rem 0.75rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .icon-card:hover {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-light);
+    transform: translateY(-1px);
+  }
+
+  .icon-card.copied {
+    border-color: #16a34a;
+    background: #f0fdf4;
+  }
+
+  .icon-card i {
+    font-size: var(--icon-size);
+    color: var(--icon-color);
+    display: block;
+    margin-bottom: 0.5rem;
+    line-height: 1;
+  }
+
+  .icon-name {
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    word-break: break-all;
+    line-height: 1.3;
+    font-family: monospace;
+  }
+
+  .copy-hint {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    background: #16a34a;
+    color: #fff;
+    font-size: 0.7rem;
+    padding: 3px;
+    text-align: center;
+    transform: translateY(-100%);
+    transition: transform 0.15s;
+    border-radius: var(--radius) var(--radius) 0 0;
+  }
+
+  .icon-card.copied .copy-hint { transform: translateY(0); }
+
+  .hidden { display: none !important; }
+
+  .no-result {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 3rem;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+  }
+
+  footer {
+    text-align: center;
+    padding: 2rem;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    border-top: 1px solid var(--border);
+    margin-top: 1rem;
+  }
+
+  @media (max-width: 600px) {
+    header, main { padding-left: 1rem; padding-right: 1rem; }
+    .grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1><i class="fa-solid fa-map-location-dot"></i>Font Awesome × Leaflet アイコン一覧</h1>
+  <div class="controls">
+    <div class="search-wrap">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input id="search" type="text" placeholder="アイコン名で検索..." oninput="filterIcons()">
+    </div>
+    <div class="filter-btns" id="filterBtns">
+      <button class="filter-btn active" onclick="setFilter('all', this)">すべて</button>
+      <button class="filter-btn" onclick="setFilter('マーカー・場所', this)">マーカー・場所</button>
+      <button class="filter-btn" onclick="setFilter('交通・移動', this)">交通・移動</button>
+      <button class="filter-btn" onclick="setFilter('施設・建物', this)">施設・建物</button>
+      <button class="filter-btn" onclick="setFilter('自然・地形', this)">自然・地形</button>
+      <button class="filter-btn" onclick="setFilter('UI・操作', this)">UI・操作</button>
+      <button class="filter-btn" onclick="setFilter('安全・警告', this)">安全・警告</button>
+      <button class="filter-btn" onclick="setFilter('情報・データ', this)">情報・データ</button>
+    </div>
+    <span class="stat" id="stat"></span>
+  </div>
+
+  <div class="style-bar">
+    <div class="style-group">
+      <span class="style-label">サイズ</span>
+      <input type="range" id="sizeSlider" min="14" max="64" value="26" step="2" oninput="updateSize(this.value)">
+      <span id="sizeVal">26px</span>
+    </div>
+    <div class="style-group">
+      <span class="style-label">色</span>
+      <input type="color" id="colorPicker" value="#2563eb" oninput="updateColor(this.value)">
+    </div>
+    <div class="style-group">
+      <span class="style-label">プリセット</span>
+      <div class="preset-colors" id="presetColors"></div>
+    </div>
+  </div>
+</header>
+
+<main id="main"></main>
+
+<footer>クリックするとクラス名をクリップボードにコピーします &nbsp;·&nbsp; Font Awesome 6 Free</footer>
+
+<script>
+const ICONS = [
+  // ─── マーカー・場所 ─────────────────────────────
+  { cls: "fa-solid fa-location-dot",          name: "location-dot",          cat: "マーカー・場所" },
+  { cls: "fa-solid fa-location-pin",          name: "location-pin",          cat: "マーカー・場所" },
+  { cls: "fa-solid fa-map-pin",               name: "map-pin",               cat: "マーカー・場所" },
+  { cls: "fa-solid fa-map-marker",            name: "map-marker",            cat: "マーカー・場所" },
+  { cls: "fa-solid fa-thumbtack",             name: "thumbtack",             cat: "マーカー・場所" },
+  { cls: "fa-solid fa-circle-dot",            name: "circle-dot",            cat: "マーカー・場所" },
+  { cls: "fa-solid fa-crosshairs",            name: "crosshairs",            cat: "マーカー・場所" },
+  { cls: "fa-solid fa-bullseye",              name: "bullseye",              cat: "マーカー・場所" },
+  { cls: "fa-solid fa-map",                   name: "map",                   cat: "マーカー・場所" },
+  { cls: "fa-regular fa-map",                 name: "map (regular)",         cat: "マーカー・場所" },
+  { cls: "fa-solid fa-map-location",          name: "map-location",          cat: "マーカー・場所" },
+  { cls: "fa-solid fa-map-location-dot",      name: "map-location-dot",      cat: "マーカー・場所" },
+  { cls: "fa-solid fa-compass",               name: "compass",               cat: "マーカー・場所" },
+  { cls: "fa-regular fa-compass",             name: "compass (regular)",     cat: "マーカー・場所" },
+  { cls: "fa-solid fa-globe",                 name: "globe",                 cat: "マーカー・場所" },
+  { cls: "fa-solid fa-earth-americas",        name: "earth-americas",        cat: "マーカー・場所" },
+  { cls: "fa-solid fa-earth-asia",            name: "earth-asia",            cat: "マーカー・場所" },
+  { cls: "fa-solid fa-earth-europe",          name: "earth-europe",          cat: "マーカー・場所" },
+  { cls: "fa-solid fa-earth-africa",          name: "earth-africa",          cat: "マーカー・場所" },
+  { cls: "fa-solid fa-earth-oceania",         name: "earth-oceania",         cat: "マーカー・場所" },
+  { cls: "fa-solid fa-satellite",             name: "satellite",             cat: "マーカー・場所" },
+  { cls: "fa-solid fa-satellite-dish",        name: "satellite-dish",        cat: "マーカー・場所" },
+  { cls: "fa-solid fa-location-crosshairs",   name: "location-crosshairs",   cat: "マーカー・場所" },
+  { cls: "fa-solid fa-street-view",           name: "street-view",           cat: "マーカー・場所" },
+
+  // ─── 交通・移動 ─────────────────────────────────
+  { cls: "fa-solid fa-car",                   name: "car",                   cat: "交通・移動" },
+  { cls: "fa-solid fa-car-side",              name: "car-side",              cat: "交通・移動" },
+  { cls: "fa-solid fa-car-rear",              name: "car-rear",              cat: "交通・移動" },
+  { cls: "fa-solid fa-car-burst",             name: "car-burst",             cat: "交通・移動" },
+  { cls: "fa-solid fa-taxi",                  name: "taxi",                  cat: "交通・移動" },
+  { cls: "fa-solid fa-bus",                   name: "bus",                   cat: "交通・移動" },
+  { cls: "fa-solid fa-bus-simple",            name: "bus-simple",            cat: "交通・移動" },
+  { cls: "fa-solid fa-train",                 name: "train",                 cat: "交通・移動" },
+  { cls: "fa-solid fa-train-subway",          name: "train-subway",          cat: "交通・移動" },
+  { cls: "fa-solid fa-train-tram",            name: "train-tram",            cat: "交通・移動" },
+  { cls: "fa-solid fa-bicycle",               name: "bicycle",               cat: "交通・移動" },
+  { cls: "fa-solid fa-motorcycle",            name: "motorcycle",            cat: "交通・移動" },
+  { cls: "fa-solid fa-truck",                 name: "truck",                 cat: "交通・移動" },
+  { cls: "fa-solid fa-truck-pickup",          name: "truck-pickup",          cat: "交通・移動" },
+  { cls: "fa-solid fa-truck-moving",          name: "truck-moving",          cat: "交通・移動" },
+  { cls: "fa-solid fa-van-shuttle",           name: "van-shuttle",           cat: "交通・移動" },
+  { cls: "fa-solid fa-plane",                 name: "plane",                 cat: "交通・移動" },
+  { cls: "fa-solid fa-plane-arrival",         name: "plane-arrival",         cat: "交通・移動" },
+  { cls: "fa-solid fa-plane-departure",       name: "plane-departure",       cat: "交通・移動" },
+  { cls: "fa-solid fa-helicopter",            name: "helicopter",            cat: "交通・移動" },
+  { cls: "fa-solid fa-ship",                  name: "ship",                  cat: "交通・移動" },
+  { cls: "fa-solid fa-sailboat",              name: "sailboat",              cat: "交通・移動" },
+  { cls: "fa-solid fa-ferry",                 name: "ferry",                 cat: "交通・移動" },
+  { cls: "fa-solid fa-anchor",                name: "anchor",                cat: "交通・移動" },
+  { cls: "fa-solid fa-rocket",                name: "rocket",                cat: "交通・移動" },
+  { cls: "fa-solid fa-person-walking",        name: "person-walking",        cat: "交通・移動" },
+  { cls: "fa-solid fa-person-biking",         name: "person-biking",         cat: "交通・移動" },
+  { cls: "fa-solid fa-person-hiking",         name: "person-hiking",         cat: "交通・移動" },
+  { cls: "fa-solid fa-person-running",        name: "person-running",        cat: "交通・移動" },
+  { cls: "fa-solid fa-route",                 name: "route",                 cat: "交通・移動" },
+  { cls: "fa-solid fa-road",                  name: "road",                  cat: "交通・移動" },
+  { cls: "fa-solid fa-traffic-light",         name: "traffic-light",         cat: "交通・移動" },
+  { cls: "fa-solid fa-gas-pump",              name: "gas-pump",              cat: "交通・移動" },
+  { cls: "fa-solid fa-charging-station",      name: "charging-station",      cat: "交通・移動" },
+  { cls: "fa-solid fa-parking",               name: "parking",               cat: "交通・移動" },
+  { cls: "fa-solid fa-square-parking",        name: "square-parking",        cat: "交通・移動" },
+  { cls: "fa-solid fa-tractor",               name: "tractor",               cat: "交通・移動" },
+  { cls: "fa-solid fa-snowplow",              name: "snowplow",              cat: "交通・移動" },
+
+  // ─── 施設・建物 ─────────────────────────────────
+  { cls: "fa-solid fa-house",                 name: "house",                 cat: "施設・建物" },
+  { cls: "fa-solid fa-house-chimney",         name: "house-chimney",         cat: "施設・建物" },
+  { cls: "fa-solid fa-building",              name: "building",              cat: "施設・建物" },
+  { cls: "fa-regular fa-building",            name: "building (regular)",    cat: "施設・建物" },
+  { cls: "fa-solid fa-buildings",             name: "buildings",             cat: "施設・建物" },
+  { cls: "fa-solid fa-city",                  name: "city",                  cat: "施設・建物" },
+  { cls: "fa-solid fa-hotel",                 name: "hotel",                 cat: "施設・建物" },
+  { cls: "fa-solid fa-store",                 name: "store",                 cat: "施設・建物" },
+  { cls: "fa-solid fa-shop",                  name: "shop",                  cat: "施設・建物" },
+  { cls: "fa-solid fa-school",                name: "school",                cat: "施設・建物" },
+  { cls: "fa-solid fa-graduation-cap",        name: "graduation-cap",        cat: "施設・建物" },
+  { cls: "fa-solid fa-hospital",              name: "hospital",              cat: "施設・建物" },
+  { cls: "fa-regular fa-hospital",            name: "hospital (regular)",    cat: "施設・建物" },
+  { cls: "fa-solid fa-clinic-medical",        name: "clinic-medical",        cat: "施設・建物" },
+  { cls: "fa-solid fa-cross",                 name: "cross (medical)",       cat: "施設・建物" },
+  { cls: "fa-solid fa-church",                name: "church",                cat: "施設・建物" },
+  { cls: "fa-solid fa-mosque",                name: "mosque",                cat: "施設・建物" },
+  { cls: "fa-solid fa-synagogue",             name: "synagogue",             cat: "施設・建物" },
+  { cls: "fa-solid fa-place-of-worship",      name: "place-of-worship",      cat: "施設・建物" },
+  { cls: "fa-solid fa-landmark",              name: "landmark",              cat: "施設・建物" },
+  { cls: "fa-solid fa-landmark-dome",         name: "landmark-dome",         cat: "施設・建物" },
+  { cls: "fa-solid fa-monument",              name: "monument",              cat: "施設・建物" },
+  { cls: "fa-solid fa-castle",                name: "castle",                cat: "施設・建物" },
+  { cls: "fa-solid fa-fort-awesome",          name: "fort-awesome",          cat: "施設・建物" },
+  { cls: "fa-brands fa-fort-awesome",         name: "fort-awesome (brands)", cat: "施設・建物" },
+  { cls: "fa-solid fa-torii-gate",            name: "torii-gate",            cat: "施設・建物" },
+  { cls: "fa-solid fa-university",            name: "university",            cat: "施設・建物" },
+  { cls: "fa-solid fa-bank",                  name: "bank",                  cat: "施設・建物" },
+  { cls: "fa-solid fa-piggy-bank",            name: "piggy-bank",            cat: "施設・建物" },
+  { cls: "fa-solid fa-fire-station",          name: "fire-station",          cat: "施設・建物" },
+  { cls: "fa-solid fa-warehouse",             name: "warehouse",             cat: "施設・建物" },
+  { cls: "fa-solid fa-industry",              name: "industry",              cat: "施設・建物" },
+  { cls: "fa-solid fa-campground",            name: "campground",            cat: "施設・建物" },
+  { cls: "fa-solid fa-tent",                  name: "tent",                  cat: "施設・建物" },
+  { cls: "fa-solid fa-tents",                 name: "tents",                 cat: "施設・建物" },
+  { cls: "fa-solid fa-utensils",              name: "utensils",              cat: "施設・建物" },
+  { cls: "fa-solid fa-fork-knife",            name: "fork-knife",            cat: "施設・建物" },
+  { cls: "fa-solid fa-mug-saucer",            name: "mug-saucer",            cat: "施設・建物" },
+  { cls: "fa-solid fa-martini-glass",         name: "martini-glass",         cat: "施設・建物" },
+  { cls: "fa-solid fa-wine-glass",            name: "wine-glass",            cat: "施設・建物" },
+  { cls: "fa-solid fa-beer-mug-empty",        name: "beer-mug-empty",        cat: "施設・建物" },
+  { cls: "fa-solid fa-ticket",                name: "ticket",                cat: "施設・建物" },
+  { cls: "fa-solid fa-ticket-simple",         name: "ticket-simple",         cat: "施設・建物" },
+  { cls: "fa-solid fa-football",              name: "football",              cat: "施設・建物" },
+  { cls: "fa-solid fa-futbol",                name: "futbol (soccer)",       cat: "施設・建物" },
+  { cls: "fa-solid fa-baseball",              name: "baseball",              cat: "施設・建物" },
+  { cls: "fa-solid fa-basketball",            name: "basketball",            cat: "施設・建物" },
+  { cls: "fa-solid fa-golf-ball-tee",         name: "golf-ball-tee",         cat: "施設・建物" },
+  { cls: "fa-solid fa-dumbbell",              name: "dumbbell",              cat: "施設・建物" },
+  { cls: "fa-solid fa-person-swimming",       name: "person-swimming",       cat: "施設・建物" },
+  { cls: "fa-solid fa-children",              name: "children",              cat: "施設・建物" },
+  { cls: "fa-solid fa-person-breastfeeding",  name: "person-breastfeeding",  cat: "施設・建物" },
+  { cls: "fa-solid fa-wheelchair",            name: "wheelchair",            cat: "施設・建物" },
+
+  // ─── 自然・地形 ─────────────────────────────────
+  { cls: "fa-solid fa-mountain",              name: "mountain",              cat: "自然・地形" },
+  { cls: "fa-solid fa-mountain-sun",          name: "mountain-sun",          cat: "自然・地形" },
+  { cls: "fa-solid fa-mountain-city",         name: "mountain-city",         cat: "自然・地形" },
+  { cls: "fa-solid fa-volcano",               name: "volcano",               cat: "自然・地形" },
+  { cls: "fa-solid fa-hill-rockslide",        name: "hill-rockslide",        cat: "自然・地形" },
+  { cls: "fa-solid fa-hill-avalanche",        name: "hill-avalanche",        cat: "自然・地形" },
+  { cls: "fa-solid fa-water",                 name: "water",                 cat: "自然・地形" },
+  { cls: "fa-solid fa-droplet",               name: "droplet",               cat: "自然・地形" },
+  { cls: "fa-solid fa-wave-square",           name: "wave-square",           cat: "自然・地形" },
+  { cls: "fa-solid fa-person-drowning",       name: "person-drowning",       cat: "自然・地形" },
+  { cls: "fa-solid fa-snowflake",             name: "snowflake",             cat: "自然・地形" },
+  { cls: "fa-solid fa-sun",                   name: "sun",                   cat: "自然・地形" },
+  { cls: "fa-regular fa-sun",                 name: "sun (regular)",         cat: "自然・地形" },
+  { cls: "fa-solid fa-moon",                  name: "moon",                  cat: "自然・地形" },
+  { cls: "fa-solid fa-cloud",                 name: "cloud",                 cat: "自然・地形" },
+  { cls: "fa-solid fa-cloud-rain",            name: "cloud-rain",            cat: "自然・地形" },
+  { cls: "fa-solid fa-cloud-sun-rain",        name: "cloud-sun-rain",        cat: "自然・地形" },
+  { cls: "fa-solid fa-cloud-bolt",            name: "cloud-bolt",            cat: "自然・地形" },
+  { cls: "fa-solid fa-cloud-snow",            name: "cloud-snow",            cat: "自然・地形" },
+  { cls: "fa-solid fa-cloud-showers-heavy",   name: "cloud-showers-heavy",   cat: "自然・地形" },
+  { cls: "fa-solid fa-tornado",               name: "tornado",               cat: "自然・地形" },
+  { cls: "fa-solid fa-hurricane",             name: "hurricane",             cat: "自然・地形" },
+  { cls: "fa-solid fa-wind",                  name: "wind",                  cat: "自然・地形" },
+  { cls: "fa-solid fa-temperature-full",      name: "temperature-full",      cat: "自然・地形" },
+  { cls: "fa-solid fa-temperature-high",      name: "temperature-high",      cat: "自然・地形" },
+  { cls: "fa-solid fa-temperature-low",       name: "temperature-low",       cat: "自然・地形" },
+  { cls: "fa-solid fa-tree",                  name: "tree",                  cat: "自然・地形" },
+  { cls: "fa-solid fa-trees",                 name: "trees",                 cat: "自然・地形" },
+  { cls: "fa-solid fa-seedling",              name: "seedling",              cat: "自然・地形" },
+  { cls: "fa-solid fa-leaf",                  name: "leaf",                  cat: "自然・地形" },
+  { cls: "fa-solid fa-spa",                   name: "spa",                   cat: "自然・地形" },
+  { cls: "fa-solid fa-pagelines",             name: "pagelines",             cat: "自然・地形" },
+  { cls: "fa-solid fa-crow",                  name: "crow",                  cat: "自然・地形" },
+  { cls: "fa-solid fa-dove",                  name: "dove",                  cat: "自然・地形" },
+  { cls: "fa-solid fa-fish",                  name: "fish",                  cat: "自然・地形" },
+  { cls: "fa-solid fa-fish-fins",             name: "fish-fins",             cat: "自然・地形" },
+  { cls: "fa-solid fa-paw",                   name: "paw",                   cat: "自然・地形" },
+  { cls: "fa-solid fa-fire",                  name: "fire",                  cat: "自然・地形" },
+  { cls: "fa-solid fa-fire-flame-curved",     name: "fire-flame-curved",     cat: "自然・地形" },
+  { cls: "fa-solid fa-house-flood-water",     name: "house-flood-water",     cat: "自然・地形" },
+  { cls: "fa-solid fa-person-falling",        name: "person-falling",        cat: "自然・地形" },
+
+  // ─── UI・操作 ─────────────────────────────────
+  { cls: "fa-solid fa-plus",                  name: "plus",                  cat: "UI・操作" },
+  { cls: "fa-solid fa-minus",                 name: "minus",                 cat: "UI・操作" },
+  { cls: "fa-solid fa-magnifying-glass",      name: "magnifying-glass",      cat: "UI・操作" },
+  { cls: "fa-solid fa-magnifying-glass-plus", name: "magnifying-glass-plus", cat: "UI・操作" },
+  { cls: "fa-solid fa-magnifying-glass-minus",name: "magnifying-glass-minus",cat: "UI・操作" },
+  { cls: "fa-solid fa-magnifying-glass-location", name: "magnifying-glass-location", cat: "UI・操作" },
+  { cls: "fa-solid fa-expand",                name: "expand",                cat: "UI・操作" },
+  { cls: "fa-solid fa-compress",              name: "compress",              cat: "UI・操作" },
+  { cls: "fa-solid fa-maximize",              name: "maximize",              cat: "UI・操作" },
+  { cls: "fa-solid fa-minimize",              name: "minimize",              cat: "UI・操作" },
+  { cls: "fa-solid fa-up-right-and-down-left-from-center", name: "up-right-and-down-left-from-center", cat: "UI・操作" },
+  { cls: "fa-solid fa-arrows-to-circle",      name: "arrows-to-circle",      cat: "UI・操作" },
+  { cls: "fa-solid fa-arrows-to-dot",         name: "arrows-to-dot",         cat: "UI・操作" },
+  { cls: "fa-solid fa-arrows-from-dotted-line", name: "arrows-from-dotted-line", cat: "UI・操作" },
+  { cls: "fa-solid fa-layer-group",           name: "layer-group",           cat: "UI・操作" },
+  { cls: "fa-solid fa-filter",                name: "filter",                cat: "UI・操作" },
+  { cls: "fa-solid fa-sliders",               name: "sliders",               cat: "UI・操作" },
+  { cls: "fa-solid fa-gear",                  name: "gear",                  cat: "UI・操作" },
+  { cls: "fa-solid fa-gears",                 name: "gears",                 cat: "UI・操作" },
+  { cls: "fa-solid fa-bars",                  name: "bars",                  cat: "UI・操作" },
+  { cls: "fa-solid fa-ellipsis",              name: "ellipsis",              cat: "UI・操作" },
+  { cls: "fa-solid fa-ellipsis-vertical",     name: "ellipsis-vertical",     cat: "UI・操作" },
+  { cls: "fa-solid fa-xmark",                 name: "xmark",                 cat: "UI・操作" },
+  { cls: "fa-solid fa-check",                 name: "check",                 cat: "UI・操作" },
+  { cls: "fa-solid fa-pen",                   name: "pen",                   cat: "UI・操作" },
+  { cls: "fa-solid fa-pen-to-square",         name: "pen-to-square",         cat: "UI・操作" },
+  { cls: "fa-solid fa-trash",                 name: "trash",                 cat: "UI・操作" },
+  { cls: "fa-solid fa-trash-can",             name: "trash-can",             cat: "UI・操作" },
+  { cls: "fa-solid fa-share",                 name: "share",                 cat: "UI・操作" },
+  { cls: "fa-solid fa-share-nodes",           name: "share-nodes",           cat: "UI・操作" },
+  { cls: "fa-solid fa-link",                  name: "link",                  cat: "UI・操作" },
+  { cls: "fa-solid fa-copy",                  name: "copy",                  cat: "UI・操作" },
+  { cls: "fa-solid fa-print",                 name: "print",                 cat: "UI・操作" },
+  { cls: "fa-solid fa-download",              name: "download",              cat: "UI・操作" },
+  { cls: "fa-solid fa-upload",                name: "upload",                cat: "UI・操作" },
+  { cls: "fa-solid fa-floppy-disk",           name: "floppy-disk",           cat: "UI・操作" },
+  { cls: "fa-solid fa-rotate-left",           name: "rotate-left",           cat: "UI・操作" },
+  { cls: "fa-solid fa-rotate-right",          name: "rotate-right",          cat: "UI・操作" },
+  { cls: "fa-solid fa-undo",                  name: "undo",                  cat: "UI・操作" },
+  { cls: "fa-solid fa-redo",                  name: "redo",                  cat: "UI・操作" },
+  { cls: "fa-solid fa-arrows-up-down-left-right", name: "arrows-up-down-left-right", cat: "UI・操作" },
+  { cls: "fa-solid fa-up-down-left-right",    name: "up-down-left-right",    cat: "UI・操作" },
+  { cls: "fa-solid fa-hand",                  name: "hand",                  cat: "UI・操作" },
+  { cls: "fa-solid fa-hand-pointer",          name: "hand-pointer",          cat: "UI・操作" },
+  { cls: "fa-solid fa-cursor",                name: "cursor",                cat: "UI・操作" },
+  { cls: "fa-solid fa-draw-polygon",          name: "draw-polygon",          cat: "UI・操作" },
+  { cls: "fa-solid fa-vector-square",         name: "vector-square",         cat: "UI・操作" },
+  { cls: "fa-solid fa-pen-ruler",             name: "pen-ruler",             cat: "UI・操作" },
+  { cls: "fa-solid fa-ruler",                 name: "ruler",                 cat: "UI・操作" },
+  { cls: "fa-solid fa-ruler-combined",        name: "ruler-combined",        cat: "UI・操作" },
+  { cls: "fa-solid fa-ruler-horizontal",      name: "ruler-horizontal",      cat: "UI・操作" },
+  { cls: "fa-solid fa-ruler-vertical",        name: "ruler-vertical",        cat: "UI・操作" },
+
+  // ─── 安全・警告 ─────────────────────────────────
+  { cls: "fa-solid fa-triangle-exclamation",  name: "triangle-exclamation",  cat: "安全・警告" },
+  { cls: "fa-solid fa-circle-exclamation",    name: "circle-exclamation",    cat: "安全・警告" },
+  { cls: "fa-solid fa-circle-xmark",          name: "circle-xmark",          cat: "安全・警告" },
+  { cls: "fa-solid fa-radiation",             name: "radiation",             cat: "安全・警告" },
+  { cls: "fa-solid fa-biohazard",             name: "biohazard",             cat: "安全・警告" },
+  { cls: "fa-solid fa-skull",                 name: "skull",                 cat: "安全・警告" },
+  { cls: "fa-solid fa-skull-crossbones",      name: "skull-crossbones",      cat: "安全・警告" },
+  { cls: "fa-solid fa-bomb",                  name: "bomb",                  cat: "安全・警告" },
+  { cls: "fa-solid fa-ban",                   name: "ban",                   cat: "安全・警告" },
+  { cls: "fa-solid fa-lock",                  name: "lock",                  cat: "安全・警告" },
+  { cls: "fa-solid fa-unlock",                name: "unlock",                cat: "安全・警告" },
+  { cls: "fa-solid fa-shield",                name: "shield",                cat: "安全・警告" },
+  { cls: "fa-solid fa-shield-halved",         name: "shield-halved",         cat: "安全・警告" },
+  { cls: "fa-solid fa-shield-heart",          name: "shield-heart",          cat: "安全・警告" },
+  { cls: "fa-solid fa-fire-extinguisher",     name: "fire-extinguisher",     cat: "安全・警告" },
+  { cls: "fa-solid fa-bell",                  name: "bell",                  cat: "安全・警告" },
+  { cls: "fa-regular fa-bell",                name: "bell (regular)",        cat: "安全・警告" },
+  { cls: "fa-solid fa-bell-slash",            name: "bell-slash",            cat: "安全・警告" },
+  { cls: "fa-solid fa-siren",                 name: "siren",                 cat: "安全・警告" },
+  { cls: "fa-solid fa-siren-on",              name: "siren-on",              cat: "安全・警告" },
+  { cls: "fa-solid fa-lightbulb",             name: "lightbulb",             cat: "安全・警告" },
+  { cls: "fa-regular fa-lightbulb",           name: "lightbulb (regular)",   cat: "安全・警告" },
+  { cls: "fa-solid fa-person-military-to-person", name: "person-military-to-person", cat: "安全・警告" },
+  { cls: "fa-solid fa-person-shelter",        name: "person-shelter",        cat: "安全・警告" },
+  { cls: "fa-solid fa-house-chimney-crack",   name: "house-chimney-crack",   cat: "安全・警告" },
+  { cls: "fa-solid fa-house-tsunami",         name: "house-tsunami",         cat: "安全・警告" },
+  { cls: "fa-solid fa-bridge-water",          name: "bridge-water",          cat: "安全・警告" },
+  { cls: "fa-solid fa-bridge-lock",           name: "bridge-lock",           cat: "安全・警告" },
+
+  // ─── 情報・データ ─────────────────────────────────
+  { cls: "fa-solid fa-circle-info",           name: "circle-info",           cat: "情報・データ" },
+  { cls: "fa-solid fa-circle-question",       name: "circle-question",       cat: "情報・データ" },
+  { cls: "fa-regular fa-circle-question",     name: "circle-question (reg)", cat: "情報・データ" },
+  { cls: "fa-solid fa-star",                  name: "star",                  cat: "情報・データ" },
+  { cls: "fa-regular fa-star",                name: "star (regular)",        cat: "情報・データ" },
+  { cls: "fa-solid fa-star-half",             name: "star-half",             cat: "情報・データ" },
+  { cls: "fa-solid fa-heart",                 name: "heart",                 cat: "情報・データ" },
+  { cls: "fa-regular fa-heart",               name: "heart (regular)",       cat: "情報・データ" },
+  { cls: "fa-solid fa-bookmark",              name: "bookmark",              cat: "情報・データ" },
+  { cls: "fa-regular fa-bookmark",            name: "bookmark (regular)",    cat: "情報・データ" },
+  { cls: "fa-solid fa-flag",                  name: "flag",                  cat: "情報・データ" },
+  { cls: "fa-regular fa-flag",                name: "flag (regular)",        cat: "情報・データ" },
+  { cls: "fa-solid fa-tag",                   name: "tag",                   cat: "情報・データ" },
+  { cls: "fa-solid fa-tags",                  name: "tags",                  cat: "情報・データ" },
+  { cls: "fa-solid fa-chart-bar",             name: "chart-bar",             cat: "情報・データ" },
+  { cls: "fa-solid fa-chart-line",            name: "chart-line",            cat: "情報・データ" },
+  { cls: "fa-solid fa-chart-pie",             name: "chart-pie",             cat: "情報・データ" },
+  { cls: "fa-solid fa-table",                 name: "table",                 cat: "情報・データ" },
+  { cls: "fa-solid fa-database",              name: "database",              cat: "情報・データ" },
+  { cls: "fa-solid fa-list",                  name: "list",                  cat: "情報・データ" },
+  { cls: "fa-solid fa-camera",                name: "camera",                cat: "情報・データ" },
+  { cls: "fa-solid fa-image",                 name: "image",                 cat: "情報・データ" },
+  { cls: "fa-regular fa-image",               name: "image (regular)",       cat: "情報・データ" },
+  { cls: "fa-solid fa-images",                name: "images",                cat: "情報・データ" },
+  { cls: "fa-solid fa-video",                 name: "video",                 cat: "情報・データ" },
+  { cls: "fa-solid fa-phone",                 name: "phone",                 cat: "情報・データ" },
+  { cls: "fa-solid fa-envelope",              name: "envelope",              cat: "情報・データ" },
+  { cls: "fa-regular fa-envelope",            name: "envelope (regular)",    cat: "情報・データ" },
+  { cls: "fa-solid fa-message",               name: "message",               cat: "情報・データ" },
+  { cls: "fa-regular fa-message",             name: "message (regular)",     cat: "情報・データ" },
+  { cls: "fa-solid fa-comments",              name: "comments",              cat: "情報・データ" },
+  { cls: "fa-solid fa-wifi",                  name: "wifi",                  cat: "情報・データ" },
+  { cls: "fa-solid fa-signal",                name: "signal",                cat: "情報・データ" },
+  { cls: "fa-solid fa-user",                  name: "user",                  cat: "情報・データ" },
+  { cls: "fa-solid fa-users",                 name: "users",                 cat: "情報・データ" },
+  { cls: "fa-solid fa-user-group",            name: "user-group",            cat: "情報・データ" },
+  { cls: "fa-solid fa-person",                name: "person",                cat: "情報・データ" },
+  { cls: "fa-solid fa-people-group",          name: "people-group",          cat: "情報・データ" },
+  { cls: "fa-solid fa-clock",                 name: "clock",                 cat: "情報・データ" },
+  { cls: "fa-regular fa-clock",               name: "clock (regular)",       cat: "情報・データ" },
+  { cls: "fa-solid fa-calendar",              name: "calendar",              cat: "情報・データ" },
+  { cls: "fa-solid fa-calendar-days",         name: "calendar-days",         cat: "情報・データ" },
+  { cls: "fa-solid fa-money-bill",            name: "money-bill",            cat: "情報・データ" },
+  { cls: "fa-solid fa-coins",                 name: "coins",                 cat: "情報・データ" },
+  { cls: "fa-solid fa-credit-card",           name: "credit-card",           cat: "情報・データ" },
+  { cls: "fa-solid fa-qrcode",                name: "qrcode",                cat: "情報・データ" },
+  { cls: "fa-solid fa-barcode",               name: "barcode",               cat: "情報・データ" },
+  { cls: "fa-solid fa-circle",                name: "circle",                cat: "情報・データ" },
+  { cls: "fa-regular fa-circle",              name: "circle (regular)",      cat: "情報・データ" },
+  { cls: "fa-solid fa-square",                name: "square",                cat: "情報・データ" },
+  { cls: "fa-solid fa-diamond",               name: "diamond",               cat: "情報・データ" },
+  { cls: "fa-solid fa-hexagon",               name: "hexagon",               cat: "情報・データ" },
+  { cls: "fa-solid fa-octagon",               name: "octagon",               cat: "情報・データ" },
+];
+
+const PRESETS = [
+  { color: '#2563eb', label: 'ブルー' },
+  { color: '#16a34a', label: 'グリーン' },
+  { color: '#dc2626', label: 'レッド' },
+  { color: '#d97706', label: 'オレンジ' },
+  { color: '#7c3aed', label: 'パープル' },
+  { color: '#0891b2', label: 'シアン' },
+  { color: '#be185d', label: 'ピンク' },
+  { color: '#854d0e', label: 'ブラウン' },
+  { color: '#374151', label: 'グレー' },
+  { color: '#1a1d23', label: 'ブラック' },
+];
+
+function updateSize(val) {
+  document.documentElement.style.setProperty('--icon-size', val + 'px');
+  document.getElementById('sizeVal').textContent = val + 'px';
+}
+
+function updateColor(val) {
+  document.documentElement.style.setProperty('--icon-color', val);
+  document.getElementById('colorPicker').value = val;
+  document.querySelectorAll('.preset-dot').forEach(d => {
+    d.classList.toggle('active', d.dataset.color === val);
+  });
+}
+
+function initPresets() {
+  const wrap = document.getElementById('presetColors');
+  PRESETS.forEach(p => {
+    const dot = document.createElement('div');
+    dot.className = 'preset-dot' + (p.color === '#2563eb' ? ' active' : '');
+    dot.style.background = p.color;
+    dot.dataset.color = p.color;
+    dot.title = p.label;
+    dot.addEventListener('click', () => updateColor(p.color));
+    wrap.appendChild(dot);
+  });
+}
+
+let currentFilter = 'all';
+let searchTerm = '';
+
+function groupByCategory(icons) {
+  const map = {};
+  icons.forEach(ic => {
+    if (!map[ic.cat]) map[ic.cat] = [];
+    map[ic.cat].push(ic);
+  });
+  return map;
+}
+
+function setFilter(cat, btn) {
+  currentFilter = cat;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  render();
+}
+
+function filterIcons() {
+  searchTerm = document.getElementById('search').value.trim().toLowerCase();
+  render();
+}
+
+function copyClass(cls, card) {
+  navigator.clipboard.writeText(cls).then(() => {
+    card.classList.add('copied');
+    setTimeout(() => card.classList.remove('copied'), 1200);
+  });
+}
+
+function render() {
+  let filtered = ICONS.filter(ic => {
+    const catOk = currentFilter === 'all' || ic.cat === currentFilter;
+    const termOk = !searchTerm || ic.name.toLowerCase().includes(searchTerm) || ic.cls.toLowerCase().includes(searchTerm);
+    return catOk && termOk;
+  });
+
+  const total = filtered.length;
+  document.getElementById('stat').textContent = `${total} / ${ICONS.length} 件`;
+
+  const main = document.getElementById('main');
+  main.innerHTML = '';
+
+  if (total === 0) {
+    main.innerHTML = '<p style="text-align:center;padding:3rem;color:var(--text-muted);">該当するアイコンが見つかりませんでした。</p>';
+    return;
+  }
+
+  if (currentFilter !== 'all' || searchTerm) {
+    // flat grid
+    const section = document.createElement('div');
+    section.className = 'section';
+    const grid = document.createElement('div');
+    grid.className = 'grid';
+    filtered.forEach(ic => grid.appendChild(makeCard(ic)));
+    section.appendChild(grid);
+    main.appendChild(section);
+  } else {
+    const grouped = groupByCategory(filtered);
+    Object.entries(grouped).forEach(([cat, icons]) => {
+      const section = document.createElement('div');
+      section.className = 'section';
+      section.innerHTML = `<div class="section-header"><h2>${cat}</h2><span class="section-badge">${icons.length} 個</span></div>`;
+      const grid = document.createElement('div');
+      grid.className = 'grid';
+      icons.forEach(ic => grid.appendChild(makeCard(ic)));
+      section.appendChild(grid);
+      main.appendChild(section);
+    });
+  }
+}
+
+function makeCard(ic) {
+  const card = document.createElement('div');
+  card.className = 'icon-card';
+  card.title = `クリックでコピー: ${ic.cls}`;
+  card.innerHTML = `
+    <div class="copy-hint">コピーしました</div>
+    <i class="${ic.cls}" aria-hidden="true"></i>
+    <div class="icon-name">${ic.name}</div>
+  `;
+  card.addEventListener('click', () => copyClass(ic.cls, card));
+  return card;
+}
+
+initPresets();
+render();
+</script>
+</body>
+</html>
