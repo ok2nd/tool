@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="ja"><head>
+<title>文字海都市</title>
+<meta charset="utf-8"/>
+<meta content="noindex,nofollow,noarchive" name="robots"/>
+<meta content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<link href="css/style.css" rel="stylesheet"/>
+
+<style id="tts-injected-style">
+  .tts-sentence { transition: background-color 0.15s ease, box-shadow 0.15s ease; }
+  .tts-sentence.tts-active {
+    background-color: rgba(255, 224, 102, 0.65);
+    box-shadow: 0 0 0 2px rgba(255, 193, 7, 0.5);
+    border-radius: 3px;
+  }
+  #tts-controls {
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    box-sizing: border-box;
+    background: rgba(30, 30, 30, 0.92);
+    color: #fff;
+    padding: 8px 12px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    font-family: sans-serif;
+    font-size: 13px;
+    z-index: 999999;
+    writing-mode: horizontal-tb;
+  }
+  #tts-controls button {
+    background: #444;
+    color: #fff;
+    border: 1px solid #666;
+    border-radius: 4px;
+    padding: 6px 10px;
+    cursor: pointer;
+    font-size: 13px;
+  }
+  #tts-controls button:hover { background: #555; }
+  #tts-controls button:disabled { opacity: 0.4; cursor: default; }
+  #tts-controls select, #tts-controls input[type=range] {
+    font-size: 12px;
+  }
+  #tts-controls label { display: flex; align-items: center; gap: 4px; white-space: nowrap; }
+  body { padding-bottom: 56px; }
+</style>
+</head>
+<body>
+<div id="content-wrapper">
+<div id="content">
+
+<h1><span class="tts-sentence" id="tts-1">文字海都市</span></h1>
+<p><span class="tts-sentence" id="tts-2">最初に漢字が減り始めた時、人々はただの教育問題だと思っていた。</span></p>
+<p><span class="tts-sentence" id="tts-3">若者が難しい字を書けなくなる。</span></p>
+<p><span class="tts-sentence" id="tts-4">古い本が読まれなくなる。</span></p>
+<p><span class="tts-sentence" id="tts-5">手書き文化が消え、誰もが音声入力だけで生活するようになる。</span></p>
+<p><span class="tts-sentence" id="tts-6">それは緩やかな変化だった。</span></p>
+<p><span class="tts-sentence" id="tts-7">だが、ある日を境に、世界そのものがおかしくなり始めた。</span></p>
+<p><span class="tts-sentence" id="tts-8">東京湾の水位が突然下がった。</span></p>
+<p><span class="tts-sentence" id="tts-9">海面が一夜で三メートル低下したのである。</span></p>
+<p><span class="tts-sentence" id="tts-10">原因は不明だった。</span></p>
+<p><span class="tts-sentence" id="tts-11">気象庁も大学も説明できない。</span></p>
+<p><span class="tts-sentence" id="tts-12">ただ、一人の老人だけが静かに呟いた。</span></p>
+<p><span class="tts-sentence" id="tts-13">「海の字が減ったからだ」</span></p>
+<p><span class="tts-sentence" id="tts-14">当然、誰も相手にしなかった。</span></p>
+<p><span class="tts-sentence" id="tts-15">だが翌週、さらに奇妙なことが起きる。</span></p>
+<p><span class="tts-sentence" id="tts-16">空が浅くなった。</span></p>
+<p><span class="tts-sentence" id="tts-17">正確には、人々が空の高さを感じられなくなった。</span></p>
+<p><span class="tts-sentence" id="tts-18">見上げても、天井のように近い。</span></p>
+<p><span class="tts-sentence" id="tts-19">飛行機事故が続発した。</span></p>
+<p><span class="tts-sentence" id="tts-20">パイロットたちは高度感覚を失い、機体を制御できなくなる。</span></p>
+<p><span class="tts-sentence" id="tts-21">そして、また老人が言う。</span></p>
+<p><span class="tts-sentence" id="tts-22">「空という漢字が消えかけている」</span></p>
+<p><span class="tts-sentence" id="tts-23">それでも世界は信じなかった。</span></p>
+<p><span class="tts-sentence" id="tts-24">二十二歳の古書修復士、秋名トウヤだけは違った。</span></p>
+<p><span class="tts-sentence" id="tts-25">彼は東京旧字保存館で働いている。</span></p>
+<p><span class="tts-sentence" id="tts-26">そこは紙の本を保管する巨大施設だった。</span></p>
+<p><span class="tts-sentence" id="tts-27">電子化できない古文書。</span></p>
+<p><span class="tts-sentence" id="tts-28">崩し字。</span></p>
+<p><span class="tts-sentence" id="tts-29">失われた異体字。</span></p>
+<p><span class="tts-sentence" id="tts-30">誰も読めなくなった文字たち。</span></p>
+<p><span class="tts-sentence" id="tts-31">トウヤは文字が好きだった。</span></p>
+<p><span class="tts-sentence" id="tts-32">いや、好きというより、文字の中に生きている感覚があった。</span></p>
+<p><span class="tts-sentence" id="tts-33">例えば「森」という字を見ると、本当に木々のざわめきが聞こえる。</span></p>
+<p><span class="tts-sentence" id="tts-34">「雨」を見ると湿った匂いがした。</span></p>
+<p><span class="tts-sentence" id="tts-35">子供の頃からそうだった。</span></p>
+<p><span class="tts-sentence" id="tts-36">彼は自分だけ感覚がおかしいのだと思っていた。</span></p>
+<p><span class="tts-sentence" id="tts-37">その夜、保存館へ一人の老人が訪れる。</span></p>
+<p><span class="tts-sentence" id="tts-38">海の字が減ったと言っていた男だった。</span></p>
+<p><span class="tts-sentence" id="tts-39">白髪。</span></p>
+<p><span class="tts-sentence" id="tts-40">細い身体。</span></p>
+<p><span class="tts-sentence" id="tts-41">異様に静かな目。</span></p>
+<p><span class="tts-sentence" id="tts-42">「あなたが秋名トウヤ君か」</span></p>
+<p><span class="tts-sentence" id="tts-43">「はい」</span></p>
+<p><span class="tts-sentence" id="tts-44">「文字が聞こえるらしいね」</span></p>
+<p><span class="tts-sentence" id="tts-45">トウヤは凍りついた。</span></p>
+<p><span class="tts-sentence" id="tts-46">誰にも話したことがない。</span></p>
+<p><span class="tts-sentence" id="tts-47">老人は笑う。</span></p>
+<p><span class="tts-sentence" id="tts-48">「安心しなさい。</span><span class="tts-sentence" id="tts-49">昔は珍しくなかった」</span></p>
+<p><span class="tts-sentence" id="tts-50">「あなたは誰ですか」</span></p>
+<p><span class="tts-sentence" id="tts-51">「字守だ」</span></p>
+<p><span class="tts-sentence" id="tts-52">聞いたことのない言葉だった。</span></p>
+<p><span class="tts-sentence" id="tts-53">老人は保存館の奥を見回す。</span></p>
+<p><span class="tts-sentence" id="tts-54">棚には数百万冊の本が並んでいる。</span></p>
+<p><span class="tts-sentence" id="tts-55">「まだ残っているか」</span></p>
+<p><span class="tts-sentence" id="tts-56">彼は少し安心したようだった。</span></p>
+<p><span class="tts-sentence" id="tts-57">「何がです？</span><span class="tts-sentence" id="tts-58">」</span></p>
+<p><span class="tts-sentence" id="tts-59">「世界の部品だよ」</span></p>
+<p><span class="tts-sentence" id="tts-60">老人は静かに答えた。</span></p>
+<p><span class="tts-sentence" id="tts-61">トウヤは眉をひそめる。</span></p>
+<p><span class="tts-sentence" id="tts-62">「意味が分かりません」</span></p>
+<p><span class="tts-sentence" id="tts-63">老人は一冊の古書を取り出した。</span></p>
+<p><span class="tts-sentence" id="tts-64">和紙の表紙には、巨大な「字」が書かれている。</span></p>
+<p><span class="tts-sentence" id="tts-65">「この世界は漢字でできている」</span></p>
+<p><span class="tts-sentence" id="tts-66">トウヤは黙った。</span></p>
+<p><span class="tts-sentence" id="tts-67">冗談には見えなかった。</span></p>
+<p><span class="tts-sentence" id="tts-68">老人は続ける。</span></p>
+<p><span class="tts-sentence" id="tts-69">「昔、人類は言葉が単なる記号だと思っていた」</span></p>
+<p><span class="tts-sentence" id="tts-70">「違うんですか」</span></p>
+<p><span class="tts-sentence" id="tts-71">「逆だ。</span><span class="tts-sentence" id="tts-72">記号の方が本体なんだ」</span></p>
+<p><span class="tts-sentence" id="tts-73">老人は本を開く。</span></p>
+<p><span class="tts-sentence" id="tts-74">そこには大量の漢字が並んでいた。</span></p>
+<p><span class="tts-sentence" id="tts-75">山。</span></p>
+<p><span class="tts-sentence" id="tts-76">川。</span></p>
+<p><span class="tts-sentence" id="tts-77">火。</span></p>
+<p><span class="tts-sentence" id="tts-78">空。</span></p>
+<p><span class="tts-sentence" id="tts-79">海。</span></p>
+<p><span class="tts-sentence" id="tts-80">「これらは概念じゃない」</span></p>
+<p><span class="tts-sentence" id="tts-81">老人の指先が紙を撫でる。</span></p>
+<p><span class="tts-sentence" id="tts-82">「現実を固定する楔だ」</span></p>
+<p><span class="tts-sentence" id="tts-83">その瞬間、トウヤは妙な感覚を覚えた。</span></p>
+<p><span class="tts-sentence" id="tts-84">本の文字が、微かに光ったように見えたのである。</span></p>
+<p><span class="tts-sentence" id="tts-85">「漢字には形がある。</span><span class="tts-sentence" id="tts-86">意味がある。</span><span class="tts-sentence" id="tts-87">音がある。</span><span class="tts-sentence" id="tts-88">そして歴史がある」</span></p>
+<p><span class="tts-sentence" id="tts-89">老人は言う。</span></p>
+<p><span class="tts-sentence" id="tts-90">「長い時間、人類は文字を書き続けた」</span></p>
+<p><span class="tts-sentence" id="tts-91">「それが？</span><span class="tts-sentence" id="tts-92">」</span></p>
+<p><span class="tts-sentence" id="tts-93">「世界を維持していたんだ」</span></p>
+<p><span class="tts-sentence" id="tts-94">トウヤは理解できなかった。</span></p>
+<p><span class="tts-sentence" id="tts-95">だが、外で起きている異常を思い出す。</span></p>
+<p><span class="tts-sentence" id="tts-96">海。</span></p>
+<p><span class="tts-sentence" id="tts-97">空。</span></p>
+<p><span class="tts-sentence" id="tts-98">どちらも、人々がほとんど書かなくなった字だった。</span></p>
+<p><span class="tts-sentence" id="tts-99">翌日、保存館で事件が起きた。</span></p>
+<p><span class="tts-sentence" id="tts-100">「風」の棚が消えたのである。</span></p>
+<p><span class="tts-sentence" id="tts-101">棚だけではない。</span></p>
+<p><span class="tts-sentence" id="tts-102">その周囲の本も。</span></p>
+<p><span class="tts-sentence" id="tts-103">職員たちは混乱した。</span></p>
+<p><span class="tts-sentence" id="tts-104">監視映像を確認する。</span></p>
+<p><span class="tts-sentence" id="tts-105">だがそこには、最初から空間しか存在していなかった。</span></p>
+<p><span class="tts-sentence" id="tts-106">「記録が消えてる……」</span></p>
+<p><span class="tts-sentence" id="tts-107">トウヤは震えた。</span></p>
+<p><span class="tts-sentence" id="tts-108">老人は静かに頷く。</span></p>
+<p><span class="tts-sentence" id="tts-109">「風の字が弱っている」</span></p>
+<p><span class="tts-sentence" id="tts-110">「漢字が消えると、現実も消えるの？</span><span class="tts-sentence" id="tts-111">」</span></p>
+<p><span class="tts-sentence" id="tts-112">「正確には、存在を保てなくなる」</span></p>
+<p><span class="tts-sentence" id="tts-113">老人は窓を見た。</span></p>
+<p><span class="tts-sentence" id="tts-114">外では風が止まっていた。</span></p>
+<p><span class="tts-sentence" id="tts-115">木々が一枚も揺れない。</span></p>
+<p><span class="tts-sentence" id="tts-116">その静けさは不気味だった。</span></p>
+<p><span class="tts-sentence" id="tts-117">「昔はもっと字が強かった」</span></p>
+<p><span class="tts-sentence" id="tts-118">老人は語る。</span></p>
+<p><span class="tts-sentence" id="tts-119">「筆で書かれ、石へ刻まれ、人の手で繰り返された」</span></p>
+<p><span class="tts-sentence" id="tts-120">「今は？</span><span class="tts-sentence" id="tts-121">」</span></p>
+<p><span class="tts-sentence" id="tts-122">「誰も書かない」</span></p>
+<p><span class="tts-sentence" id="tts-123">トウヤは気づき始めていた。</span></p>
+<p><span class="tts-sentence" id="tts-124">この世界は、人類の言語活動によって維持されている。</span></p>
+<p><span class="tts-sentence" id="tts-125">文字が減れば、世界も薄くなる。</span></p>
+<p><span class="tts-sentence" id="tts-126">「じゃあ、全部の漢字が消えたら」</span></p>
+<p><span class="tts-sentence" id="tts-127">老人は少し黙った。</span></p>
+<p><span class="tts-sentence" id="tts-128">「世界は無名になる」</span></p>
+<p><span class="tts-sentence" id="tts-129">その夜、トウヤは家で大量の漢字を書いた。</span></p>
+<p><span class="tts-sentence" id="tts-130">海。</span></p>
+<p><span class="tts-sentence" id="tts-131">空。</span></p>
+<p><span class="tts-sentence" id="tts-132">風。</span></p>
+<p><span class="tts-sentence" id="tts-133">紙が埋まるほど書き続ける。</span></p>
+<p><span class="tts-sentence" id="tts-134">すると不思議なことが起きた。</span></p>
+<p><span class="tts-sentence" id="tts-135">窓の外で、風が吹いた。</span></p>
+<p><span class="tts-sentence" id="tts-136">静止していた木々が揺れる。</span></p>
+<p><span class="tts-sentence" id="tts-137">遠くで波の音がした。</span></p>
+<p><span class="tts-sentence" id="tts-138">トウヤは息を呑んだ。</span></p>
+<p><span class="tts-sentence" id="tts-139">本当に漢字が世界を支えている。</span></p>
+<p><span class="tts-sentence" id="tts-140">数日後、日本政府は異常事態を宣言した。</span></p>
+<p><span class="tts-sentence" id="tts-141">全国で現実崩壊が始まっていた。</span></p>
+<p><span class="tts-sentence" id="tts-142">「森」の薄い地域では木々が透明化する。</span></p>
+<p><span class="tts-sentence" id="tts-143">「川」の使用頻度が低い地方では河川が干上がる。</span></p>
+<p><span class="tts-sentence" id="tts-144">「灯」が消えた地区では光源が不安定になる。</span></p>
+<p><span class="tts-sentence" id="tts-145">そして恐ろしいことに、人名の漢字も消え始めていた。</span></p>
+<p><span class="tts-sentence" id="tts-146">存在を忘れられた人々は、輪郭を失う。</span></p>
+<p><span class="tts-sentence" id="tts-147">写真から顔が消え、記憶から名前が抜け落ちる。</span></p>
+<p><span class="tts-sentence" id="tts-148">老人は言った。</span></p>
+<p><span class="tts-sentence" id="tts-149">「時間がない」</span></p>
+<p><span class="tts-sentence" id="tts-150">「どうすればいい」</span></p>
+<p><span class="tts-sentence" id="tts-151">「根源文字へ行く」</span></p>
+<p><span class="tts-sentence" id="tts-152">「根源文字？</span><span class="tts-sentence" id="tts-153">」</span></p>
+<p><span class="tts-sentence" id="tts-154">老人は保存館の地下へトウヤを案内した。</span></p>
+<p><span class="tts-sentence" id="tts-155">そこには巨大な石室があった。</span></p>
+<p><span class="tts-sentence" id="tts-156">壁一面に古代文字が刻まれている。</span></p>
+<p><span class="tts-sentence" id="tts-157">甲骨文。</span></p>
+<p><span class="tts-sentence" id="tts-158">金文。</span></p>
+<p><span class="tts-sentence" id="tts-159">篆書。</span></p>
+<p><span class="tts-sentence" id="tts-160">見たことのない古い漢字。</span></p>
+<p><span class="tts-sentence" id="tts-161">「ここは何なんです」</span></p>
+<p><span class="tts-sentence" id="tts-162">「文字海への入口だ」</span></p>
+<p><span class="tts-sentence" id="tts-163">老人は中央の石碑へ手を置いた。</span></p>
+<p><span class="tts-sentence" id="tts-164">そこには巨大な「文」が刻まれている。</span></p>
+<p><span class="tts-sentence" id="tts-165">「昔、人類は偶然発見した」</span></p>
+<p><span class="tts-sentence" id="tts-166">「何を？</span><span class="tts-sentence" id="tts-167">」</span></p>
+<p><span class="tts-sentence" id="tts-168">「漢字が現実を接続していることを」</span></p>
+<p><span class="tts-sentence" id="tts-169">石碑が光る。</span></p>
+<p><span class="tts-sentence" id="tts-170">空気が震えた。</span></p>
+<p><span class="tts-sentence" id="tts-171">次の瞬間。</span></p>
+<p><span class="tts-sentence" id="tts-172">トウヤの視界が反転した。</span></p>
+<p><span class="tts-sentence" id="tts-173">彼は巨大な海の上に立っていた。</span></p>
+<p><span class="tts-sentence" id="tts-174">黒い海。</span></p>
+<p><span class="tts-sentence" id="tts-175">だが波は文字だった。</span></p>
+<p><span class="tts-sentence" id="tts-176">無数の漢字が流れている。</span></p>
+<p><span class="tts-sentence" id="tts-177">山。</span></p>
+<p><span class="tts-sentence" id="tts-178">雨。</span></p>
+<p><span class="tts-sentence" id="tts-179">星。</span></p>
+<p><span class="tts-sentence" id="tts-180">命。</span></p>
+<p><span class="tts-sentence" id="tts-181">文字が波となり、海を形成している。</span></p>
+<p><span class="tts-sentence" id="tts-182">「ここが文字海だ」</span></p>
+<p><span class="tts-sentence" id="tts-183">老人の声が響く。</span></p>
+<p><span class="tts-sentence" id="tts-184">空には巨大な漢字が浮かんでいた。</span></p>
+<p><span class="tts-sentence" id="tts-185">一文字ごとに、現実が脈動している。</span></p>
+<p><span class="tts-sentence" id="tts-186">「世界中の言語には力がある」</span></p>
+<p><span class="tts-sentence" id="tts-187">老人は言う。</span></p>
+<p><span class="tts-sentence" id="tts-188">「だが漢字は特別だ。</span><span class="tts-sentence" id="tts-189">意味と形が直接結びついている」</span></p>
+<p><span class="tts-sentence" id="tts-190">トウヤは海面へ触れた。</span></p>
+<p><span class="tts-sentence" id="tts-191">すると「水」の字が浮かび上がる。</span></p>
+<p><span class="tts-sentence" id="tts-192">冷たさが伝わった。</span></p>
+<p><span class="tts-sentence" id="tts-193">「感じるだろう」</span></p>
+<p><span class="tts-sentence" id="tts-194">老人は微笑む。</span></p>
+<p><span class="tts-sentence" id="tts-195">「文字そのものが物理なんだ」</span></p>
+<p><span class="tts-sentence" id="tts-196">その時だった。</span></p>
+<p><span class="tts-sentence" id="tts-197">遠くの海が崩れ始めた。</span></p>
+<p><span class="tts-sentence" id="tts-198">大量の漢字が砕け、黒い空白へ落ちていく。</span></p>
+<p><span class="tts-sentence" id="tts-199">「あれは？</span><span class="tts-sentence" id="tts-200">」</span></p>
+<p><span class="tts-sentence" id="tts-201">老人の表情が曇る。</span></p>
+<p><span class="tts-sentence" id="tts-202">「無字領域だ」</span></p>
+<p><span class="tts-sentence" id="tts-203">「無字？</span><span class="tts-sentence" id="tts-204">」</span></p>
+<p><span class="tts-sentence" id="tts-205">「誰にも書かれず、読まれず、忘れられた文字の墓場だ」</span></p>
+<p><span class="tts-sentence" id="tts-206">トウヤは寒気を覚えた。</span></p>
+<p><span class="tts-sentence" id="tts-207">空白は恐ろしい速度で広がっている。</span></p>
+<p><span class="tts-sentence" id="tts-208">漢字を飲み込み、世界を削っていく。</span></p>
+<p><span class="tts-sentence" id="tts-209">「止められないんですか」</span></p>
+<p><span class="tts-sentence" id="tts-210">老人は静かに首を振る。</span></p>
+<p><span class="tts-sentence" id="tts-211">「人類が文字を捨てた時点で、いずれこうなる運命だった」</span></p>
+<p><span class="tts-sentence" id="tts-212">その瞬間、トウヤは気づいた。</span></p>
+<p><span class="tts-sentence" id="tts-213">海の奥に、巨大な文字が沈んでいる。</span></p>
+<p><span class="tts-sentence" id="tts-214">あまりにも大きく、世界そのもののような字。</span></p>
+<p><span class="tts-sentence" id="tts-215">「あれは……？</span><span class="tts-sentence" id="tts-216">」</span></p>
+<p><span class="tts-sentence" id="tts-217">老人はゆっくり答えた。</span></p>
+<p><span class="tts-sentence" id="tts-218">「最初の漢字だ」</span></p>
+<p><span class="tts-sentence" id="tts-219">トウヤは目を見開く。</span></p>
+<p><span class="tts-sentence" id="tts-220">「最初？</span><span class="tts-sentence" id="tts-221">」</span></p>
+<p><span class="tts-sentence" id="tts-222">「人類が最初に発見した、世界を固定する文字」</span></p>
+<p><span class="tts-sentence" id="tts-223">巨大な文字は海底で脈動していた。</span></p>
+<p><span class="tts-sentence" id="tts-224">それを見るだけで、胸が締めつけられる。</span></p>
+<p><span class="tts-sentence" id="tts-225">形を認識できない。</span></p>
+<p><span class="tts-sentence" id="tts-226">だが意味だけが流れ込んでくる。</span></p>
+<p><span class="tts-sentence" id="tts-227">存在。</span></p>
+<p><span class="tts-sentence" id="tts-228">境界。</span></p>
+<p><span class="tts-sentence" id="tts-229">名。</span></p>
+<p><span class="tts-sentence" id="tts-230">「昔、人類はこれを見た」</span></p>
+<p><span class="tts-sentence" id="tts-231">老人は言う。</span></p>
+<p><span class="tts-sentence" id="tts-232">「そして文字を作り始めた」</span></p>
+<p><span class="tts-sentence" id="tts-233">「つまり漢字は発明じゃない？</span><span class="tts-sentence" id="tts-234">」</span></p>
+<p><span class="tts-sentence" id="tts-235">「発見だ」</span></p>
+<p><span class="tts-sentence" id="tts-236">老人の声は静かだった。</span></p>
+<p><span class="tts-sentence" id="tts-237">「世界の構造を、人類なりに写したものだ」</span></p>
+<p><span class="tts-sentence" id="tts-238">トウヤは震えた。</span></p>
+<p><span class="tts-sentence" id="tts-239">山という字は、本当に山の形だった。</span></p>
+<p><span class="tts-sentence" id="tts-240">川は流れ。</span></p>
+<p><span class="tts-sentence" id="tts-241">木は樹木。</span></p>
+<p><span class="tts-sentence" id="tts-242">文字は抽象ではなく、現実そのものだったのだ。</span></p>
+<p><span class="tts-sentence" id="tts-243">突然、海が激しく揺れる。</span></p>
+<p><span class="tts-sentence" id="tts-244">空白が迫っていた。</span></p>
+<p><span class="tts-sentence" id="tts-245">無数の漢字が砕けていく。</span></p>
+<p><span class="tts-sentence" id="tts-246">「時間がない」</span></p>
+<p><span class="tts-sentence" id="tts-247">老人は叫んだ。</span></p>
+<p><span class="tts-sentence" id="tts-248">「最初の字を書き直すんだ」</span></p>
+<p><span class="tts-sentence" id="tts-249">「どうやって」</span></p>
+<p><span class="tts-sentence" id="tts-250">「お前ならできる」</span></p>
+<p><span class="tts-sentence" id="tts-251">トウヤの手へ筆が渡される。</span></p>
+<p><span class="tts-sentence" id="tts-252">黒い筆。</span></p>
+<p><span class="tts-sentence" id="tts-253">異様に重い。</span></p>
+<p><span class="tts-sentence" id="tts-254">彼は海面へ向かった。</span></p>
+<p><span class="tts-sentence" id="tts-255">巨大な最初の漢字が脈打っている。</span></p>
+<p><span class="tts-sentence" id="tts-256">その意味が流れ込む。</span></p>
+<p><span class="tts-sentence" id="tts-257">世界とは、名前によって存在する。</span></p>
+<p><span class="tts-sentence" id="tts-258">名づけられたものだけが現実になる。</span></p>
+<p><span class="tts-sentence" id="tts-259">だから文字が消えれば、世界も消える。</span></p>
+<p><span class="tts-sentence" id="tts-260">トウヤは理解した。</span></p>
+<p><span class="tts-sentence" id="tts-261">人類はずっと、文字によって宇宙を維持していたのだ。</span></p>
+<p><span class="tts-sentence" id="tts-262">彼は筆を握る。</span></p>
+<p><span class="tts-sentence" id="tts-263">空白が迫る。</span></p>
+<p><span class="tts-sentence" id="tts-264">海が崩れる。</span></p>
+<p><span class="tts-sentence" id="tts-265">そして、ゆっくりと一文字を書いた。</span></p>
+<p><span class="tts-sentence" id="tts-266">「生」</span></p>
+<p><span class="tts-sentence" id="tts-267">瞬間。</span></p>
+<p><span class="tts-sentence" id="tts-268">文字海が光った。</span></p>
+<p><span class="tts-sentence" id="tts-269">無数の漢字が共鳴する。</span></p>
+<p><span class="tts-sentence" id="tts-270">山。</span></p>
+<p><span class="tts-sentence" id="tts-271">海。</span></p>
+<p><span class="tts-sentence" id="tts-272">空。</span></p>
+<p><span class="tts-sentence" id="tts-273">風。</span></p>
+<p><span class="tts-sentence" id="tts-274">世界中の文字が脈動し、巨大な波となって広がった。</span></p>
+<p><span class="tts-sentence" id="tts-275">空白が止まる。</span></p>
+<p><span class="tts-sentence" id="tts-276">砕けた漢字が再生していく。</span></p>
+<p><span class="tts-sentence" id="tts-277">老人は静かに笑った。</span></p>
+<p><span class="tts-sentence" id="tts-278">「まだ終わらないらしい」</span></p>
+<p><span class="tts-sentence" id="tts-279">トウヤは崩れ落ちた。</span></p>
+<p><span class="tts-sentence" id="tts-280">気づくと、保存館の地下室へ戻っている。</span></p>
+<p><span class="tts-sentence" id="tts-281">外では風が吹いていた。</span></p>
+<p><span class="tts-sentence" id="tts-282">遠くで海鳴りが聞こえる。</span></p>
+<p><span class="tts-sentence" id="tts-283">空は高かった。</span></p>
+<p><span class="tts-sentence" id="tts-284">老人の姿は消えていた。</span></p>
+<p><span class="tts-sentence" id="tts-285">ただ石碑だけが残っている。</span></p>
+<p><span class="tts-sentence" id="tts-286">そこには、新しい文字が刻まれていた。</span></p>
+<p><span class="tts-sentence" id="tts-287">「生」</span></p>
+<p><span class="tts-sentence" id="tts-288">トウヤは静かにそれを見つめた。</span></p>
+<p><span class="tts-sentence" id="tts-289">世界は、まだ名前を持っている。</span></p>
+<p><span class="tts-sentence" id="tts-290">だからきっと、存在し続けることができるのだ。</span></p>
+
+
+</div><!-- /#content -->
+</div><!-- /#content-wrapper -->
+<script src="js/nav.js"></script>
+<script src="js/common.js"></script>
+
+
+<div id="tts-controls">
+<button id="tts-play" title="再生">▶ 再生</button>
+<button disabled="" id="tts-pause" title="一時停止">❚❚ 一時停止</button>
+<button disabled="" id="tts-stop" title="停止">■ 停止</button>
+<label>速度
+    <input id="tts-rate" max="2" min="0.5" step="0.1" type="range" value="1"/>
+<span id="tts-rate-label">1.0x</span>
+</label>
+<label>音声
+    <select id="tts-voice"></select>
+</label>
+</div>
+
+<script id="tts-injected-script">
+(function () {
+  var sentences = Array.prototype.slice.call(document.querySelectorAll('.tts-sentence'));
+  var idx = 0;
+  var isPlaying = false;
+  var rate = 1.0;
+  var selectedVoice = null;
+  var voices = [];
+  // 再生セッションID。cancel() 後に遅れて届く古い onend/onerror を
+  // 無視するために使う（これが無いと、クリックで飛んだ直後に
+  // キャンセルされたはずの前の発話の onend が発火し、
+  // ハイライトが1文余分に先へ進んでしまう）。
+  var playSession = 0;
+
+  var btnPlay = document.getElementById('tts-play');
+  var btnPause = document.getElementById('tts-pause');
+  var btnStop = document.getElementById('tts-stop');
+  var rateInput = document.getElementById('tts-rate');
+  var rateLabel = document.getElementById('tts-rate-label');
+  var voiceSelect = document.getElementById('tts-voice');
+
+  function updateButtons() {
+    btnPlay.disabled = isPlaying;
+    btnPause.disabled = !isPlaying;
+    btnStop.disabled = !isPlaying && idx === 0;
+  }
+
+  // scrollIntoView() を呼んだ直後は、フォントの非同期読み込みなどで
+  // レイアウトがまだ確定しておらず、ブラウザが「既に画面内にある」と
+  // 誤判定してスクロールをスキップすることがある（クリックで飛んだ
+  // 場所によってスクロールする/しないが切り替わって見える一因）。
+  // そこで、スクロール後に requestAnimationFrame を2回挟んで実際に
+  // 画面内に入ったか検証し、入っていなければもう一度スクロールし直す
+  // 自己修復的な仕組みにする。
+  function isElementVisible(el, margin) {
+    var rect = el.getBoundingClientRect();
+    var vw = window.innerWidth;
+    var vh = window.innerHeight;
+    return (
+      rect.top >= -margin &&
+      rect.left >= -margin &&
+      rect.bottom <= vh + margin &&
+      rect.right <= vw + margin &&
+      rect.width > 0 &&
+      rect.height > 0
+    );
+  }
+
+  function doScrollIntoView(el) {
+    el.scrollIntoView({ behavior: 'auto', block: 'center', inline: 'center' });
+  }
+
+  function scrollToElement(el) {
+    // 呼び出し前に強制的にレイアウトを確定させる
+    void document.body.offsetHeight;
+    doScrollIntoView(el);
+
+    // レイアウトが遅れて確定するケースに備え、2フレーム後に再検証する
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        if (!isElementVisible(el, 4)) {
+          doScrollIntoView(el);
+          // それでもダメな場合、もう一段階だけ再試行する
+          requestAnimationFrame(function () {
+            requestAnimationFrame(function () {
+              if (!isElementVisible(el, 4)) {
+                doScrollIntoView(el);
+              }
+            });
+          });
+        }
+      });
+    });
+  }
+
+  function clearHighlight() {
+    for (var i = 0; i < sentences.length; i++) sentences[i].classList.remove('tts-active');
+  }
+
+  function loadVoices() {
+    var all = window.speechSynthesis.getVoices() || [];
+    voices = all.filter(function (v) { return v.lang && v.lang.toLowerCase().indexOf('ja') === 0; });
+    if (voices.length === 0) voices = all; // 日本語音声が無ければ全部表示
+    voiceSelect.innerHTML = '';
+    voices.forEach(function (v, i) {
+      var opt = document.createElement('option');
+      opt.value = i;
+      opt.textContent = v.name + ' (' + v.lang + ')';
+      voiceSelect.appendChild(opt);
+    });
+    if (voices.length > 0) selectedVoice = voices[0];
+  }
+
+  if (typeof window.speechSynthesis !== 'undefined') {
+    loadVoices();
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+  }
+
+  voiceSelect.addEventListener('change', function () {
+    selectedVoice = voices[parseInt(voiceSelect.value, 10)];
+  });
+
+  rateInput.addEventListener('input', function () {
+    rate = parseFloat(rateInput.value);
+    rateLabel.textContent = rate.toFixed(1) + 'x';
+  });
+
+  // session: この呼び出しが発行された時点の playSession。
+  // 発話の onend/onerror が実際に発火した時点で playSession が
+  // 変わっていれば（＝途中でキャンセル/新規セッション開始済み）、
+  // 古いイベントとして無視する。
+  function speakFrom(i, session) {
+    if (session !== playSession) return; // 既に無効化されたセッション
+    if (i >= sentences.length) {
+      isPlaying = false;
+      idx = 0;
+      clearHighlight();
+      updateButtons();
+      return;
+    }
+    idx = i;
+    clearHighlight();
+    var el = sentences[idx];
+    el.classList.add('tts-active');
+    scrollToElement(el);
+
+    var utter = new SpeechSynthesisUtterance(el.textContent);
+    utter.lang = (selectedVoice && selectedVoice.lang) || 'ja-JP';
+    utter.rate = rate;
+    if (selectedVoice) utter.voice = selectedVoice;
+    utter.onend = function () {
+      if (session !== playSession) return;
+      if (isPlaying) speakFrom(idx + 1, session);
+    };
+    utter.onerror = function () {
+      if (session !== playSession) return;
+      if (isPlaying) speakFrom(idx + 1, session);
+    };
+    window.speechSynthesis.speak(utter);
+  }
+
+  // 新しい再生セッションを開始する（Play押下 / クリックでの位置指定 共通処理）
+  function startPlaybackFrom(i) {
+    playSession++; // 古いセッションのonend/onerrorを無効化
+    var mySession = playSession;
+    isPlaying = true;
+    window.speechSynthesis.cancel();
+    speakFrom(i, mySession);
+    updateButtons();
+  }
+
+  btnPlay.addEventListener('click', function () {
+    if (isPlaying) return;
+    startPlaybackFrom(idx);
+  });
+
+  btnPause.addEventListener('click', function () {
+    playSession++; // 以降届く古いonend/onerrorを無効化
+    isPlaying = false;
+    window.speechSynthesis.cancel();
+    updateButtons();
+  });
+
+  btnStop.addEventListener('click', function () {
+    playSession++;
+    isPlaying = false;
+    window.speechSynthesis.cancel();
+    idx = 0;
+    clearHighlight();
+    updateButtons();
+  });
+
+  sentences.forEach(function (el, i) {
+    el.style.cursor = 'pointer';
+    el.addEventListener('click', function () {
+      if (isPlaying) {
+        startPlaybackFrom(i);
+      } else {
+        playSession++; // 念のため保留中のイベントを無効化
+        window.speechSynthesis.cancel();
+        idx = i;
+        clearHighlight();
+        el.classList.add('tts-active');
+        scrollToElement(el);
+      }
+    });
+  });
+
+  updateButtons();
+})();
+</script>
+</body></html>

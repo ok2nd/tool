@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="ja"><head>
+<title>十月のラジオ屋</title>
+<meta charset="utf-8"/>
+<meta content="noindex,nofollow,noarchive" name="robots"/>
+<meta content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<link href="css/style.css" rel="stylesheet"/>
+
+<style id="tts-injected-style">
+  .tts-sentence { transition: background-color 0.15s ease, box-shadow 0.15s ease; }
+  .tts-sentence.tts-active {
+    background-color: rgba(255, 224, 102, 0.65);
+    box-shadow: 0 0 0 2px rgba(255, 193, 7, 0.5);
+    border-radius: 3px;
+  }
+  #tts-controls {
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    box-sizing: border-box;
+    background: rgba(30, 30, 30, 0.92);
+    color: #fff;
+    padding: 8px 12px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    font-family: sans-serif;
+    font-size: 13px;
+    z-index: 999999;
+    writing-mode: horizontal-tb;
+  }
+  #tts-controls button {
+    background: #444;
+    color: #fff;
+    border: 1px solid #666;
+    border-radius: 4px;
+    padding: 6px 10px;
+    cursor: pointer;
+    font-size: 13px;
+  }
+  #tts-controls button:hover { background: #555; }
+  #tts-controls button:disabled { opacity: 0.4; cursor: default; }
+  #tts-controls select, #tts-controls input[type=range] {
+    font-size: 12px;
+  }
+  #tts-controls label { display: flex; align-items: center; gap: 4px; white-space: nowrap; }
+  body { padding-bottom: 56px; }
+</style>
+</head>
+<body>
+<div id="content-wrapper">
+<div id="content">
+
+<h1><span class="tts-sentence" id="tts-1">十月のラジオ屋</span></h1>
+
+<p><span class="tts-sentence" id="tts-2">町には、秋がゆっくり降りてきていた。</span></p>
+
+<p><span class="tts-sentence" id="tts-3">石畳の道には赤い落葉が積もり、古い街灯が夕暮れを琥珀色に染めている。</span></p>
+
+<p><span class="tts-sentence" id="tts-4">風が吹くたび、どこかで木の実が転がる音がした。</span></p>
+
+<p><span class="tts-sentence" id="tts-5">アメリカ中西部の、小さな町だった。</span></p>
+
+<p><span class="tts-sentence" id="tts-6">町の名を覚えている人は、もう少ない。</span></p>
+
+<p><span class="tts-sentence" id="tts-7">昔は鉄道で栄えたが、今では列車もほとんど停まらない。</span></p>
+
+<p><span class="tts-sentence" id="tts-8">秋になると、町全体が少しだけ世界から忘れられたように見えた。</span></p>
+
+<p><span class="tts-sentence" id="tts-9">少年エディは、その町で育った。</span></p>
+
+<p><span class="tts-sentence" id="tts-10">十三歳。</span></p>
+
+<p><span class="tts-sentence" id="tts-11">背が高く、いつもセーターの袖を伸ばして歩く癖があった。</span></p>
+
+<p><span class="tts-sentence" id="tts-12">彼は毎週金曜日になると、メインストリートの古いラジオ屋へ通った。</span></p>
+
+<p><span class="tts-sentence" id="tts-13">店の名前は「マーシャル無線商会」。</span></p>
+
+<p><span class="tts-sentence" id="tts-14">だが誰もそんな名前では呼ばない。</span></p>
+
+<p><span class="tts-sentence" id="tts-15">町の人間はみんな、「古ラジオ屋」と呼んでいた。</span></p>
+
+<p><span class="tts-sentence" id="tts-16">店には古い真空管ラジオが山のように積まれている。</span></p>
+
+<p><span class="tts-sentence" id="tts-17">木製のラジオ。</span></p>
+
+<p><span class="tts-sentence" id="tts-18">銀色のラジオ。</span></p>
+
+<p><span class="tts-sentence" id="tts-19">船みたいに丸いラジオ。</span></p>
+
+<p><span class="tts-sentence" id="tts-20">中には、もう音の出ないものも多かった。</span></p>
+
+<p><span class="tts-sentence" id="tts-21">店主のマーシャル老人は、痩せた男だった。</span></p>
+
+<p><span class="tts-sentence" id="tts-22">猫背で、いつも蝶ネクタイを締めている。</span></p>
+
+<p><span class="tts-sentence" id="tts-23">彼は客が来ても、あまり顔を上げない。</span></p>
+
+<p><span class="tts-sentence" id="tts-24">小さな工具を持ち、カチカチとラジオを直し続けている。</span></p>
+
+<p><span class="tts-sentence" id="tts-25">「こんにちは」</span></p>
+
+<p><span class="tts-sentence" id="tts-26">金曜日の夕方、エディが店へ入る。</span></p>
+
+<p><span class="tts-sentence" id="tts-27">店内には古い木と油の匂いが漂っていた。</span></p>
+
+<p><span class="tts-sentence" id="tts-28">「また来たのか」</span></p>
+
+<p><span class="tts-sentence" id="tts-29">老人は半田ごてを置かずに言った。</span></p>
+
+<p><span class="tts-sentence" id="tts-30">「うん」</span></p>
+
+<p><span class="tts-sentence" id="tts-31">「坊主はラジオなんか聴かんだろ」</span></p>
+
+<p><span class="tts-sentence" id="tts-32">「好きなんだよ」</span></p>
+
+<p><span class="tts-sentence" id="tts-33">「変わったガキだ」</span></p>
+
+<p><span class="tts-sentence" id="tts-34">エディは笑った。</span></p>
+
+<p><span class="tts-sentence" id="tts-35">本当は、ラジオそのものより、この店の空気が好きだった。</span></p>
+
+<p><span class="tts-sentence" id="tts-36">夕暮れになると真空管がぼんやり光り、店じゅうで小さな雑音が鳴り始める。</span></p>
+
+<p><span class="tts-sentence" id="tts-37">ザーッ。</span></p>
+
+<p><span class="tts-sentence" id="tts-38">ピチ、ピチ。</span></p>
+
+<p><span class="tts-sentence" id="tts-39">遠い海みたいな音。</span></p>
+
+<p><span class="tts-sentence" id="tts-40">まるで世界の隅っこから、誰かが囁いているようだった。</span></p>
+
+<p><span class="tts-sentence" id="tts-41">ある十月の金曜日、エディは店の奥で奇妙なラジオを見つけた。</span></p>
+
+<p><span class="tts-sentence" id="tts-42">黒い木箱だった。</span></p>
+
+<p><span class="tts-sentence" id="tts-43">他のラジオより古く、表面には細かな傷がついている。</span></p>
+
+<p><span class="tts-sentence" id="tts-44">だがダイヤルだけが妙に新しかった。</span></p>
+
+<p><span class="tts-sentence" id="tts-45">数字ではなく、小さな星座が描かれている。</span></p>
+
+<p><span class="tts-sentence" id="tts-46">「それ、触るな」</span></p>
+
+<p><span class="tts-sentence" id="tts-47">突然、マーシャル老人が言った。</span></p>
+
+<p><span class="tts-sentence" id="tts-48">エディは驚いて振り向く。</span></p>
+
+<p><span class="tts-sentence" id="tts-49">老人は珍しく真面目な顔をしていた。</span></p>
+
+<p><span class="tts-sentence" id="tts-50">「なんで？</span><span class="tts-sentence" id="tts-51">」</span></p>
+
+<p><span class="tts-sentence" id="tts-52">「壊れてる」</span></p>
+
+<p><span class="tts-sentence" id="tts-53">「直せないの？</span><span class="tts-sentence" id="tts-54">」</span></p>
+
+<p><span class="tts-sentence" id="tts-55">「……たぶんな」</span></p>
+
+<p><span class="tts-sentence" id="tts-56">エディはラジオを見つめた。</span></p>
+
+<p><span class="tts-sentence" id="tts-57">黒い木箱は、夕暮れの光を吸い込んでいるみたいだった。</span></p>
+
+<p><span class="tts-sentence" id="tts-58">「音、出ないの？</span><span class="tts-sentence" id="tts-59">」</span></p>
+
+<p><span class="tts-sentence" id="tts-60">マーシャル老人は少し黙った。</span></p>
+
+<p><span class="tts-sentence" id="tts-61">それから小さく言った。</span></p>
+
+<p><span class="tts-sentence" id="tts-62">「出すぎるんだ」</span></p>
+
+<p><span class="tts-sentence" id="tts-63">外では風が吹いていた。</span></p>
+
+<p><span class="tts-sentence" id="tts-64">落葉が窓へ当たる。</span></p>
+
+<p><span class="tts-sentence" id="tts-65">その日は、それ以上何も聞かなかった。</span></p>
+
+<p><span class="tts-sentence" id="tts-66">だがエディは気になって仕方がなかった。</span></p>
+
+<p><span class="tts-sentence" id="tts-67">翌週も、その次の週も、彼はラジオを眺めた。</span></p>
+
+<p><span class="tts-sentence" id="tts-68">マーシャル老人は決して触らせない。</span></p>
+
+<p><span class="tts-sentence" id="tts-69">ある雨の夕方だった。</span></p>
+
+<p><span class="tts-sentence" id="tts-70">町は霧に包まれ、通りには誰も歩いていなかった。</span></p>
+
+<p><span class="tts-sentence" id="tts-71">エディが店へ入ると、奥から激しい咳が聞こえた。</span></p>
+
+<p><span class="tts-sentence" id="tts-72">マーシャル老人が椅子へ座り込んでいる。</span></p>
+
+<p><span class="tts-sentence" id="tts-73">顔色が悪かった。</span></p>
+
+<p><span class="tts-sentence" id="tts-74">「大丈夫？</span><span class="tts-sentence" id="tts-75">」</span></p>
+
+<p><span class="tts-sentence" id="tts-76">「歳だ」</span></p>
+
+<p><span class="tts-sentence" id="tts-77">老人は笑った。</span></p>
+
+<p><span class="tts-sentence" id="tts-78">「薬、持ってくる？</span><span class="tts-sentence" id="tts-79">」</span></p>
+
+<p><span class="tts-sentence" id="tts-80">「いや……少し休めばいい」</span></p>
+
+<p><span class="tts-sentence" id="tts-81">彼は目を閉じた。</span></p>
+
+<p><span class="tts-sentence" id="tts-82">店内にはラジオの雑音だけが流れている。</span></p>
+
+<p><span class="tts-sentence" id="tts-83">エディは静かに店の奥を見た。</span></p>
+
+<p><span class="tts-sentence" id="tts-84">黒いラジオが棚に置かれている。</span></p>
+
+<p><span class="tts-sentence" id="tts-85">不思議なほど静かだった。</span></p>
+
+<p><span class="tts-sentence" id="tts-86">エディはゆっくり近づいた。</span></p>
+
+<p><span class="tts-sentence" id="tts-87">そして、ダイヤルへ触れた。</span></p>
+
+<p><span class="tts-sentence" id="tts-88">冷たい金属だった。</span></p>
+
+<p><span class="tts-sentence" id="tts-89">少しだけ回す。</span></p>
+
+<p><span class="tts-sentence" id="tts-90">ザーッ。</span></p>
+
+<p><span class="tts-sentence" id="tts-91">雑音が鳴る。</span></p>
+
+<p><span class="tts-sentence" id="tts-92">さらに回す。</span></p>
+
+<p><span class="tts-sentence" id="tts-93">すると突然、音楽が聞こえた。</span></p>
+
+<p><span class="tts-sentence" id="tts-94">古いジャズだった。</span></p>
+
+<p><span class="tts-sentence" id="tts-95">遠いホールで演奏されているような、柔らかなトランペット。</span></p>
+
+<p><span class="tts-sentence" id="tts-96">エディは目を丸くした。</span></p>
+
+<p><span class="tts-sentence" id="tts-97">「壊れてないじゃないか」</span></p>
+
+<p><span class="tts-sentence" id="tts-98">そのときだった。</span></p>
+
+<p><span class="tts-sentence" id="tts-99">音楽の向こうから、誰かの声が聞こえた。</span></p>
+
+<p><span class="tts-sentence" id="tts-100">『……メインストリートは雪だ』</span></p>
+
+<p><span class="tts-sentence" id="tts-101">男の声だった。</span></p>
+
+<p><span class="tts-sentence" id="tts-102">『クリスマスの飾りつけが始まってる』</span></p>
+
+<p><span class="tts-sentence" id="tts-103">エディは眉をひそめた。</span></p>
+
+<p><span class="tts-sentence" id="tts-104">今は十月で、外は雨だ。</span></p>
+
+<p><span class="tts-sentence" id="tts-105">ラジオの向こうで、別の声が笑った。</span></p>
+
+<p><span class="tts-sentence" id="tts-106">『ジョー、また飲みすぎだろ』</span></p>
+
+<p><span class="tts-sentence" id="tts-107">『違う。</span><span class="tts-sentence" id="tts-108">本当に雪なんだ』</span></p>
+
+<p><span class="tts-sentence" id="tts-109">ザーッ。</span></p>
+
+<p><span class="tts-sentence" id="tts-110">雑音。</span></p>
+
+<p><span class="tts-sentence" id="tts-111">それから再び、音楽。</span></p>
+
+<p><span class="tts-sentence" id="tts-112">エディはラジオへ耳を近づけた。</span></p>
+
+<p><span class="tts-sentence" id="tts-113">今度は女の声が聞こえる。</span></p>
+
+<p><span class="tts-sentence" id="tts-114">『今夜、流星群が来るって』</span></p>
+
+<p><span class="tts-sentence" id="tts-115">『去年も見たわ』</span></p>
+
+<p><span class="tts-sentence" id="tts-116">『でも今年は赤いんだってさ』</span></p>
+
+<p><span class="tts-sentence" id="tts-117">雑音。</span></p>
+
+<p><span class="tts-sentence" id="tts-118">雨音。</span></p>
+
+<p><span class="tts-sentence" id="tts-119">店の窓が震えた。</span></p>
+
+<p><span class="tts-sentence" id="tts-120">「だから言ったろう」</span></p>
+
+<p><span class="tts-sentence" id="tts-121">背後で声がした。</span></p>
+
+<p><span class="tts-sentence" id="tts-122">マーシャル老人だった。</span></p>
+
+<p><span class="tts-sentence" id="tts-123">彼はいつのまにか起きていた。</span></p>
+
+<p><span class="tts-sentence" id="tts-124">「そのラジオは、少し変なんだ」</span></p>
+
+<p><span class="tts-sentence" id="tts-125">エディは振り返った。</span></p>
+
+<p><span class="tts-sentence" id="tts-126">「何これ？</span><span class="tts-sentence" id="tts-127">」</span></p>
+
+<p><span class="tts-sentence" id="tts-128">老人はゆっくり椅子へ腰掛けた。</span></p>
+
+<p><span class="tts-sentence" id="tts-129">「昔、戦争のあとに手に入れた」</span></p>
+
+<p><span class="tts-sentence" id="tts-130">「どこのラジオ？</span><span class="tts-sentence" id="tts-131">」</span></p>
+
+<p><span class="tts-sentence" id="tts-132">「知らん」</span></p>
+
+<p><span class="tts-sentence" id="tts-133">老人は窓の外を見た。</span></p>
+
+<p><span class="tts-sentence" id="tts-134">「ただ、夜になると時々、まだ来ていない放送を拾う」</span></p>
+
+<p><span class="tts-sentence" id="tts-135">エディは笑った。</span></p>
+
+<p><span class="tts-sentence" id="tts-136">「未来のラジオってこと？</span><span class="tts-sentence" id="tts-137">」</span></p>
+
+<p><span class="tts-sentence" id="tts-138">「たぶんな」</span></p>
+
+<p><span class="tts-sentence" id="tts-139">「そんなのあるわけない」</span></p>
+
+<p><span class="tts-sentence" id="tts-140">「わしもそう思った」</span></p>
+
+<p><span class="tts-sentence" id="tts-141">老人は静かに続けた。</span></p>
+
+<p><span class="tts-sentence" id="tts-142">「だが、翌月になると、本当に雪が降った」</span></p>
+
+<p><span class="tts-sentence" id="tts-143">店の中で真空管が淡く光っていた。</span></p>
+
+<p><span class="tts-sentence" id="tts-144">ザーッ。</span></p>
+
+<p><span class="tts-sentence" id="tts-145">遠い波みたいな雑音。</span></p>
+
+<p><span class="tts-sentence" id="tts-146">エディは急に胸が高鳴った。</span></p>
+
+<p><span class="tts-sentence" id="tts-147">「未来って、どんなこと話してるの？</span><span class="tts-sentence" id="tts-148">」</span></p>
+
+<p><span class="tts-sentence" id="tts-149">「大したことじゃない」</span></p>
+
+<p><span class="tts-sentence" id="tts-150">「戦争とか？</span><span class="tts-sentence" id="tts-151">」</span></p>
+
+<p><span class="tts-sentence" id="tts-152">「いや」</span></p>
+
+<p><span class="tts-sentence" id="tts-153">「世界の終わりとか？</span><span class="tts-sentence" id="tts-154">」</span></p>
+
+<p><span class="tts-sentence" id="tts-155">老人は首を振った。</span></p>
+
+<p><span class="tts-sentence" id="tts-156">「晩飯の話や、天気の話ばかりだ」</span></p>
+
+<p><span class="tts-sentence" id="tts-157">エディは少し拍子抜けした。</span></p>
+
+<p><span class="tts-sentence" id="tts-158">「それだけ？</span><span class="tts-sentence" id="tts-159">」</span></p>
+
+<p><span class="tts-sentence" id="tts-160">「未来ってのは、案外そういうもんらしい」</span></p>
+
+<p><span class="tts-sentence" id="tts-161">その夜から、エディは毎週ラジオを聴きに通った。</span></p>
+
+<p><span class="tts-sentence" id="tts-162">未来の放送は奇妙だった。</span></p>
+
+<p><span class="tts-sentence" id="tts-163">『今日は公園の噴水が凍った』</span></p>
+
+<p><span class="tts-sentence" id="tts-164">『新しい映画館ができた』</span></p>
+
+<p><span class="tts-sentence" id="tts-165">『古い橋が取り壊されるらしい』</span></p>
+
+<p><span class="tts-sentence" id="tts-166">そんな話ばかりだった。</span></p>
+
+<p><span class="tts-sentence" id="tts-167">だが時々、胸がざわつく言葉も混じる。</span></p>
+
+<p><span class="tts-sentence" id="tts-168">『今夜の火星はきれいだ』</span></p>
+
+<p><span class="tts-sentence" id="tts-169">『木星便の遅延が続いています』</span></p>
+
+<p><span class="tts-sentence" id="tts-170">『軌道エレベーター周辺は強風です』</span></p>
+
+<p><span class="tts-sentence" id="tts-171">エディはそれを聞くたび、胸の奥が熱くなった。</span></p>
+
+<p><span class="tts-sentence" id="tts-172">未来は、本当に来るのだ。</span></p>
+
+<p><span class="tts-sentence" id="tts-173">そしてそこでも、人々はラジオを聴き、夕飯を食べ、天気の話をしている。</span></p>
+
+<p><span class="tts-sentence" id="tts-174">ある晩、エディはラジオへ尋ねた。</span></p>
+
+<p><span class="tts-sentence" id="tts-175">もちろん返事が来るとは思っていなかった。</span></p>
+
+<p><span class="tts-sentence" id="tts-176">「未来って、どんな匂いがする？</span><span class="tts-sentence" id="tts-177">」</span></p>
+
+<p><span class="tts-sentence" id="tts-178">ザーッ。</span></p>
+
+<p><span class="tts-sentence" id="tts-179">雑音。</span></p>
+
+<p><span class="tts-sentence" id="tts-180">それから、小さな少女の声が聞こえた。</span></p>
+
+<p><span class="tts-sentence" id="tts-181">『雨のあとみたいな匂い』</span></p>
+
+<p><span class="tts-sentence" id="tts-182">エディは凍りついた。</span></p>
+
+<p><span class="tts-sentence" id="tts-183">マーシャル老人も顔を上げる。</span></p>
+
+<p><span class="tts-sentence" id="tts-184">ラジオの向こうで、少女が笑った。</span></p>
+
+<p><span class="tts-sentence" id="tts-185">『そっちは？</span><span class="tts-sentence" id="tts-186">』</span></p>
+
+<p><span class="tts-sentence" id="tts-187">エディはしばらく声が出なかった。</span></p>
+
+<p><span class="tts-sentence" id="tts-188">やがて小さく言った。</span></p>
+
+<p><span class="tts-sentence" id="tts-189">「落葉の匂い」</span></p>
+
+<p><span class="tts-sentence" id="tts-190">ラジオの向こうで、誰かが「きれい」と呟いた。</span></p>
+
+<p><span class="tts-sentence" id="tts-191">その瞬間、店の電灯がふっと揺れた。</span></p>
+
+<p><span class="tts-sentence" id="tts-192">ザーッ。</span></p>
+
+<p><span class="tts-sentence" id="tts-193">放送は消えた。</span></p>
+
+<p><span class="tts-sentence" id="tts-194">店の中に静寂が落ちる。</span></p>
+
+<p><span class="tts-sentence" id="tts-195">マーシャル老人は長いこと黙っていた。</span></p>
+
+<p><span class="tts-sentence" id="tts-196">やがて彼は、窓の外の夜を見ながら言った。</span></p>
+
+<p><span class="tts-sentence" id="tts-197">「未来の連中も、寂しいのかもしれんな」</span></p>
+
+<p><span class="tts-sentence" id="tts-198">秋は深まっていった。</span></p>
+
+<p><span class="tts-sentence" id="tts-199">町の木々は赤く染まり、夜の空気は冷たくなる。</span></p>
+
+<p><span class="tts-sentence" id="tts-200">ある金曜日、エディが店へ行くと、入口に貼り紙があった。</span></p>
+
+<p><span class="tts-sentence" id="tts-201">『閉店します』</span></p>
+
+<p><span class="tts-sentence" id="tts-202">エディは慌てて中へ入った。</span></p>
+
+<p><span class="tts-sentence" id="tts-203">店は薄暗かった。</span></p>
+
+<p><span class="tts-sentence" id="tts-204">棚のラジオが半分ほど消えている。</span></p>
+
+<p><span class="tts-sentence" id="tts-205">マーシャル老人は椅子へ座り、静かにコーヒーを飲んでいた。</span></p>
+
+<p><span class="tts-sentence" id="tts-206">「閉めるの？</span><span class="tts-sentence" id="tts-207">」</span></p>
+
+<p><span class="tts-sentence" id="tts-208">「潮時だ」</span></p>
+
+<p><span class="tts-sentence" id="tts-209">「なんで」</span></p>
+
+<p><span class="tts-sentence" id="tts-210">「もう直す目が見えん」</span></p>
+
+<p><span class="tts-sentence" id="tts-211">老人は笑った。</span></p>
+
+<p><span class="tts-sentence" id="tts-212">外では風が鳴っていた。</span></p>
+
+<p><span class="tts-sentence" id="tts-213">エディは胸が痛くなった。</span></p>
+
+<p><span class="tts-sentence" id="tts-214">この店がなくなるなんて、考えたこともなかった。</span></p>
+
+<p><span class="tts-sentence" id="tts-215">マーシャル老人はゆっくり立ち上がった。</span></p>
+
+<p><span class="tts-sentence" id="tts-216">そして店の奥から、黒いラジオを持ってきた。</span></p>
+
+<p><span class="tts-sentence" id="tts-217">「持ってけ」</span></p>
+
+<p><span class="tts-sentence" id="tts-218">「え？</span><span class="tts-sentence" id="tts-219">」</span></p>
+
+<p><span class="tts-sentence" id="tts-220">「おまえのほうが、未来を聴きたがってる」</span></p>
+
+<p><span class="tts-sentence" id="tts-221">エディはラジオを受け取った。</span></p>
+
+<p><span class="tts-sentence" id="tts-222">ずっしり重かった。</span></p>
+
+<p><span class="tts-sentence" id="tts-223">「でもこれ、大事なんじゃ」</span></p>
+
+<p><span class="tts-sentence" id="tts-224">老人は首を振った。</span></p>
+
+<p><span class="tts-sentence" id="tts-225">「ラジオってのはな、本当は声を届けるためのもんだ」</span></p>
+
+<p><span class="tts-sentence" id="tts-226">彼は窓の外を見た。</span></p>
+
+<p><span class="tts-sentence" id="tts-227">落葉が夜道を転がっていく。</span></p>
+
+<p><span class="tts-sentence" id="tts-228">「時代を越えてでもな」</span></p>
+
+<p><span class="tts-sentence" id="tts-229">その冬、マーシャル老人は亡くなった。</span></p>
+
+<p><span class="tts-sentence" id="tts-230">雪の朝だった。</span></p>
+
+<p><span class="tts-sentence" id="tts-231">町の教会の鐘が静かに鳴っていた。</span></p>
+
+<p><span class="tts-sentence" id="tts-232">エディは葬式の帰り道、ラジオを抱えて歩いた。</span></p>
+
+<p><span class="tts-sentence" id="tts-233">世界は真っ白だった。</span></p>
+
+<p><span class="tts-sentence" id="tts-234">家へ帰ると、彼はラジオを机へ置いた。</span></p>
+
+<p><span class="tts-sentence" id="tts-235">窓の外には雪。</span></p>
+
+<p><span class="tts-sentence" id="tts-236">暖房の音。</span></p>
+
+<p><span class="tts-sentence" id="tts-237">遠い汽笛。</span></p>
+
+<p><span class="tts-sentence" id="tts-238">エディは静かにダイヤルを回した。</span></p>
+
+<p><span class="tts-sentence" id="tts-239">ザーッ。</span></p>
+
+<p><span class="tts-sentence" id="tts-240">雑音。</span></p>
+
+<p><span class="tts-sentence" id="tts-241">そして、誰かの声。</span></p>
+
+<p><span class="tts-sentence" id="tts-242">『……今夜は雪だ』</span></p>
+
+<p><span class="tts-sentence" id="tts-243">エディは息を止めた。</span></p>
+
+<p><span class="tts-sentence" id="tts-244">『古い町で、大きな雪が降ってる』</span></p>
+
+<p><span class="tts-sentence" id="tts-245">それは少女の声だった。</span></p>
+
+<p><span class="tts-sentence" id="tts-246">『昔のラジオ屋さんが閉まった日だね』</span></p>
+
+<p><span class="tts-sentence" id="tts-247">別の声が答える。</span></p>
+
+<p><span class="tts-sentence" id="tts-248">『うん。</span><span class="tts-sentence" id="tts-249">でも、そのあともラジオは残った』</span></p>
+
+<p><span class="tts-sentence" id="tts-250">『よかった』</span></p>
+
+<p><span class="tts-sentence" id="tts-251">静かな沈黙。</span></p>
+
+<p><span class="tts-sentence" id="tts-252">それから少女が、小さく言った。</span></p>
+
+<p><span class="tts-sentence" id="tts-253">『その子が、いつか作るんだよ』</span></p>
+
+<p><span class="tts-sentence" id="tts-254">エディの胸が高鳴る。</span></p>
+
+<p><span class="tts-sentence" id="tts-255">『最初の時間受信機を』</span></p>
+
+<p><span class="tts-sentence" id="tts-256">雪が降っていた。</span></p>
+
+<p><span class="tts-sentence" id="tts-257">窓の外で、白い夜が静かに広がっている。</span></p>
+
+<p><span class="tts-sentence" id="tts-258">エディはラジオを見つめた。</span></p>
+
+<p><span class="tts-sentence" id="tts-259">黒い木箱。</span></p>
+
+<p><span class="tts-sentence" id="tts-260">星座のダイヤル。</span></p>
+
+<p><span class="tts-sentence" id="tts-261">未来の声。</span></p>
+
+<p><span class="tts-sentence" id="tts-262">そして彼は初めて気づいた。</span></p>
+
+<p><span class="tts-sentence" id="tts-263">このラジオは、未来から届いたものではなかった。</span></p>
+
+<p><span class="tts-sentence" id="tts-264">まだ作られていない、自分自身の発明だったのだ。</span></p>
+
+<p><span class="tts-sentence" id="tts-265">ザーッ。</span></p>
+
+<p><span class="tts-sentence" id="tts-266">雑音の向こうで、誰かが笑った。</span></p>
+
+<p><span class="tts-sentence" id="tts-267">まるで遠い未来の冬から、落葉の匂いを懐かしむみたいに。</span></p>
+
+
+</div><!-- /#content -->
+</div><!-- /#content-wrapper -->
+<script src="js/nav.js"></script>
+<script src="js/common.js"></script>
+
+
+<div id="tts-controls">
+<button id="tts-play" title="再生">▶ 再生</button>
+<button disabled="" id="tts-pause" title="一時停止">❚❚ 一時停止</button>
+<button disabled="" id="tts-stop" title="停止">■ 停止</button>
+<label>速度
+    <input id="tts-rate" max="2" min="0.5" step="0.1" type="range" value="1"/>
+<span id="tts-rate-label">1.0x</span>
+</label>
+<label>音声
+    <select id="tts-voice"></select>
+</label>
+</div>
+
+<script id="tts-injected-script">
+(function () {
+  var sentences = Array.prototype.slice.call(document.querySelectorAll('.tts-sentence'));
+  var idx = 0;
+  var isPlaying = false;
+  var rate = 1.0;
+  var selectedVoice = null;
+  var voices = [];
+  // 再生セッションID。cancel() 後に遅れて届く古い onend/onerror を
+  // 無視するために使う（これが無いと、クリックで飛んだ直後に
+  // キャンセルされたはずの前の発話の onend が発火し、
+  // ハイライトが1文余分に先へ進んでしまう）。
+  var playSession = 0;
+
+  var btnPlay = document.getElementById('tts-play');
+  var btnPause = document.getElementById('tts-pause');
+  var btnStop = document.getElementById('tts-stop');
+  var rateInput = document.getElementById('tts-rate');
+  var rateLabel = document.getElementById('tts-rate-label');
+  var voiceSelect = document.getElementById('tts-voice');
+
+  function updateButtons() {
+    btnPlay.disabled = isPlaying;
+    btnPause.disabled = !isPlaying;
+    btnStop.disabled = !isPlaying && idx === 0;
+  }
+
+  // scrollIntoView() を呼んだ直後は、フォントの非同期読み込みなどで
+  // レイアウトがまだ確定しておらず、ブラウザが「既に画面内にある」と
+  // 誤判定してスクロールをスキップすることがある（クリックで飛んだ
+  // 場所によってスクロールする/しないが切り替わって見える一因）。
+  // そこで、スクロール後に requestAnimationFrame を2回挟んで実際に
+  // 画面内に入ったか検証し、入っていなければもう一度スクロールし直す
+  // 自己修復的な仕組みにする。
+  function isElementVisible(el, margin) {
+    var rect = el.getBoundingClientRect();
+    var vw = window.innerWidth;
+    var vh = window.innerHeight;
+    return (
+      rect.top >= -margin &&
+      rect.left >= -margin &&
+      rect.bottom <= vh + margin &&
+      rect.right <= vw + margin &&
+      rect.width > 0 &&
+      rect.height > 0
+    );
+  }
+
+  function doScrollIntoView(el) {
+    el.scrollIntoView({ behavior: 'auto', block: 'center', inline: 'center' });
+  }
+
+  function scrollToElement(el) {
+    // 呼び出し前に強制的にレイアウトを確定させる
+    void document.body.offsetHeight;
+    doScrollIntoView(el);
+
+    // レイアウトが遅れて確定するケースに備え、2フレーム後に再検証する
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        if (!isElementVisible(el, 4)) {
+          doScrollIntoView(el);
+          // それでもダメな場合、もう一段階だけ再試行する
+          requestAnimationFrame(function () {
+            requestAnimationFrame(function () {
+              if (!isElementVisible(el, 4)) {
+                doScrollIntoView(el);
+              }
+            });
+          });
+        }
+      });
+    });
+  }
+
+  function clearHighlight() {
+    for (var i = 0; i < sentences.length; i++) sentences[i].classList.remove('tts-active');
+  }
+
+  function loadVoices() {
+    var all = window.speechSynthesis.getVoices() || [];
+    voices = all.filter(function (v) { return v.lang && v.lang.toLowerCase().indexOf('ja') === 0; });
+    if (voices.length === 0) voices = all; // 日本語音声が無ければ全部表示
+    voiceSelect.innerHTML = '';
+    voices.forEach(function (v, i) {
+      var opt = document.createElement('option');
+      opt.value = i;
+      opt.textContent = v.name + ' (' + v.lang + ')';
+      voiceSelect.appendChild(opt);
+    });
+    if (voices.length > 0) selectedVoice = voices[0];
+  }
+
+  if (typeof window.speechSynthesis !== 'undefined') {
+    loadVoices();
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+  }
+
+  voiceSelect.addEventListener('change', function () {
+    selectedVoice = voices[parseInt(voiceSelect.value, 10)];
+  });
+
+  rateInput.addEventListener('input', function () {
+    rate = parseFloat(rateInput.value);
+    rateLabel.textContent = rate.toFixed(1) + 'x';
+  });
+
+  // session: この呼び出しが発行された時点の playSession。
+  // 発話の onend/onerror が実際に発火した時点で playSession が
+  // 変わっていれば（＝途中でキャンセル/新規セッション開始済み）、
+  // 古いイベントとして無視する。
+  function speakFrom(i, session) {
+    if (session !== playSession) return; // 既に無効化されたセッション
+    if (i >= sentences.length) {
+      isPlaying = false;
+      idx = 0;
+      clearHighlight();
+      updateButtons();
+      return;
+    }
+    idx = i;
+    clearHighlight();
+    var el = sentences[idx];
+    el.classList.add('tts-active');
+    scrollToElement(el);
+
+    var utter = new SpeechSynthesisUtterance(el.textContent);
+    utter.lang = (selectedVoice && selectedVoice.lang) || 'ja-JP';
+    utter.rate = rate;
+    if (selectedVoice) utter.voice = selectedVoice;
+    utter.onend = function () {
+      if (session !== playSession) return;
+      if (isPlaying) speakFrom(idx + 1, session);
+    };
+    utter.onerror = function () {
+      if (session !== playSession) return;
+      if (isPlaying) speakFrom(idx + 1, session);
+    };
+    window.speechSynthesis.speak(utter);
+  }
+
+  // 新しい再生セッションを開始する（Play押下 / クリックでの位置指定 共通処理）
+  function startPlaybackFrom(i) {
+    playSession++; // 古いセッションのonend/onerrorを無効化
+    var mySession = playSession;
+    isPlaying = true;
+    window.speechSynthesis.cancel();
+    speakFrom(i, mySession);
+    updateButtons();
+  }
+
+  btnPlay.addEventListener('click', function () {
+    if (isPlaying) return;
+    startPlaybackFrom(idx);
+  });
+
+  btnPause.addEventListener('click', function () {
+    playSession++; // 以降届く古いonend/onerrorを無効化
+    isPlaying = false;
+    window.speechSynthesis.cancel();
+    updateButtons();
+  });
+
+  btnStop.addEventListener('click', function () {
+    playSession++;
+    isPlaying = false;
+    window.speechSynthesis.cancel();
+    idx = 0;
+    clearHighlight();
+    updateButtons();
+  });
+
+  sentences.forEach(function (el, i) {
+    el.style.cursor = 'pointer';
+    el.addEventListener('click', function () {
+      if (isPlaying) {
+        startPlaybackFrom(i);
+      } else {
+        playSession++; // 念のため保留中のイベントを無効化
+        window.speechSynthesis.cancel();
+        idx = i;
+        clearHighlight();
+        el.classList.add('tts-active');
+        scrollToElement(el);
+      }
+    });
+  });
+
+  updateButtons();
+})();
+</script>
+</body></html>

@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="ja"><head>
+<title>反転図書館</title>
+<meta charset="utf-8"/>
+<meta content="noindex,nofollow,noarchive" name="robots"/>
+<meta content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<link href="css/style.css" rel="stylesheet"/>
+
+<style id="tts-injected-style">
+  .tts-sentence { transition: background-color 0.15s ease, box-shadow 0.15s ease; }
+  .tts-sentence.tts-active {
+    background-color: rgba(255, 224, 102, 0.65);
+    box-shadow: 0 0 0 2px rgba(255, 193, 7, 0.5);
+    border-radius: 3px;
+  }
+  #tts-controls {
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    box-sizing: border-box;
+    background: rgba(30, 30, 30, 0.92);
+    color: #fff;
+    padding: 8px 12px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    font-family: sans-serif;
+    font-size: 13px;
+    z-index: 999999;
+    writing-mode: horizontal-tb;
+  }
+  #tts-controls button {
+    background: #444;
+    color: #fff;
+    border: 1px solid #666;
+    border-radius: 4px;
+    padding: 6px 10px;
+    cursor: pointer;
+    font-size: 13px;
+  }
+  #tts-controls button:hover { background: #555; }
+  #tts-controls button:disabled { opacity: 0.4; cursor: default; }
+  #tts-controls select, #tts-controls input[type=range] {
+    font-size: 12px;
+  }
+  #tts-controls label { display: flex; align-items: center; gap: 4px; white-space: nowrap; }
+  body { padding-bottom: 56px; }
+</style>
+</head>
+<body>
+<div id="content-wrapper">
+<div id="content">
+
+<h1><span class="tts-sentence" id="tts-1">反転図書館</span></h1>
+<p><span class="tts-sentence" id="tts-2">最初に消えたのは、海だった。</span></p>
+<p><span class="tts-sentence" id="tts-3">正確には、人々が海を思い出せなくなった。</span></p>
+<p><span class="tts-sentence" id="tts-4">地図にはまだ青い領域が存在している。</span><span class="tts-sentence" id="tts-5">衛星写真にも巨大な水面が映っている。</span><span class="tts-sentence" id="tts-6">気候シミュレーションも正常に動作していた。</span><span class="tts-sentence" id="tts-7">しかし誰も、海というものを実感として理解できなかった。</span></p>
+<p><span class="tts-sentence" id="tts-8">「巨大な液体の平面が存在する、という概念が脳内で安定しないんです」</span></p>
+<p><span class="tts-sentence" id="tts-9">ニュース番組で学者が説明していた。</span></p>
+<p><span class="tts-sentence" id="tts-10">司会者は頷いていたが、表情を見る限り、本人も理解していなかった。</span></p>
+<p><span class="tts-sentence" id="tts-11">巨大な液体。</span></p>
+<p><span class="tts-sentence" id="tts-12">水平線。</span></p>
+<p><span class="tts-sentence" id="tts-13">波。</span></p>
+<p><span class="tts-sentence" id="tts-14">そうした単語を聞くたび、人々は軽い眩暈を覚えるようになった。</span></p>
+<p><span class="tts-sentence" id="tts-15">私の仕事は校閲だった。</span></p>
+<p><span class="tts-sentence" id="tts-16">文章校閲ではなく、現実校閲。</span></p>
+<p><span class="tts-sentence" id="tts-17">世界は膨大な情報量によって構成されており、人類社会は長い間、その維持を自動化してきた。</span><span class="tts-sentence" id="tts-18">物理法則。</span><span class="tts-sentence" id="tts-19">歴史。</span><span class="tts-sentence" id="tts-20">文化。</span><span class="tts-sentence" id="tts-21">自然環境。</span><span class="tts-sentence" id="tts-22">そうしたものはすべて巨大な記述層によって管理されている。</span></p>
+<p><span class="tts-sentence" id="tts-23">そして近年、その記述に乱れが発生し始めていた。</span></p>
+<p><span class="tts-sentence" id="tts-24">「海」の消失もその一例だった。</span></p>
+<p><span class="tts-sentence" id="tts-25">私は中央図書庁第三保存区画に所属していた。</span></p>
+<p><span class="tts-sentence" id="tts-26">図書庁は地下にある。</span></p>
+<p><span class="tts-sentence" id="tts-27">地下と言っても単なる地下空間ではない。</span><span class="tts-sentence" id="tts-28">都市全体の下層へ、垂直方向に何百キロも伸びる巨大構造体だ。</span><span class="tts-sentence" id="tts-29">深部へ行くほど古い概念が保存されている。</span></p>
+<p><span class="tts-sentence" id="tts-30">最下層には重力や時間の原型が収蔵されているという噂もあった。</span></p>
+<p><span class="tts-sentence" id="tts-31">毎朝、私は昇降筒で地下九十二層へ降りる。</span></p>
+<p><span class="tts-sentence" id="tts-32">途中、窓外に膨大な書架が見える。</span></p>
+<p><span class="tts-sentence" id="tts-33">そこに収蔵されているのは本ではない。</span><span class="tts-sentence" id="tts-34">現実そのものだった。</span></p>
+<p><span class="tts-sentence" id="tts-35">「雨」</span></p>
+<p><span class="tts-sentence" id="tts-36">「鉄」</span></p>
+<p><span class="tts-sentence" id="tts-37">「犬」</span></p>
+<p><span class="tts-sentence" id="tts-38">「昨日」</span></p>
+<p><span class="tts-sentence" id="tts-39">そうした概念が個別の記述単位として保管されている。</span></p>
+<p><span class="tts-sentence" id="tts-40">世界とはつまり、巨大な図書館だった。</span></p>
+<p><span class="tts-sentence" id="tts-41">私の席には朝から警告灯が点滅していた。</span></p>
+<p><span class="tts-sentence" id="tts-42">案件番号C-11871。</span></p>
+<p><span class="tts-sentence" id="tts-43">概念劣化速度、危険域。</span></p>
+<p><span class="tts-sentence" id="tts-44">対象。</span></p>
+<p><span class="tts-sentence" id="tts-45">「海」</span></p>
+<p><span class="tts-sentence" id="tts-46">私は端末を開いた。</span></p>
+<p><span class="tts-sentence" id="tts-47">記述層の状態が表示される。</span></p>
+<p><span class="tts-sentence" id="tts-48">大量の欠落が発生していた。</span></p>
+<p><span class="tts-sentence" id="tts-49">塩分濃度の定義が不安定化。</span><span class="tts-sentence" id="tts-50">潮汐概念の参照先消失。</span><span class="tts-sentence" id="tts-51">水平線の描画アルゴリズムに破損。</span><span class="tts-sentence" id="tts-52">波音データベースの断片化。</span></p>
+<p><span class="tts-sentence" id="tts-53">まるで巨大な文章が腐敗しているようだった。</span></p>
+<p><span class="tts-sentence" id="tts-54">「また海か」</span></p>
+<p><span class="tts-sentence" id="tts-55">隣席の真賀田が言う。</span></p>
+<p><span class="tts-sentence" id="tts-56">彼女は古典担当だった。</span><span class="tts-sentence" id="tts-57">現在では使用されなくなった概念群を修復している。</span></p>
+<p><span class="tts-sentence" id="tts-58">「最近多いですね」</span></p>
+<p><span class="tts-sentence" id="tts-59">「大規模概念ほど維持コストが高いから」</span></p>
+<p><span class="tts-sentence" id="tts-60">彼女は珈琲を飲みながら続けた。</span></p>
+<p><span class="tts-sentence" id="tts-61">「世界も容量不足なんだよ」</span></p>
+<p><span class="tts-sentence" id="tts-62">半分冗談のような口調だったが、実際、その可能性は否定されていない。</span></p>
+<p><span class="tts-sentence" id="tts-63">宇宙は有限情報空間であり、保存可能な現実量には上限が存在する。</span></p>
+<p><span class="tts-sentence" id="tts-64">文明が高度化するにつれ、世界は複雑化し続けた。</span></p>
+<p><span class="tts-sentence" id="tts-65">結果として、古い概念から順番に圧縮が始まっている。</span></p>
+<p><span class="tts-sentence" id="tts-66">海は巨大すぎた。</span></p>
+<p><span class="tts-sentence" id="tts-67">維持するには情報量を消費しすぎる。</span></p>
+<p><span class="tts-sentence" id="tts-68">「修復班は？</span><span class="tts-sentence" id="tts-69">」</span></p>
+<p><span class="tts-sentence" id="tts-70">「昨日、二人発狂した」</span></p>
+<p><span class="tts-sentence" id="tts-71">私は黙った。</span></p>
+<p><span class="tts-sentence" id="tts-72">大規模概念の修復には危険が伴う。</span></p>
+<p><span class="tts-sentence" id="tts-73">概念へ深く接続しすぎると、自我境界が曖昧になるからだ。</span></p>
+<p><span class="tts-sentence" id="tts-74">海を修復しようとして、自分自身が海との区別を失う。</span></p>
+<p><span class="tts-sentence" id="tts-75">実際、過去には山岳概念へ没入した修復者が、身体を岩石化させた例もある。</span></p>
+<p><span class="tts-sentence" id="tts-76">昼前、召集がかかった。</span></p>
+<p><span class="tts-sentence" id="tts-77">第三会議室。</span></p>
+<p><span class="tts-sentence" id="tts-78">室内には十数人の校閲官が集まっていた。</span></p>
+<p><span class="tts-sentence" id="tts-79">中央に立っているのは局長だった。</span></p>
+<p><span class="tts-sentence" id="tts-80">名前は知らない。</span></p>
+<p><span class="tts-sentence" id="tts-81">局長クラスになると個人名は不要になる。</span></p>
+<p><span class="tts-sentence" id="tts-82">「状況は悪化している」</span></p>
+<p><span class="tts-sentence" id="tts-83">局長は言った。</span></p>
+<p><span class="tts-sentence" id="tts-84">「海洋概念の欠落率は三十二パーセントを超えた。</span><span class="tts-sentence" id="tts-85">このままでは数日以内に世界から海が消失する」</span></p>
+<p><span class="tts-sentence" id="tts-86">誰も驚かなかった。</span></p>
+<p><span class="tts-sentence" id="tts-87">この数十年、世界は少しずつ縮小し続けている。</span></p>
+<p><span class="tts-sentence" id="tts-88">まず星座が減った。</span></p>
+<p><span class="tts-sentence" id="tts-89">次に昆虫の種類が減少した。</span></p>
+<p><span class="tts-sentence" id="tts-90">ある年、秋という季節が部分的に消失した。</span></p>
+<p><span class="tts-sentence" id="tts-91">秋を知らない世代も既に存在する。</span></p>
+<p><span class="tts-sentence" id="tts-92">「原因は未特定だ」</span></p>
+<p><span class="tts-sentence" id="tts-93">局長は続ける。</span></p>
+<p><span class="tts-sentence" id="tts-94">「だが深層書架で異常が観測された」</span></p>
+<p><span class="tts-sentence" id="tts-95">室内の空気が少し変わった。</span></p>
+<p><span class="tts-sentence" id="tts-96">深層書架。</span></p>
+<p><span class="tts-sentence" id="tts-97">地下百二十層以下を指す言葉だ。</span></p>
+<p><span class="tts-sentence" id="tts-98">そこには現実の原型が収蔵されていると言われている。</span></p>
+<p><span class="tts-sentence" id="tts-99">通常の職員は立ち入り禁止だった。</span></p>
+<p><span class="tts-sentence" id="tts-100">「調査隊を編成する」</span></p>
+<p><span class="tts-sentence" id="tts-101">局長の視線がこちらへ向いた。</span></p>
+<p><span class="tts-sentence" id="tts-102">「君も参加しろ」</span></p>
+<p><span class="tts-sentence" id="tts-103">その日の午後、私は深層用昇降機へ乗っていた。</span></p>
+<p><span class="tts-sentence" id="tts-104">同乗者は三人。</span></p>
+<p><span class="tts-sentence" id="tts-105">真賀田。</span></p>
+<p><span class="tts-sentence" id="tts-106">保安担当の老人。</span></p>
+<p><span class="tts-sentence" id="tts-107">それから、名前のない少女。</span></p>
+<p><span class="tts-sentence" id="tts-108">少女は十代半ばほどに見えるが、図書庁職員ではないらしかった。</span><span class="tts-sentence" id="tts-109">白い服を着ている。</span><span class="tts-sentence" id="tts-110">手には古びた本を抱えていた。</span></p>
+<p><span class="tts-sentence" id="tts-111">「誰なんですか」</span></p>
+<p><span class="tts-sentence" id="tts-112">私は真賀田に聞いた。</span></p>
+<p><span class="tts-sentence" id="tts-113">「案内役」</span></p>
+<p><span class="tts-sentence" id="tts-114">「案内役？</span><span class="tts-sentence" id="tts-115">」</span></p>
+<p><span class="tts-sentence" id="tts-116">「深層は普通の人間には読めないから」</span></p>
+<p><span class="tts-sentence" id="tts-117">意味が分からなかった。</span></p>
+<p><span class="tts-sentence" id="tts-118">昇降機は静かに下降を続ける。</span></p>
+<p><span class="tts-sentence" id="tts-119">地下百層を超えたあたりで、壁面の構造が変化し始めた。</span></p>
+<p><span class="tts-sentence" id="tts-120">書架が歪んでいる。</span></p>
+<p><span class="tts-sentence" id="tts-121">本棚が幾何学的に折れ曲がり、空間内部へ潜り込んでいる。</span><span class="tts-sentence" id="tts-122">遠近感も狂っていた。</span></p>
+<p><span class="tts-sentence" id="tts-123">「深層では、概念同士の距離が近いんです」</span></p>
+<p><span class="tts-sentence" id="tts-124">少女が突然言った。</span></p>
+<p><span class="tts-sentence" id="tts-125">彼女は窓外を見つめている。</span></p>
+<p><span class="tts-sentence" id="tts-126">「海と空と死と記憶が、隣り合っている」</span></p>
+<p><span class="tts-sentence" id="tts-127">私は返答できなかった。</span></p>
+<p><span class="tts-sentence" id="tts-128">地下百二十七層。</span></p>
+<p><span class="tts-sentence" id="tts-129">昇降機が停止する。</span></p>
+<p><span class="tts-sentence" id="tts-130">扉の向こうには暗闇が広がっていた。</span></p>
+<p><span class="tts-sentence" id="tts-131">空気が違う。</span></p>
+<p><span class="tts-sentence" id="tts-132">重いというより、情報密度が高い感じがした。</span></p>
+<p><span class="tts-sentence" id="tts-133">通路には文字が漂っている。</span></p>
+<p><span class="tts-sentence" id="tts-134">文字そのものが塵のように空中を浮遊していた。</span></p>
+<p><span class="tts-sentence" id="tts-135">ひらがな。</span><span class="tts-sentence" id="tts-136">数式。</span><span class="tts-sentence" id="tts-137">知らない言語。</span><span class="tts-sentence" id="tts-138">音符。</span><span class="tts-sentence" id="tts-139">設計図。</span></p>
+<p><span class="tts-sentence" id="tts-140">世界を構成する断片だ。</span></p>
+<p><span class="tts-sentence" id="tts-141">「こっちです」</span></p>
+<p><span class="tts-sentence" id="tts-142">少女が歩き出す。</span></p>
+<p><span class="tts-sentence" id="tts-143">我々は後に続いた。</span></p>
+<p><span class="tts-sentence" id="tts-144">深層書架は静かだった。</span></p>
+<p><span class="tts-sentence" id="tts-145">だが完全な静寂ではない。</span></p>
+<p><span class="tts-sentence" id="tts-146">どこかでページをめくる音がする。</span></p>
+<p><span class="tts-sentence" id="tts-147">誰もいないはずなのに。</span></p>
+<p><span class="tts-sentence" id="tts-148">しばらく進むと、巨大な空間へ出た。</span></p>
+<p><span class="tts-sentence" id="tts-149">中心に塔がある。</span></p>
+<p><span class="tts-sentence" id="tts-150">塔、としか形容できない構造体だった。</span></p>
+<p><span class="tts-sentence" id="tts-151">無数の本棚が螺旋状に積み重なり、天井の見えない高さまで伸びている。</span></p>
+<p><span class="tts-sentence" id="tts-152">その内部を黒い液体が循環していた。</span></p>
+<p><span class="tts-sentence" id="tts-153">私は理解した。</span></p>
+<p><span class="tts-sentence" id="tts-154">あれが海だ。</span></p>
+<p><span class="tts-sentence" id="tts-155">海の原型。</span></p>
+<p><span class="tts-sentence" id="tts-156">「こんな場所に保存されていたのか」</span></p>
+<p><span class="tts-sentence" id="tts-157">保安担当の老人が呟く。</span></p>
+<p><span class="tts-sentence" id="tts-158">少女は首を振った。</span></p>
+<p><span class="tts-sentence" id="tts-159">「違います」</span></p>
+<p><span class="tts-sentence" id="tts-160">「これは保存じゃない」</span></p>
+<p><span class="tts-sentence" id="tts-161">彼女は塔を見上げる。</span></p>
+<p><span class="tts-sentence" id="tts-162">「ここで書かれているんです」</span></p>
+<p><span class="tts-sentence" id="tts-163">その瞬間、塔の内部で何かが動いた。</span></p>
+<p><span class="tts-sentence" id="tts-164">黒い液体が逆流を始める。</span></p>
+<p><span class="tts-sentence" id="tts-165">同時に、空間全体で文字が崩壊し始めた。</span></p>
+<p><span class="tts-sentence" id="tts-166">漢字が部首単位へ分解され、数式が記号へ戻り、文章が意味を失う。</span></p>
+<p><span class="tts-sentence" id="tts-167">私は頭痛を覚えた。</span></p>
+<p><span class="tts-sentence" id="tts-168">世界の解像度が落ちている。</span></p>
+<p><span class="tts-sentence" id="tts-169">「下がれ！</span><span class="tts-sentence" id="tts-170">」</span></p>
+<p><span class="tts-sentence" id="tts-171">老人が叫んだ。</span></p>
+<p><span class="tts-sentence" id="tts-172">だが遅かった。</span></p>
+<p><span class="tts-sentence" id="tts-173">塔の中央が裂ける。</span></p>
+<p><span class="tts-sentence" id="tts-174">内部から巨大な白紙が現れた。</span></p>
+<p><span class="tts-sentence" id="tts-175">白紙。</span></p>
+<p><span class="tts-sentence" id="tts-176">それは単なる紙ではない。</span></p>
+<p><span class="tts-sentence" id="tts-177">記述される以前の現実だった。</span></p>
+<p><span class="tts-sentence" id="tts-178">白紙がこちらを見ている。</span></p>
+<p><span class="tts-sentence" id="tts-179">そんな錯覚を覚えた。</span></p>
+<p><span class="tts-sentence" id="tts-180">「あれが原因です」</span></p>
+<p><span class="tts-sentence" id="tts-181">少女は静かに言った。</span></p>
+<p><span class="tts-sentence" id="tts-182">「世界が書き換えを始めている」</span></p>
+<p><span class="tts-sentence" id="tts-183">「誰が？</span><span class="tts-sentence" id="tts-184">」</span></p>
+<p><span class="tts-sentence" id="tts-185">私が聞く。</span></p>
+<p><span class="tts-sentence" id="tts-186">少女は少し考えてから答えた。</span></p>
+<p><span class="tts-sentence" id="tts-187">「世界自身が」</span></p>
+<p><span class="tts-sentence" id="tts-188">意味が分からない。</span></p>
+<p><span class="tts-sentence" id="tts-189">だが理解できる気もした。</span></p>
+<p><span class="tts-sentence" id="tts-190">文明は長い時間をかけて現実を固定しすぎた。</span></p>
+<p><span class="tts-sentence" id="tts-191">定義。</span></p>
+<p><span class="tts-sentence" id="tts-192">分類。</span></p>
+<p><span class="tts-sentence" id="tts-193">記録。</span></p>
+<p><span class="tts-sentence" id="tts-194">あらゆるものを名前で閉じ込めた。</span></p>
+<p><span class="tts-sentence" id="tts-195">しかし世界は本来、もっと曖昧なものだったのではないか。</span></p>
+<p><span class="tts-sentence" id="tts-196">白紙がゆっくりと広がる。</span></p>
+<p><span class="tts-sentence" id="tts-197">周囲の書架が消えていく。</span></p>
+<p><span class="tts-sentence" id="tts-198">いや、消えているのではない。</span></p>
+<p><span class="tts-sentence" id="tts-199">未記述状態へ戻っている。</span></p>
+<p><span class="tts-sentence" id="tts-200">「逃げろ！</span><span class="tts-sentence" id="tts-201">」</span></p>
+<p><span class="tts-sentence" id="tts-202">老人が銃のような装置を構えた。</span></p>
+<p><span class="tts-sentence" id="tts-203">装置から大量の文字列が射出される。</span></p>
+<p><span class="tts-sentence" id="tts-204">固定化コード。</span></p>
+<p><span class="tts-sentence" id="tts-205">現実を安定させるための応急処置だ。</span></p>
+<p><span class="tts-sentence" id="tts-206">だが文字列は白紙へ吸い込まれ、意味を失っていく。</span></p>
+<p><span class="tts-sentence" id="tts-207">「駄目です」</span></p>
+<p><span class="tts-sentence" id="tts-208">少女が言う。</span></p>
+<p><span class="tts-sentence" id="tts-209">「あれはまだ何にもなっていない」</span></p>
+<p><span class="tts-sentence" id="tts-210">何にもなっていないものには、定義が効かない。</span></p>
+<p><span class="tts-sentence" id="tts-211">私は突然、恐怖より先に奇妙な感動を覚えていた。</span></p>
+<p><span class="tts-sentence" id="tts-212">世界が、まだ途中だった。</span></p>
+<p><span class="tts-sentence" id="tts-213">完成していなかった。</span></p>
+<p><span class="tts-sentence" id="tts-214">だから変化する。</span></p>
+<p><span class="tts-sentence" id="tts-215">だから壊れる。</span></p>
+<p><span class="tts-sentence" id="tts-216">「海はどうなるんだ」</span></p>
+<p><span class="tts-sentence" id="tts-217">真賀田が呟く。</span></p>
+<p><span class="tts-sentence" id="tts-218">少女は白紙を見つめたまま答える。</span></p>
+<p><span class="tts-sentence" id="tts-219">「たぶん、別の形になる」</span></p>
+<p><span class="tts-sentence" id="tts-220">「別の形？</span><span class="tts-sentence" id="tts-221">」</span></p>
+<p><span class="tts-sentence" id="tts-222">「もっと小さい海かもしれないし、空へ浮かぶ海かもしれない」</span></p>
+<p><span class="tts-sentence" id="tts-223">彼女は少し笑った。</span></p>
+<p><span class="tts-sentence" id="tts-224">「あるいは、誰かの夢の中だけに存在する海かもしれない」</span></p>
+<p><span class="tts-sentence" id="tts-225">白紙がさらに広がる。</span></p>
+<p><span class="tts-sentence" id="tts-226">私の手が薄く透け始めていた。</span></p>
+<p><span class="tts-sentence" id="tts-227">定義が揺らいでいる。</span></p>
+<p><span class="tts-sentence" id="tts-228">私は自分の名前を思い出そうとした。</span></p>
+<p><span class="tts-sentence" id="tts-229">思い出せない。</span></p>
+<p><span class="tts-sentence" id="tts-230">校閲官であることしか分からない。</span></p>
+<p><span class="tts-sentence" id="tts-231">「名前を持ちすぎると重くなるんです」</span></p>
+<p><span class="tts-sentence" id="tts-232">少女が言う。</span></p>
+<p><span class="tts-sentence" id="tts-233">「だから深層では、みんな少しずつ軽くなる」</span></p>
+<p><span class="tts-sentence" id="tts-234">彼女自身、名前を持っていないのだと私は気づいた。</span></p>
+<p><span class="tts-sentence" id="tts-235">その瞬間、白紙の中央へ文字がひとつだけ浮かんだ。</span></p>
+<p><span class="tts-sentence" id="tts-236">海。</span></p>
+<p><span class="tts-sentence" id="tts-237">たった一文字。</span></p>
+<p><span class="tts-sentence" id="tts-238">だがその文字から膨大な音が溢れ出す。</span></p>
+<p><span class="tts-sentence" id="tts-239">波。</span></p>
+<p><span class="tts-sentence" id="tts-240">風。</span></p>
+<p><span class="tts-sentence" id="tts-241">鳥。</span></p>
+<p><span class="tts-sentence" id="tts-242">潮の匂い。</span></p>
+<p><span class="tts-sentence" id="tts-243">水平線。</span></p>
+<p><span class="tts-sentence" id="tts-244">私は突然、海を理解した。</span></p>
+<p><span class="tts-sentence" id="tts-245">理解した瞬間、涙が出た。</span></p>
+<p><span class="tts-sentence" id="tts-246">なぜ泣いているのか分からない。</span></p>
+<p><span class="tts-sentence" id="tts-247">たぶん、人類は長い間、海を忘れながら生きてきたのだ。</span></p>
+<p><span class="tts-sentence" id="tts-248">少女は静かに言った。</span></p>
+<p><span class="tts-sentence" id="tts-249">「世界は時々、自分で読み直しをするんです」</span></p>
+<p><span class="tts-sentence" id="tts-250">白紙に次々と文字が浮かび始める。</span></p>
+<p><span class="tts-sentence" id="tts-251">空。</span></p>
+<p><span class="tts-sentence" id="tts-252">雨。</span></p>
+<p><span class="tts-sentence" id="tts-253">猫。</span></p>
+<p><span class="tts-sentence" id="tts-254">死。</span></p>
+<p><span class="tts-sentence" id="tts-255">春。</span></p>
+<p><span class="tts-sentence" id="tts-256">まだ存在しているもの。</span></p>
+<p><span class="tts-sentence" id="tts-257">既に失われたもの。</span></p>
+<p><span class="tts-sentence" id="tts-258">これから生まれるもの。</span></p>
+<p><span class="tts-sentence" id="tts-259">それらが同時に書き込まれていく。</span></p>
+<p><span class="tts-sentence" id="tts-260">私は気づいた。</span></p>
+<p><span class="tts-sentence" id="tts-261">図書館とは保存施設ではなかった。</span></p>
+<p><span class="tts-sentence" id="tts-262">執筆装置だったのだ。</span></p>
+<p><span class="tts-sentence" id="tts-263">世界は誰かによって書かれているのではない。</span></p>
+<p><span class="tts-sentence" id="tts-264">書かれ続けている。</span></p>
+<p><span class="tts-sentence" id="tts-265">終わりなく。</span></p>
+<p><span class="tts-sentence" id="tts-266">その時、遠くでページを閉じる音がした。</span></p>
+<p><span class="tts-sentence" id="tts-267">巨大な音だった。</span></p>
+<p><span class="tts-sentence" id="tts-268">世界のどこかで、ひとつの物語が終わったのだ。</span></p>
+<p><span class="tts-sentence" id="tts-269">同時に、新しいページが開く。</span></p>
+<p><span class="tts-sentence" id="tts-270">風が吹いた。</span></p>
+<p><span class="tts-sentence" id="tts-271">深層書架の奥から、潮の匂いが流れてくる。</span></p>
+<p><span class="tts-sentence" id="tts-272">私はまだ見たことのない海を想像した。</span></p>
+<p><span class="tts-sentence" id="tts-273">その海は、きっと以前とは少し違う。</span></p>
+<p><span class="tts-sentence" id="tts-274">だが違っていても構わないのだと思えた。</span></p>
+<p><span class="tts-sentence" id="tts-275">世界は完成品ではない。</span></p>
+<p><span class="tts-sentence" id="tts-276">校正途中の原稿なのだから。</span></p>
+
+</div><!-- /#content -->
+</div><!-- /#content-wrapper -->
+<script src="js/nav.js"></script>
+<script src="js/common.js"></script>
+
+
+<div id="tts-controls">
+<button id="tts-play" title="再生">▶ 再生</button>
+<button disabled="" id="tts-pause" title="一時停止">❚❚ 一時停止</button>
+<button disabled="" id="tts-stop" title="停止">■ 停止</button>
+<label>速度
+    <input id="tts-rate" max="2" min="0.5" step="0.1" type="range" value="1"/>
+<span id="tts-rate-label">1.0x</span>
+</label>
+<label>音声
+    <select id="tts-voice"></select>
+</label>
+</div>
+
+<script id="tts-injected-script">
+(function () {
+  var sentences = Array.prototype.slice.call(document.querySelectorAll('.tts-sentence'));
+  var idx = 0;
+  var isPlaying = false;
+  var rate = 1.0;
+  var selectedVoice = null;
+  var voices = [];
+  // 再生セッションID。cancel() 後に遅れて届く古い onend/onerror を
+  // 無視するために使う（これが無いと、クリックで飛んだ直後に
+  // キャンセルされたはずの前の発話の onend が発火し、
+  // ハイライトが1文余分に先へ進んでしまう）。
+  var playSession = 0;
+
+  var btnPlay = document.getElementById('tts-play');
+  var btnPause = document.getElementById('tts-pause');
+  var btnStop = document.getElementById('tts-stop');
+  var rateInput = document.getElementById('tts-rate');
+  var rateLabel = document.getElementById('tts-rate-label');
+  var voiceSelect = document.getElementById('tts-voice');
+
+  function updateButtons() {
+    btnPlay.disabled = isPlaying;
+    btnPause.disabled = !isPlaying;
+    btnStop.disabled = !isPlaying && idx === 0;
+  }
+
+  // scrollIntoView() を呼んだ直後は、フォントの非同期読み込みなどで
+  // レイアウトがまだ確定しておらず、ブラウザが「既に画面内にある」と
+  // 誤判定してスクロールをスキップすることがある（クリックで飛んだ
+  // 場所によってスクロールする/しないが切り替わって見える一因）。
+  // そこで、スクロール後に requestAnimationFrame を2回挟んで実際に
+  // 画面内に入ったか検証し、入っていなければもう一度スクロールし直す
+  // 自己修復的な仕組みにする。
+  function isElementVisible(el, margin) {
+    var rect = el.getBoundingClientRect();
+    var vw = window.innerWidth;
+    var vh = window.innerHeight;
+    return (
+      rect.top >= -margin &&
+      rect.left >= -margin &&
+      rect.bottom <= vh + margin &&
+      rect.right <= vw + margin &&
+      rect.width > 0 &&
+      rect.height > 0
+    );
+  }
+
+  function doScrollIntoView(el) {
+    el.scrollIntoView({ behavior: 'auto', block: 'center', inline: 'center' });
+  }
+
+  function scrollToElement(el) {
+    // 呼び出し前に強制的にレイアウトを確定させる
+    void document.body.offsetHeight;
+    doScrollIntoView(el);
+
+    // レイアウトが遅れて確定するケースに備え、2フレーム後に再検証する
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        if (!isElementVisible(el, 4)) {
+          doScrollIntoView(el);
+          // それでもダメな場合、もう一段階だけ再試行する
+          requestAnimationFrame(function () {
+            requestAnimationFrame(function () {
+              if (!isElementVisible(el, 4)) {
+                doScrollIntoView(el);
+              }
+            });
+          });
+        }
+      });
+    });
+  }
+
+  function clearHighlight() {
+    for (var i = 0; i < sentences.length; i++) sentences[i].classList.remove('tts-active');
+  }
+
+  function loadVoices() {
+    var all = window.speechSynthesis.getVoices() || [];
+    voices = all.filter(function (v) { return v.lang && v.lang.toLowerCase().indexOf('ja') === 0; });
+    if (voices.length === 0) voices = all; // 日本語音声が無ければ全部表示
+    voiceSelect.innerHTML = '';
+    voices.forEach(function (v, i) {
+      var opt = document.createElement('option');
+      opt.value = i;
+      opt.textContent = v.name + ' (' + v.lang + ')';
+      voiceSelect.appendChild(opt);
+    });
+    if (voices.length > 0) selectedVoice = voices[0];
+  }
+
+  if (typeof window.speechSynthesis !== 'undefined') {
+    loadVoices();
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+  }
+
+  voiceSelect.addEventListener('change', function () {
+    selectedVoice = voices[parseInt(voiceSelect.value, 10)];
+  });
+
+  rateInput.addEventListener('input', function () {
+    rate = parseFloat(rateInput.value);
+    rateLabel.textContent = rate.toFixed(1) + 'x';
+  });
+
+  // session: この呼び出しが発行された時点の playSession。
+  // 発話の onend/onerror が実際に発火した時点で playSession が
+  // 変わっていれば（＝途中でキャンセル/新規セッション開始済み）、
+  // 古いイベントとして無視する。
+  function speakFrom(i, session) {
+    if (session !== playSession) return; // 既に無効化されたセッション
+    if (i >= sentences.length) {
+      isPlaying = false;
+      idx = 0;
+      clearHighlight();
+      updateButtons();
+      return;
+    }
+    idx = i;
+    clearHighlight();
+    var el = sentences[idx];
+    el.classList.add('tts-active');
+    scrollToElement(el);
+
+    var utter = new SpeechSynthesisUtterance(el.textContent);
+    utter.lang = (selectedVoice && selectedVoice.lang) || 'ja-JP';
+    utter.rate = rate;
+    if (selectedVoice) utter.voice = selectedVoice;
+    utter.onend = function () {
+      if (session !== playSession) return;
+      if (isPlaying) speakFrom(idx + 1, session);
+    };
+    utter.onerror = function () {
+      if (session !== playSession) return;
+      if (isPlaying) speakFrom(idx + 1, session);
+    };
+    window.speechSynthesis.speak(utter);
+  }
+
+  // 新しい再生セッションを開始する（Play押下 / クリックでの位置指定 共通処理）
+  function startPlaybackFrom(i) {
+    playSession++; // 古いセッションのonend/onerrorを無効化
+    var mySession = playSession;
+    isPlaying = true;
+    window.speechSynthesis.cancel();
+    speakFrom(i, mySession);
+    updateButtons();
+  }
+
+  btnPlay.addEventListener('click', function () {
+    if (isPlaying) return;
+    startPlaybackFrom(idx);
+  });
+
+  btnPause.addEventListener('click', function () {
+    playSession++; // 以降届く古いonend/onerrorを無効化
+    isPlaying = false;
+    window.speechSynthesis.cancel();
+    updateButtons();
+  });
+
+  btnStop.addEventListener('click', function () {
+    playSession++;
+    isPlaying = false;
+    window.speechSynthesis.cancel();
+    idx = 0;
+    clearHighlight();
+    updateButtons();
+  });
+
+  sentences.forEach(function (el, i) {
+    el.style.cursor = 'pointer';
+    el.addEventListener('click', function () {
+      if (isPlaying) {
+        startPlaybackFrom(i);
+      } else {
+        playSession++; // 念のため保留中のイベントを無効化
+        window.speechSynthesis.cancel();
+        idx = i;
+        clearHighlight();
+        el.classList.add('tts-active');
+        scrollToElement(el);
+      }
+    });
+  });
+
+  updateButtons();
+})();
+</script>
+</body></html>
