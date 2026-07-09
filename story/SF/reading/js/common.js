@@ -13,6 +13,29 @@ function initReader() {
 	var btnPrev = document.getElementById('btn-prev');
 	var btnNext = document.getElementById('btn-next');
 
+	/* ==== TTS reader integration (auto-injected by tts_core.py) ====
+	   centerElement() は、既存のページめくり機構（applyOffset / currentPage /
+	   ページ番号表示 / ボタンの有効無効状態）と矛盾なく、
+	   指定した要素を画面中央へ持ってくるための公開API。 */
+	window.__ttsReaderAPI = {
+		centerElement: function (el, animate) {
+			computeMetrics();
+			var wrapperRect = wrapper.getBoundingClientRect();
+			var elRect = el.getBoundingClientRect();
+			var wrapperCenter = wrapperRect.left + wrapperRect.width / 2;
+			var elCenter = elRect.left + elRect.width / 2;
+			var delta = wrapperCenter - elCenter;
+			applyOffset(scrollOffset + delta, animate !== false);
+		},
+		/* TTSバーの高さが変わった(画面回転・折り返し等)後に、
+		   ページ数やレイアウトを現在ページを保ったまま再計算する */
+		recalculate: function () {
+			computeMetrics();
+			goToPage(Math.min(currentPage, totalPages - 1), false);
+		}
+	};
+
+
 	/* ページ数・行幅を再計算 */
 	function computeMetrics() {
 		var cw = content.scrollWidth;
