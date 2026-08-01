@@ -1,0 +1,15 @@
+
+
+C:\xampp\htdocs\2nd_tool\photo-folder
+
+
+Ç©ÇÁÉRÉsÅ[
+
+
+https://ok2nd.github.io/tool/photo-folder/list.html?csv=name-list.txt
+
+
+http://localhost/github/tool/photo-folder/list.html?csv=name-list.txt
+
+
+
