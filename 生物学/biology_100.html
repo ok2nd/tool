@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>この20年で分かった生物学 100選</title>
+<style>
+  :root {
+    --accent: #2f6f4f;
+    --accent-light: #e8f2ec;
+    --text: #23241f;
+    --sub: #5b5f57;
+    --line: #d8ddd3;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 0;
+    background: #f7f7f4;
+    color: var(--text);
+    font-family: "Hiragino Sans", "Yu Gothic", "Noto Sans JP", "Meiryo", sans-serif;
+    line-height: 1.85;
+  }
+  .wrap {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 56px 32px 100px;
+    background: #ffffff;
+  }
+  header {
+    text-align: center;
+    margin-bottom: 48px;
+    padding-bottom: 32px;
+    border-bottom: 3px solid var(--accent);
+  }
+  header h1 {
+    font-size: 28px;
+    letter-spacing: 0.03em;
+    margin: 0 0 12px;
+    color: var(--accent);
+  }
+  header p.lead {
+    color: var(--sub);
+    font-size: 14.5px;
+    margin: 0;
+  }
+  .intro {
+    font-size: 14.5px;
+    color: var(--sub);
+    background: var(--accent-light);
+    border-left: 4px solid var(--accent);
+    padding: 16px 20px;
+    margin-bottom: 48px;
+    border-radius: 2px;
+  }
+  section.genre {
+    margin-bottom: 40px;
+  }
+  h5 {
+    font-size: 18px;
+    color: #ffffff;
+    background: var(--accent);
+    display: inline-block;
+    padding: 6px 18px;
+    margin: 0 0 18px;
+    border-radius: 3px;
+    letter-spacing: 0.02em;
+  }
+  ol.items {
+    list-style: none;
+    counter-reset: item;
+    margin: 0;
+    padding: 0;
+  }
+  ol.items li {
+    counter-increment: item;
+    position: relative;
+    padding: 10px 0 10px 46px;
+    border-bottom: 1px solid var(--line);
+    font-size: 15px;
+  }
+  ol.items li:last-child {
+    border-bottom: none;
+  }
+  ol.items li::before {
+    content: counter(item);
+    position: absolute;
+    left: 0;
+    top: 9px;
+    width: 32px;
+    height: 32px;
+    line-height: 32px;
+    text-align: center;
+    font-size: 13px;
+    font-weight: bold;
+    color: var(--accent);
+    background: var(--accent-light);
+    border-radius: 50%;
+  }
+  strong {
+    color: var(--accent);
+    font-weight: 700;
+  }
+  footer {
+    margin-top: 60px;
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+    font-size: 12.5px;
+    color: #9a9d95;
+    text-align: center;
+  }
+  @media print {
+    body { background: #fff; }
+    .wrap { box-shadow: none; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>この20年で分かった生物学 100選</h1>
+  <p class="lead">2005年〜2025年頃の主な生物学的知見をジャンル別に整理する</p>
+</header>
+
+<p class="intro">
+ゲノム解読技術、遺伝子編集、AIによる構造予測などの技術革新により、この20年間で生物学は大きく前進した。ここでは、その中でも特に重要と考えられる知見を20のジャンルに分けて100項目挙げる。
+</p>
+
+<section class="genre">
+<h5>ゲノム科学・DNA解析</h5>
+<ol class="items">
+<li>ヒトゲノムの<strong>完全な塩基配列(T2T-CHM13)</strong>が2022年に達成され、これまで解読できなかったセントロメアや反復配列領域を含む全ゲノムが明らかになった。</li>
+<li>ENCODE計画により、ヒトゲノムの大部分が転写されており、いわゆる「ジャンクDNA」の多くが遺伝子発現の調節機能を持つことが判明した。</li>
+<li>単一の参照配列ではなく複数の集団のゲノムを統合した<strong>パンゲノム</strong>という概念が確立し、ヒトゲノムの多様性がより正確に表現できるようになった。</li>
+<li>1細胞単位でゲノムや遺伝子発現を解析するシングルセル解析技術が普及し、組織内の細胞多様性が詳細に描き出された。</li>
+<li><strong>空間トランスクリプトミクス</strong>により、組織内の遺伝子発現を位置情報とともに可視化できるようになった。</li>
+<li>ロングリードシーケンシング技術により、構造変異や反復配列を含むゲノム全体の精密な解読が可能になった。</li>
+<li>これまで完全に解読されていなかったY染色体の全塩基配列が2023年に決定された。</li>
+<li>個人ゲノム解読のコストが劇的に低下し、数万円台での全ゲノム解読が現実的になった。</li>
+</ol>
+</section>
+
+<section class="genre">
+<h5>遺伝子編集技術</h5>
+<ol class="items">
+<li><strong>CRISPR-Cas9</strong>によるゲノム編集技術が確立され、狙った遺伝子を高精度かつ低コストで改変できるようになった。</li>
+<li>DNAを切断せずに1塩基単位で正確に置換する<strong>塩基編集(ベースエディティング)</strong>技術が開発された。</li>
+<li>より柔軟で多様な変異を導入できる<strong>プライム編集</strong>技術が確立された。</li>
+<li>CRISPR技術を用いた鎌状赤血球症治療薬が承認され、遺伝子編集治療が実臨床で現実のものとなった。</li>
+<li>CRISPR技術は農作物の品種改良にも応用され、収量や耐病性を高めた作物の開発が進んでいる。</li>
+<li>体内(in vivo)で直接CRISPRを投与する遺伝子治療が臨床試験段階に進んでいる。</li>
+</ol>
+</section>
+
+<section class="genre">
+<h5>進化生物学</h5>
+<ol class="items">
+<li><strong>ネアンデルタール人ゲノム</strong>の解読により、非アフリカ系集団のゲノムに数%のネアンデルタール由来配列が存在することが判明した。</li>
+<li>指の骨の化石DNA解析のみから、新たな古人類系統である<strong>デニソワ人</strong>の存在が発見された。</li>
+<li>大腸菌の長期進化実験など、実験室内で進化を直接観察する研究により、進化の再現性と偶然性の両面が実証された。</li>
+<li>エピジェネティックな変化が世代を超えて一部継承されうることが示され、進化における獲得形質の役割が再評価された。</li>
+<li>異なる系統で似た形質が似た遺伝子変異を通じて独立に生じる、収斂進化の分子基盤が解明された。</li>
+<li>数万年前の骨や土壌サンプルからも遺伝情報を復元できる、<strong>古代DNA解析技術</strong>が大きく発展した。</li>
+<li>種間の遺伝子流動(浸透性交雑)が従来考えられていたより一般的であることが分かり、種の定義そのものが見直されている。</li>
+</ol>
+</section>
+
+<section class="genre">
+<h5>マイクロバイオーム(微生物叢)</h5>
+<ol class="items">
+<li>ヒトマイクロバイオームプロジェクトにより、人体には自己の細胞数に匹敵する数の微生物が共生していることが明らかになった。</li>
+<li>腸内細菌叢が肥満、糖尿病、免疫疾患など多様な疾患と関連することが示された。</li>
+<li>腸内細菌と脳機能が相互作用する<strong>腸脳相関</strong>の存在が示され、微生物叢が気分や行動にも影響しうることが分かった。</li>
+<li>糞便微生物移植(FMT)が難治性クロストリジオイデス・ディフィシル感染症の治療として有効であることが確立された。</li>
+<li>腸内細菌の代謝産物である短鎖脂肪酸などが、宿主の免疫系や代謝を制御する仕組みが解明された。</li>
+<li>がん免疫療法の効果が、患者の腸内細菌叢の組成によって左右されることが示された。</li>
+<li>皮膚、口腔、肺など体の様々な部位に固有の微生物叢が存在し、それぞれが健康と密接に関わることが分かった。</li>
+</ol>
+</section>
+
+<section class="genre">
+<h5>神経科学・脳科学</h5>
+<ol class="items">
+<li>脳の神経回路全体の配線図である<strong>コネクトーム</strong>の解析が進み、ショウジョウバエの全脳コネクトームが完成した。</li>
+<li><strong>光遺伝学(オプトジェネティクス)</strong>により、特定の神経細胞の活動を光で自在に制御し、行動との因果関係を直接検証できるようになった。</li>
+<li>試験管内でヒト脳の初期発生過程を再現する、脳オルガノイド(ミニ脳)の作製技術が確立された。</li>
+<li>脳-コンピュータインターフェース(BCI)の技術が進展し、麻痺患者が思考だけで機械を操作できる段階に達した。</li>
+<li>ヒト成人の海馬における新生ニューロン産生の有無について、新たな知見をめぐる議論が続いている。</li>
+<li>記憶の物理的痕跡である<strong>エングラム</strong>を担う神経細胞群が同定され、人工的な記憶の想起や書き換えが動物実験で実証された。</li>
+<li>アルツハイマー病治療薬レカネマブなどの登場により、アミロイドβ仮説をめぐる病態理解が更新された。</li>
+<li>睡眠中に脳脊髄液が脳内の老廃物を洗い流す<strong>グリンパティック系</strong>の存在が発見された。</li>
+</ol>
+</section>
+
+<section class="genre">
+<h5>発生生物学・幹細胞</h5>
+<ol class="items">
+<li>山中因子による<strong>人工多能性幹細胞(iPS細胞)</strong>の作製技術が確立し、体細胞から多能性幹細胞を作り出せるようになった。</li>
+<li><strong>オルガノイド技術</strong>により、腸、肝臓、腎臓など様々な臓器のミニチュア組織を試験管内で培養できるようになった。</li>
+<li>胚を用いずに幹細胞から胚様構造体を形成する研究が進み、初期発生の仕組みの理解に新たな道が開かれた。</li>
+<li>単一細胞レベルでの発生系譜追跡技術により、受精卵から各組織への細胞運命決定の過程が詳細に描かれた。</li>
+<li>皮膚細胞から神経細胞へなど、体細胞を直接別の細胞種へ変換する直接リプログラミング技術が確立された。</li>
+<li>臓器の一部を体外で長期培養する技術が進展し、再生医療への応用が進んでいる。</li>
+<li>iPS細胞由来の網膜細胞や心筋細胞を用いた移植治療が臨床応用の段階に入った。</li>
+</ol>
+</section>
+
+<section class="genre">
+<h5>免疫学</h5>
+<ol class="items">
+<li><strong>CAR-T細胞療法</strong>が開発され、患者自身の免疫細胞を改変してがん細胞を攻撃させる治療が白血病などで著効を示した。</li>
+<li>PD-1/PD-L1阻害薬などの<strong>免疫チェックポイント阻害薬</strong>により、がん免疫療法の概念が確立された。</li>
+<li><strong>mRNAワクチン</strong>技術が確立され、新型コロナウイルス感染症に対して迅速なワクチン開発が実現した。</li>
+<li>自然免疫にも一定の記憶機能があることが示され、「訓練免疫」という概念が確立された。</li>
+<li>制御性T細胞(Treg)の役割が解明され、自己免疫疾患やがん免疫との関連が明らかになった。</li>
+<li>単一細胞解析により、免疫細胞の多様性とその機能的な分化過程が詳細に明らかになった。</li>
+</ol>
+</section>
+
+<section class="genre">
+<h5>がん生物学</h5>
+<ol class="items">
+<li>がんゲノムプロジェクトにより、多数のがん種における体細胞変異の全体像が明らかになり、がんの分子分類が精緻化された。</li>
+<li>単一細胞解析によって<strong>腫瘍内不均一性</strong>が明らかになり、治療抵抗性の原因の一つとして注目されている。</li>
+<li>血液中を循環する腫瘍由来DNA(ctDNA)からがんを検出する<strong>液体生検</strong>技術が発展した。</li>
+<li>がん微小環境における免疫細胞やがん関連線維芽細胞の役割が解明され、新たな治療標的として注目されている。</li>
+<li>エピジェネティックな異常ががんの発生と進展に重要な役割を果たすことが示され、エピゲノム標的薬の開発が進んだ。</li>
+<li>自己複製能と分化能を持ち再発の原因となりうる、がん幹細胞という概念が確立した。</li>
+</ol>
+</section>
+
+<section class="genre">
+<h5>老化・寿命研究</h5>
+<ol class="items">
+<li>老化細胞(セネッセンス細胞)を選択的に除去する<strong>セノリティクス</strong>薬剤が、老化関連疾患の改善に有効であることが動物実験で示された。</li>
+<li>山中因子を部分的に発現させることで細胞の老化状態を若返らせる、部分的リプログラミング技術が報告された。</li>
+<li>カロリー制限やラパマイシンなどの薬剤が、複数の動物種で寿命を延長することが確認された。</li>
+<li>DNAメチル化パターンから生物学的年齢を推定する<strong>エピジェネティック時計</strong>が開発された。</li>
+<li>老化の特徴(ハルマークス・オブ・エイジング)が体系的に整理され、老化研究の統一的な枠組みが提示された。</li>
+</ol>
+</section>
+
+<section class="genre">
+<h5>構造生物学・タンパク質科学</h5>
+<ol class="items">
+<li><strong>AlphaFold</strong>をはじめとするAI技術により、アミノ酸配列からタンパク質の立体構造を高精度に予測できるようになった。</li>
+<li><strong>クライオ電子顕微鏡法</strong>の解像度向上により、巨大複合体や膜タンパク質の原子分解能構造が続々と解明された。</li>
+<li>CRISPR-Cas9複合体の立体構造解析により、ゲノム編集の分子機構が詳細に理解された。</li>
+<li>リボソームの立体構造が原子レベルで解明され、翻訳の分子機構理解が飛躍的に進んだ。</li>
+<li>AIを用いたタンパク質の新規デザイン技術が発展し、自然界に存在しない機能的なタンパク質を人工的に設計できるようになった。</li>
+<li>単一分子レベルでタンパク質の動きをリアルタイムで観察する技術が進展し、酵素反応の詳細な過程が可視化された。</li>
+</ol>
+</section>
+
+<section class="genre">
+<h5>合成生物学</h5>
+<ol class="items">
+<li>人工合成した最小ゲノムを持つ細菌が作製され、生命に必要な最小限の遺伝子セットが実験的に検証された。</li>
+<li>天然に存在しないアミノ酸をタンパク質に組み込む、<strong>遺伝暗号拡張</strong>技術が実現した。</li>
+<li>微生物を用いて抗マラリア薬アルテミシニンの前駆体などを生産する代謝工学が実用化された。</li>
+<li>DNAを用いてデジタル情報を塩基配列として長期保存する、<strong>DNAデータストレージ</strong>の研究が進んでいる。</li>
+</ol>
+</section>
+
+<section class="genre">
+<h5>エピジェネティクス</h5>
+<ol class="items">
+<li>DNAメチル化やヒストン修飾といったエピジェネティックな制御が、遺伝子発現の可逆的なスイッチとして機能することが体系的に解明された。</li>
+<li>食事やストレスなどの環境要因が、エピジェネティックな変化を介して遺伝子発現に影響を与えることが示された。</li>
+<li>一部のエピジェネティックな変化が精子や卵子を介して次世代に伝わりうる、<strong>経世代エピジェネティック遺伝</strong>の証拠が動物実験で示された。</li>
+</ol>
+</section>
+
+<section class="genre">
+<h5>古人類学・進化人類学</h5>
+<ol class="items">
+<li>化石からの遺伝情報復元を可能にした<strong>古代DNA解析技術</strong>の開発により、2022年にノーベル生理学・医学賞が授与された。</li>
+<li>デニソワ人とネアンデルタール人の混血の子の骨が発見され、両者の交雑が実際に起きていたことが直接証明された。</li>
+<li>チベット人が持つ高地適応に関わる遺伝子が、デニソワ人由来であることが判明した。</li>
+<li>フィリピンで発見された<strong>ホモ・ルゾネンシス</strong>など、これまで知られていなかった新種の人類化石が発見された。</li>
+</ol>
+</section>
+
+<section class="genre">
+<h5>生態学・環境生物学</h5>
+<ol class="items">
+<li>水や土壌のサンプルから生息する生物種を特定する、<strong>環境DNA(eDNA)</strong>解析技術が確立された。</li>
+<li>気候変動が生物の分布域や繁殖時期に与える影響が、大規模な長期観測データにより定量的に明らかになった。</li>
+<li>海洋のマイクロプラスチック汚染が食物連鎖を通じて蓄積することが、広範な調査によって確認された。</li>
+<li>森林の樹木が菌根ネットワークを介して養分や情報をやり取りする「ウッドワイドウェブ」の存在が示唆され、議論を呼んでいる。</li>
+</ol>
+</section>
+
+<section class="genre">
+<h5>植物科学</h5>
+<ol class="items">
+<li>植物の免疫応答や病害抵抗性の分子機構が解明され、CRISPR技術による耐病性作物の開発が進んだ。</li>
+<li>害虫の食害を受けた植物が揮発性物質を放出し、周囲の植物や天敵に警告する<strong>植物コミュニケーション</strong>の分子基盤が明らかになった。</li>
+<li>光合成の効率を高める遺伝子改変研究が進み、作物の収量向上につながる知見が蓄積されている。</li>
+<li>植物の概日時計(体内時計)を制御する分子機構が詳細に解明された。</li>
+</ol>
+</section>
+
+<section class="genre">
+<h5>RNA生物学</h5>
+<ol class="items">
+<li>マイクロRNAをはじめとする<strong>非コードRNA</strong>が、遺伝子発現を制御する重要な役割を担うことが広く認識されるようになった。</li>
+<li>mRNAの化学修飾(シュードウリジン化など)により体内での安定性と翻訳効率を高める技術が確立され、mRNAワクチンの実用化につながった。</li>
+<li>RNA干渉(RNAi)を利用した治療薬が開発され、特定の遺伝子発現を抑制する新しいクラスの医薬品が承認された。</li>
+<li>CRISPR技術を応用したRNA編集ツールが開発され、DNAを変えずに一時的に遺伝子発現を調節する手法が広がった。</li>
+</ol>
+</section>
+
+<section class="genre">
+<h5>感染症・ウイルス学</h5>
+<ol class="items">
+<li>新型コロナウイルス(SARS-CoV-2)のパンデミックを通じ、ウイルスの進化と変異株の出現メカニズムがリアルタイムで詳細に解析された。</li>
+<li>mRNAワクチンや迅速な抗原検査技術など、パンデミック対応を通じて感染症診断・予防技術が飛躍的に進歩した。</li>
+<li>CRISPR技術を応用した、高感度かつ迅速な病原体検出システムが開発された。</li>
+<li>抗生物質耐性菌の出現機構がゲノムレベルで解明され、新たな抗菌薬開発のターゲットが探索されている。</li>
+<li>薬剤耐性菌感染症への対策として、ウイルスを用いた<strong>ファージセラピー</strong>が再評価されている。</li>
+</ol>
+</section>
+
+<section class="genre">
+<h5>動物行動学</h5>
+<ol class="items">
+<li>道具使用や自己認識など高度な認知能力が、多様な動物種の観察研究により広く存在することが示された。</li>
+<li>小型発信機を用いた<strong>バイオロギング</strong>技術により、渡り鳥や海洋生物の移動経路が詳細に追跡できるようになった。</li>
+</ol>
+</section>
+
+<section class="genre">
+<h5>代謝・栄養科学</h5>
+<ol class="items">
+<li>概日リズムと代謝が密接に関連しており、食事のタイミングが健康に影響を与える<strong>時間栄養学</strong>の重要性が示された。</li>
+<li>成人にも褐色脂肪組織が存在し、エネルギー代謝や体温調節に関与することが再確認された。</li>
+</ol>
+</section>
+
+<section class="genre">
+<h5>生殖生物学</h5>
+<ol class="items">
+<li>iPS細胞から始原生殖細胞を体外で作り出す技術が確立され、生殖細胞形成の理解が進んだ。</li>
+<li>2つの精子由来の細胞から個体を発生させる研究など、生殖の常識を覆すような成果がマウスで報告された。</li>
+</ol>
+</section>
+
+<footer>
+この20年間(2005年頃〜2025年頃)の生物学における主要な進展を、公開されている研究成果に基づき整理したものである。
+</footer>
+
+</div>
+</body>
+</html>
