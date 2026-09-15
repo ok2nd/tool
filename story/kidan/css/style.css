@@ -1,0 +1,112 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+	background: #FFF8E1;
+	color: #3A2F1E;
+}
+/* -- clip area -- */
+#content-wrapper {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100vw;
+	/* 修正1: 100dvh でモバイルブラウザUIを動的に考慮 */
+	height: calc(100vh - 44px);
+	height: calc(100dvh - 44px);
+	overflow: hidden;
+	cursor: grab;
+}
+#content-wrapper.is-dragging {
+	cursor: grabbing;
+}
+/* -- vertical content -- */
+#content {
+	position: absolute;
+	top: 0;
+	right: 0;
+	height: 100%;
+	width: max-content;
+	font-size: 2.8vh;
+	font-family: "Yu Mincho", "YuMincho", serif;
+	line-height: 1.7;
+	font-weight: normal;
+	-webkit-writing-mode: vertical-rl;
+	-ms-writing-mode: tb-rl;
+	writing-mode: vertical-rl;
+	padding: 4vh;
+	/* ページ遷移アニメーション */
+	transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+	will-change: transform;
+	/* ドラッグ中のテキスト選択防止 */
+	user-select: none;
+	-webkit-user-select: none;
+}
+h1 { font-size: 4vh; text-indent: 3em; margin-left: 1em;}
+h2 { font-size: 3.2vh; text-align: right; padding-bottom: 2em; }
+h3 { font-size: 3.2vh; }
+h4 { font-size: 2.8vh; }
+/* -- page bar -- */
+#page-bar {
+	position: fixed;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	/* 修正1: iOSホームインジケーター分を追加 */
+	height: calc(44px + env(safe-area-inset-bottom, 0px));
+	padding-bottom: env(safe-area-inset-bottom, 0px);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: rgba(255, 248, 225, 0.95);
+	border-top: 1px solid rgba(58, 47, 30, 0.13);
+	z-index: 50;
+	user-select: none;
+}
+/* 修正1: セーフエリア対応でcontent-wrapperの高さも連動 */
+@supports (height: 100dvh) {
+	#content-wrapper {
+		height: calc(100dvh - 44px - env(safe-area-inset-bottom, 0px));
+	}
+}
+#page-num {
+	font-family: "Yu Mincho", "YuMincho", serif;
+	font-size: 12px;
+	letter-spacing: 0.25em;
+	color: rgba(58, 47, 30, 0.55);
+}
+/* -- nav buttons -- */
+.nav-btn {
+	position: fixed;
+	top: 50%;
+	transform: translateY(-50%);
+	width: 52px;
+	height: 110px;
+	border: none;
+	background: transparent;
+	cursor: pointer;
+	padding: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 100;
+	opacity: 0.38;
+	transition: opacity 0.22s ease;
+	-webkit-tap-highlight-color: transparent;
+	outline: none;
+}
+.nav-btn:hover	{ opacity: 0.72; }
+.nav-btn:active { opacity: 0.9; }
+.nav-btn.disabled {
+	opacity: 0.08;
+	pointer-events: none;
+}
+/* prev (right, triangle-right) */
+#btn-prev { right: 0; }
+/* next (left, triangle-left) */
+#btn-next { left: 0; }
+.nav-btn svg {
+	fill: #3A2F1E;
+	filter: drop-shadow(0 1px 2px rgba(255,248,225,0.7));
+}
