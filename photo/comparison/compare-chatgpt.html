@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>写真画像比較ツール</title>
+<style>
+:root{color-scheme:dark;--bg:#202329;--panel:#292e36;--line:#424954;--accent:#3286dc;--text:#e8edf3;--muted:#aeb8c4}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:14px "Yu Gothic UI",Meiryo,sans-serif;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+.toolbar{display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:10px 12px;background:#292e36;border-bottom:1px solid var(--line)}
+.group{display:flex;gap:5px;align-items:center;padding-right:12px;border-right:1px solid var(--line)}
+button{background:#3a424d;color:var(--text);border:1px solid #596372;border-radius:5px;padding:7px 11px;cursor:pointer;font-size:13px}
+button:hover{background:#4a5665}button.active{background:#1769b5;border-color:#4d9be5}
+button:disabled{opacity:.4;cursor:default}
+.spacer{flex:1}
+#workspace{position:relative;flex:1;min-height:180px;background:#202020;overflow:hidden}
+canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+canvas.dragging{cursor:grabbing}canvas.divider{cursor:ew-resize}
+.panels{height:205px;display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:9px 10px 10px;background:#292e36;border-top:1px solid var(--line);min-height:145px}
+.panel{border:1px solid #4a535f;border-radius:6px;display:flex;flex-direction:column;min-width:0;overflow:hidden}
+.panel h3{font-size:13px;font-weight:600;margin:0;padding:6px 9px;background:#343b45}
+.panel h3 span{color:var(--muted);font-weight:400;margin-left:10px}
+.filelist{flex:1;overflow:auto;padding:4px;background:#22272e}
+.file{padding:4px 7px;border-radius:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;color:#dce3eb}
+.file:hover{background:#343d48}.file.selected{background:#155a98;color:white}
+.panel-actions{display:flex;gap:5px;padding:6px;background:#303640}
+.panel-actions button{padding:5px 9px;font-size:12px}
+.status{padding:5px 10px;background:#171a1f;color:#aeb8c4;font-size:12px;border-top:1px solid #343a43}
+input[type=file]{display:none}
+#dropHint{position:absolute;inset:0;display:none;pointer-events:none;align-items:center;justify-content:center;font-size:22px;color:white;background:#3286dc22;border:3px dashed #3286dc}
+@media(max-width:760px){.toolbar{gap:5px;padding:7px}.group{padding-right:6px}.panels{height:180px}.panel-actions{flex-wrap:wrap}button{padding:6px 8px}}
+</style>
+</head>
+<body>
+<div class="toolbar">
+ <div class="group"><button id="sideMode" class="active">並べて表示</button><button id="overlayMode">重ねて表示</button></div>
+ <div class="group"><button id="fitMode" class="active">縮小表示</button><button id="actualMode">等倍表示</button></div>
+ <div class="spacer"></div>
+ <div class="group">
+  <button id="leftPrev">◀ 左</button><button id="leftNext">左 ▶</button>
+  <button id="bothPrev">◀ 同時</button><button id="bothNext">同時 ▶</button>
+  <button id="rightPrev">◀ 右</button><button id="rightNext">右 ▶</button>
+ </div>
+ <button id="resetView">表示リセット</button>
+</div>
+<main id="workspace">
+ <canvas id="canvas"></canvas>
+ <div id="dropHint">ここに画像をドロップ</div>
+</main>
+<section class="panels">
+ <div class="panel" id="leftPanel">
+  <h3>左 (A)<span id="leftCount">0 / 0</span></h3>
+  <div class="filelist" id="leftList"></div>
+  <div class="panel-actions">
+   <button id="leftAdd">画像を追加...</button><button id="leftFolder">フォルダを追加...</button>
+   <button id="leftDelete">選択を削除</button><button id="leftClear">全クリア</button>
+  </div>
+ </div>
+ <div class="panel" id="rightPanel">
+  <h3>右 (B)<span id="rightCount">0 / 0</span></h3>
+  <div class="filelist" id="rightList"></div>
+  <div class="panel-actions">
+   <button id="rightAdd">画像を追加...</button><button id="rightFolder">フォルダを追加...</button>
+   <button id="rightDelete">選択を削除</button><button id="rightClear">全クリア</button>
+  </div>
+ </div>
+</section>
+<div class="status">画像/フォルダを左右にドラッグ＆ドロップ ｜ ←→:同時移動　A/D:左　J/L:右　1/2:表示切替　Space:切替　F:縮小/等倍　ホイール:ズーム　ドラッグ:パン　ダブルクリック:リセット</div>
+<input id="leftFiles" type="file" accept="image/*" multiple>
+<input id="rightFiles" type="file" accept="image/*" multiple>
+<input id="leftDir" type="file" webkitdirectory multiple>
+<input id="rightDir" type="file" webkitdirectory multiple>
+<script>
+(()=>{
+'use strict';
+const exts=new Set(['png','jpg','jpeg','bmp','gif','webp','tif','tiff','avif']);
+const state={
+ sets:[{items:[],index:-1},{items:[],index:-1}],
+ mode:'side',fit:true,zoom:1,panX:0,panY:0,ratio:.5,
+ dragging:null,lastX:0,lastY:0,dragSide:null,cache:new Map()
+};
+const $=id=>document.getElementById(id),canvas=$('canvas'),ctx=canvas.getContext('2d');
+const names=['左','右'];
+function natural(a,b){return a.localeCompare(b,'ja',{numeric:true,sensitivity:'base'});}
+function current(side){const s=state.sets[side];return s.index>=0?s.items[s.index]:null;}
+function supported(file){const ext=(file.name.split('.').pop()||'').toLowerCase();return exts.has(ext)||file.type.startsWith('image/');}
+function addFiles(side,files){
+ const s=state.sets[side],known=new Set(s.items.map(x=>x.key));
+ const arr=[...files].filter(f=>supported(f)).map(f=>({file:f,name:f.webkitRelativePath||f.name,key:(f.webkitRelativePath||f.name)+'|'+f.size+'|'+f.lastModified}));
+ const fresh=arr.filter(x=>!known.has(x.key));
+ if(!fresh.length)return;
+ fresh.sort((a,b)=>natural(a.name,b.name));
+ const start=s.items.length;s.items.push(...fresh);s.index=start;
+ fresh.forEach(item=>load(item));refresh(side);draw();
+}
+function load(item){
+ if(item.img||item.loading)return;item.loading=true;
+ const url=URL.createObjectURL(item.file),img=new Image();
+ img.onload=()=>{item.img=img;item.url=url;item.loading=false;draw();};
+ img.onerror=()=>{item.error=true;item.loading=false;URL.revokeObjectURL(url);refreshAll();};
+ img.src=url;
+}
+function step(side,d){const s=state.sets[side];if(!s.items.length)return;s.index=Math.max(0,Math.min(s.items.length-1,s.index+d));refresh(side);draw();}
+function stepBoth(d){step(0,d);step(1,d);}
+function setIndex(side,i){const s=state.sets[side];if(!s.items.length)return;s.index=Math.max(0,Math.min(s.items.length-1,i));refresh(side);draw();}
+function remove(side){const s=state.sets[side];if(s.index<0)return;const [item]=s.items.splice(s.index,1);if(item.url)URL.revokeObjectURL(item.url);s.index=Math.min(s.index,s.items.length-1);refresh(side);draw();}
+function clear(side){const s=state.sets[side];s.items.forEach(x=>{if(x.url)URL.revokeObjectURL(x.url)});s.items=[];s.index=-1;refresh(side);draw();}
+function refresh(side){
+ const s=state.sets[side],list=$(side?'rightList':'leftList'),count=$(side?'rightCount':'leftCount');
+ count.textContent=`${s.index+1>0?s.index+1:0} / ${s.items.length}`;
+ list.replaceChildren();
+ s.items.forEach((item,i)=>{const d=document.createElement('div');d.className='file'+(i===s.index?' selected':'');d.textContent=item.name+(item.error?' (読込不可)':'');d.title=item.name;d.onclick=()=>setIndex(side,i);list.append(d);});
+}
+function refreshAll(){refresh(0);refresh(1);}
+function setMode(mode){state.mode=mode;$('sideMode').classList.toggle('active',mode==='side');$('overlayMode').classList.toggle('active',mode==='overlay');draw();}
+function setFit(fit){state.fit=fit;$('fitMode').classList.toggle('active',fit);$('actualMode').classList.toggle('active',!fit);resetView();}
+function resetView(){state.zoom=1;state.panX=0;state.panY=0;draw();}
+function resize(){const r=canvas.getBoundingClientRect(),dpr=Math.max(1,window.devicePixelRatio||1);canvas.width=Math.round(r.width*dpr);canvas.height=Math.round(r.height*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);draw();}
+function drawImage(item,rect,clipRect){
+ if(!item||!item.img){ctx.fillStyle='#999';ctx.font='16px sans-serif';ctx.textAlign='center';ctx.fillText(item?.error?'画像を読み込めません':'ここに画像をドロップ',clipRect.x+clipRect.w/2,clipRect.y+clipRect.h/2);return;}
+ const img=item.img;
+ const base=state.fit?Math.min(rect.w/img.naturalWidth,rect.h/img.naturalHeight):1;
+ const scale=base*state.zoom,w=img.naturalWidth*scale,h=img.naturalHeight*scale;
+ const cx=rect.x+rect.w/2+state.panX,cy=rect.y+rect.h/2+state.panY;
+ ctx.save();ctx.beginPath();ctx.rect(clipRect.x,clipRect.y,clipRect.w,clipRect.h);ctx.clip();
+ ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
+ ctx.drawImage(img,cx-w/2,cy-h/2,w,h);ctx.restore();
+}
+function label(text,x,y,right=false){
+ ctx.font='13px sans-serif';const w=ctx.measureText(text).width+16,h=23;if(right)x-=w;
+ ctx.fillStyle='rgba(0,0,0,.65)';ctx.beginPath();ctx.roundRect(x,y,w,h,4);ctx.fill();
+ ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(text,x+w/2,y+h/2);
+}
+function itemName(side){const s=state.sets[side],item=current(side);return `${side?'B':'A'}: ${item?item.name.split('/').pop()+'  ('+(s.index+1)+'/'+s.items.length+')':'-'}`;}
+function draw(){
+ const w=canvas.clientWidth,h=canvas.clientHeight;if(!w||!h)return;
+ ctx.clearRect(0,0,w,h);ctx.fillStyle='#202020';ctx.fillRect(0,0,w,h);
+ const a=current(0),b=current(1);
+ if(state.mode==='side'){
+  const half=w/2;drawImage(a,{x:0,y:0,w:half,h},{x:0,y:0,w:half,h});drawImage(b,{x:half,y:0,w:w-half,h},{x:half,y:0,w:w-half,h});
+  ctx.strokeStyle='#626262';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(half,0);ctx.lineTo(half,h);ctx.stroke();
+  label(itemName(0),8,8);label(itemName(1),half+8,8);
+ }else{
+  const full={x:0,y:0,w,h},x=w*state.ratio;
+  drawImage(a,full,{x:0,y:0,w:x,h});drawImage(b,full,{x,y:0,w:w-x,h});
+  ctx.strokeStyle='rgba(255,255,255,.9)';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke();
+  ctx.fillStyle='rgba(255,255,255,.92)';ctx.beginPath();ctx.arc(x,h/2,16,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#282828';ctx.font='bold 12px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('◀▶',x,h/2);
+  label(itemName(0),8,8);label(itemName(1),w-8,8,true);
+ }
+ if(state.dragSide!==null){ctx.fillStyle='rgba(60,145,245,.13)';ctx.fillRect(state.dragSide*w/2,0,w/2,h);ctx.strokeStyle='#4a9cff';ctx.lineWidth=3;ctx.strokeRect(state.dragSide*w/2+2,2,w/2-4,h-4);}
+}
+function nearDivider(x){return state.mode==='overlay'&&Math.abs(x-canvas.clientWidth*state.ratio)<14;}
+canvas.addEventListener('pointerdown',e=>{const r=canvas.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;canvas.setPointerCapture(e.pointerId);state.dragging=nearDivider(x)?'divider':'pan';state.lastX=x;state.lastY=y;canvas.classList.toggle('dragging',state.dragging==='pan');canvas.classList.toggle('divider',state.dragging==='divider');});
+canvas.addEventListener('pointermove',e=>{const r=canvas.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;
+ if(state.dragging==='divider'){state.ratio=Math.max(0,Math.min(1,x/Math.max(1,canvas.clientWidth)));draw();}
+ else if(state.dragging==='pan'){state.panX+=x-state.lastX;state.panY+=y-state.lastY;state.lastX=x;state.lastY=y;draw();}
+ else canvas.classList.toggle('divider',nearDivider(x));
+});
+function endDrag(){state.dragging=null;canvas.classList.remove('dragging','divider');}
+canvas.addEventListener('pointerup',endDrag);canvas.addEventListener('pointercancel',endDrag);
+canvas.addEventListener('dblclick',e=>{const r=canvas.getBoundingClientRect();if(!nearDivider(e.clientX-r.left))resetView();});
+canvas.addEventListener('wheel',e=>{e.preventDefault();const f=e.deltaY<0?1.15:1/1.15,newZoom=Math.max(.1,Math.min(50,state.zoom*f)),ratio=newZoom/state.zoom;
+ const r=canvas.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top,w=canvas.clientWidth,h=canvas.clientHeight;
+ const cx=state.mode==='side'?(x<w/2?w/4:w*3/4):w/2,qx=x-cx,qy=y-h/2;
+ state.panX=qx-(qx-state.panX)*ratio;state.panY=qy-(qy-state.panY)*ratio;state.zoom=newZoom;draw();
+},{passive:false});
+function filesFromInput(side,input){input.onchange=()=>{addFiles(side,input.files);input.value='';};}
+filesFromInput(0,$('leftFiles'));filesFromInput(1,$('rightFiles'));
+$('leftAdd').onclick=()=>$('leftFiles').click();$('rightAdd').onclick=()=>$('rightFiles').click();
+$('leftFolder').onclick=()=>$('leftDir').click();$('rightFolder').onclick=()=>$('rightDir').click();
+filesFromInput(0,$('leftDir'));filesFromInput(1,$('rightDir'));
+$('leftDelete').onclick=()=>remove(0);$('rightDelete').onclick=()=>remove(1);$('leftClear').onclick=()=>clear(0);$('rightClear').onclick=()=>clear(1);
+$('sideMode').onclick=()=>setMode('side');$('overlayMode').onclick=()=>setMode('overlay');
+$('fitMode').onclick=()=>setFit(true);$('actualMode').onclick=()=>setFit(false);$('resetView').onclick=resetView;
+$('leftPrev').onclick=()=>step(0,-1);$('leftNext').onclick=()=>step(0,1);$('rightPrev').onclick=()=>step(1,-1);$('rightNext').onclick=()=>step(1,1);$('bothPrev').onclick=()=>stepBoth(-1);$('bothNext').onclick=()=>stepBoth(1);
+document.addEventListener('keydown',e=>{
+ if(e.target.matches('input,textarea,select'))return;
+ if(e.key==='ArrowLeft'){e.preventDefault();stepBoth(-1)}else if(e.key==='ArrowRight'){e.preventDefault();stepBoth(1)}
+ else if(e.key.toLowerCase()==='a')step(0,-1);else if(e.key.toLowerCase()==='d')step(0,1);
+ else if(e.key.toLowerCase()==='j')step(1,-1);else if(e.key.toLowerCase()==='l')step(1,1);
+ else if(e.key==='1')setMode('side');else if(e.key==='2')setMode('overlay');
+ else if(e.code==='Space'){e.preventDefault();setMode(state.mode==='side'?'overlay':'side');}
+ else if(e.key.toLowerCase()==='f')setFit(!state.fit);
+});
+async function readEntry(entry){
+ if(entry.isFile)return new Promise(resolve=>entry.file(f=>resolve([f]),()=>resolve([])));
+ if(entry.isDirectory){const reader=entry.createReader(),all=[];while(true){const batch=await new Promise(resolve=>reader.readEntries(resolve,()=>resolve([])));if(!batch.length)break;for(const e of batch)all.push(...await readEntry(e));}return all;}
+ return [];
+}
+for(const [id,side] of [['leftPanel',0],['rightPanel',1],['workspace',null]]){
+ const el=$(id);
+ el.addEventListener('dragover',e=>{e.preventDefault();if(id==='workspace'){const r=canvas.getBoundingClientRect();state.dragSide=e.clientX-r.left<r.width/2?0:1;draw();}});
+ el.addEventListener('dragleave',e=>{if(id==='workspace'&&!el.contains(e.relatedTarget)){state.dragSide=null;draw();}});
+ el.addEventListener('drop',async e=>{e.preventDefault();state.dragSide=null;draw();let target=side;if(target===null){const r=canvas.getBoundingClientRect();target=e.clientX-r.left<r.width/2?0:1;}
+  const files=[];for(const f of e.dataTransfer.files)files.push(f);
+  const entries=[...(e.dataTransfer.items||[])].map(i=>i.webkitGetAsEntry?.()).filter(Boolean);
+  if(entries.length){files.length=0;for(const entry of entries)files.push(...await readEntry(entry));}
+  addFiles(target,files);
+ });
+}
+window.addEventListener('resize',resize);refreshAll();resize();
+})();
+</script>
+</body>
+</html>

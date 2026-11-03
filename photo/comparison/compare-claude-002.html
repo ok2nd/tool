@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>画像比較ツール</title>
+<style>
+:root{--bg:#000;--bar:#0a0a0a;--fg:#e8e8ea;--mute:#8e8e96;--line:#2e2e32;--btn:#1c1c1f;--btnh:#2a2a2f;--acc:#3b82f6;--sel:#1e3a63;color-scheme:dark}
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*,*::before,*::after{box-sizing:inherit}
+html,body{height:100%;margin:0}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{background:var(--bg);color:var(--fg);font:13px/1.4 "Hiragino Sans","Yu Gothic UI","Meiryo",system-ui,sans-serif;display:flex;flex-direction:column;overflow:hidden;user-select:none}
+#bar{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;padding:8px 10px;background:var(--bar);border-bottom:1px solid var(--line)}
+.grow{flex:1}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+button{font:inherit;color:inherit;background:var(--btn);border:1px solid var(--line);border-radius:6px;padding:4px 10px;cursor:pointer}
+button:hover{background:var(--btnh)}
+.seg button{border:0;border-radius:0;border-right:1px solid var(--line)}
+.seg button:last-child{border-right:0}
+.seg button.on{background:var(--acc);color:#fff}
+#stage{flex:1;min-height:200px;position:relative;background:#000;touch-action:none}
+canvas{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:grab}
+canvas.drag{cursor:grabbing}canvas.hres{cursor:ew-resize}
+#panels{display:flex;gap:8px;padding:8px 10px;height:196px;background:var(--bar);border-top:1px solid var(--line)}
+.panel{flex:1;min-width:0;display:flex;flex-direction:column;border:1px solid var(--line);border-radius:8px;padding:6px 8px;gap:6px}
+.panel.over{outline:2px solid var(--acc)}
+.panel h3{margin:0;font-size:13px;font-weight:600}
+.panel ul{flex:1;margin:0;padding:0;list-style:none;overflow:auto;border:1px solid var(--line);border-radius:4px;min-height:0}
+.panel li{padding:2px 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+.panel li.cur{background:var(--sel)}
+.panel .row{display:flex;gap:6px}
+.panel .row button{flex:1;padding:3px 6px}
+#status{padding:4px 10px;color:var(--mute);font-size:12px;border-top:1px solid var(--line);background:var(--bar);white-space:nowrap;overflow:auto}
+@media (max-width:700px){#panels{height:150px}}
+</style>
+</head>
+<body>
+<div id="bar">
+  <div class="seg" id="segMode"><button data-v="0" class="on" tabindex="-1">並べて表示</button><button data-v="1" tabindex="-1">重ねて表示</button></div>
+  <div class="seg" id="segFit"><button data-v="1" class="on" tabindex="-1">縮小表示</button><button data-v="0" tabindex="-1">等倍表示</button></div>
+  <span class="grow"></span>
+  <button data-nav="L-1" tabindex="-1">◀ 左</button><button data-nav="L1" tabindex="-1">左 ▶</button>
+  <button data-nav="B-1" tabindex="-1">◀ 同時</button><button data-nav="B1" tabindex="-1">同時 ▶</button>
+  <button data-nav="R-1" tabindex="-1">◀ 右</button><button data-nav="R1" tabindex="-1">右 ▶</button>
+  <span class="grow"></span>
+</div>
+<div id="stage"><canvas id="cv"></canvas></div>
+<div id="panels"></div>
+<div id="status">画像/フォルダを左右にドラッグ＆ドロップ ｜ ←→:同時移動 A/D:左 J/L:右 1/2:モード Space:切替 F:縮小/等倍 ホイール:ズーム ドラッグ:パン ダブルクリック:ズームリセット</div>
+<input type="file" id="fileIn" accept="image/*,.tif,.tiff" multiple hidden>
+<input type="file" id="dirIn" webkitdirectory multiple hidden>
+<script>
+"use strict";
+const IMG_EXT = /\.(png|jpe?g|bmp|gif|webp|tiff?|avif)$/i;
+const SIDE = 0, OVERLAY = 1;
+const collator = new Intl.Collator(undefined, {numeric: true, sensitivity: "base"});
+
+/* ---------- 画像セット(左/右) ---------- */
+class ImageSet {
+  constructor(){ this.items = []; this.index = -1; this.onchange = () => {}; }
+  add(files){
+    const have = new Set(this.items.map(f => f._key));
+    const fresh = [];
+    for (const f of files){
+      if (!IMG_EXT.test(f.name) && !(f.type || "").startsWith("image/")) continue;
+      f._key = (f.fullPath || f.webkitRelativePath || f.name) + "|" + f.size + "|" + f.lastModified;
+      if (have.has(f._key)) continue;
+      have.add(f._key); fresh.push(f);
+    }
+    if (!fresh.length) return;
+    const first = this.items.length;
+    this.items = this.items.concat(fresh).sort((a, b) => collator.compare(a._sort || a.name, b._sort || b.name));
+    this.index = this.items.indexOf(fresh.sort((a, b) => collator.compare(a._sort || a.name, b._sort || b.name))[0]);
+    this.onchange();
+  }
+  step(d){ if (this.items.length) this.setIndex(this.index + d); }
+  setIndex(i){
+    if (!this.items.length) return;
+    i = Math.max(0, Math.min(this.items.length - 1, i));
+    if (i !== this.index){ this.index = i; this.onchange(); }
+  }
+  remove(i){
+    if (i < 0 || i >= this.items.length) return;
+    this.items.splice(i, 1);
+    this.index = Math.min(this.index, this.items.length - 1);
+    if (this.items.length && this.index < 0) this.index = 0;
+    this.onchange();
+  }
+  clear(){ this.items = []; this.index = -1; this.onchange(); }
+  current(){ return this.items[this.index] || null; }
+}
+
+/* ---------- 画像キャッシュ(最大16枚、EXIFの向きを反映) ---------- */
+const cache = new Map();
+function loadImage(file){
+  if (cache.has(file)){ const v = cache.get(file); cache.delete(file); cache.set(file, v); return v; }
+  const entry = {bmp: null, w: 0, h: 0, failed: false};
+  const done = b => { entry.bmp = b; entry.w = b.width; entry.h = b.height; view.draw(); };
+  createImageBitmap(file, {imageOrientation: "from-image"}).then(done).catch(() => {
+    const url = URL.createObjectURL(file), im = new Image();
+    im.onload = () => { entry.bmp = im; entry.w = im.naturalWidth; entry.h = im.naturalHeight; URL.revokeObjectURL(url); view.draw(); };
+    im.onerror = () => { entry.failed = true; URL.revokeObjectURL(url); view.draw(); };
+    im.src = url;
+  });
+  cache.set(file, entry);
+  while (cache.size > 16) cache.delete(cache.keys().next().value);
+  return entry;
+}
+
+/* ---------- ドロップ(フォルダ再帰対応) ---------- */
+function readAll(reader){
+  return new Promise((res, rej) => {
+    const all = [];
+    (function next(){ reader.readEntries(es => es.length ? (all.push(...es), next()) : res(all), rej); })();
+  });
+}
+async function walk(entry, out){
+  if (entry.isFile){
+    await new Promise(r => entry.file(f => { f.fullPath = entry.fullPath; f._sort = entry.name; out.push(f); r(); }, r));
+  } else if (entry.isDirectory){
+    for (const c of await readAll(entry.createReader())) await walk(c, out);
+  }
+}
+async function filesFromDrop(dt){
+  const out = [], entries = [];
+  for (const it of dt.items || []){
+    const en = it.webkitGetAsEntry && it.webkitGetAsEntry();
+    if (en) entries.push(en); else if (it.kind === "file") out.push(it.getAsFile());
+  }
+  for (const en of entries) await walk(en, out);
+  if (!out.length && !entries.length) out.push(...dt.files);
+  return out.filter(Boolean);
+}
+
+/* ---------- 比較ビュー ---------- */
+const L = new ImageSet(), R = new ImageSet(), sets = [L, R];
+const cv = document.getElementById("cv"), ctx = cv.getContext("2d");
+const view = {
+  mode: SIDE, fit: true, ratio: 0.5, zoom: 1, pan: {x: 0, y: 0}, dropSide: null, drag: null, last: null,
+  W: 0, H: 0,
+  resize(){
+    const r = cv.getBoundingClientRect(), d = window.devicePixelRatio || 1;
+    this.W = r.width; this.H = r.height;
+    cv.width = Math.round(r.width * d); cv.height = Math.round(r.height * d);
+    ctx.setTransform(d, 0, 0, d, 0, 0);
+    this.draw();
+  },
+  resetView(){ this.zoom = 1; this.pan = {x: 0, y: 0}; this.draw(); },
+  drawImage(e, x, y, w, h, hx, hy, hw, hh){
+    if (!e || !e.bmp){
+      ctx.fillStyle = "#969696"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.font = "14px sans-serif";
+      ctx.fillText(e && e.failed ? "読み込めない画像です" : (e ? "読み込み中…" : "ここに画像をドロップ"), hx + hw / 2, hy + hh / 2);
+      return;
+    }
+    const base = this.fit ? Math.min(w / e.w, h / e.h) : 1, s = base * this.zoom;
+    const iw = e.w * s, ih = e.h * s, cx = x + w / 2 + this.pan.x, cy = y + h / 2 + this.pan.y;
+    ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(e.bmp, cx - iw / 2, cy - ih / 2, iw, ih);
+  },
+  name(i){
+    const s = sets[i], f = s.current(), tag = i ? "B" : "A";
+    return f ? `${tag}: ${f.name}  (${s.index + 1}/${s.items.length})` : `${tag}: -`;
+  },
+  label(text, x, y, right){
+    ctx.font = "13px sans-serif";
+    const tw = ctx.measureText(text).width + 14, th = 13 * 1.2 + 8;
+    if (right) x -= tw;
+    ctx.fillStyle = "rgba(0,0,0,.6)"; ctx.beginPath(); ctx.roundRect(x, y, tw, th, 4); ctx.fill();
+    ctx.fillStyle = "#fff"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(text, x + tw / 2, y + th / 2 + 1);
+  },
+  draw(){
+    const {W, H} = this;
+    ctx.fillStyle = "#000"; ctx.fillRect(0, 0, W, H);
+    const ea = L.current() ? loadImage(L.current()) : null, eb = R.current() ? loadImage(R.current()) : null;
+    if (this.mode === SIDE){
+      const half = W / 2;
+      [[0, ea], [half, eb]].forEach(([x, e]) => {
+        ctx.save(); ctx.beginPath(); ctx.rect(x, 0, half, H); ctx.clip();
+        this.drawImage(e, x, 0, half, H, x, 0, half, H); ctx.restore();
+      });
+      ctx.strokeStyle = "#5a5a5a"; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(Math.round(half) + .5, 0); ctx.lineTo(Math.round(half) + .5, H); ctx.stroke();
+      this.label(this.name(0), 8, 8); this.label(this.name(1), half + 8, 8);
+    } else {
+      const x = W * this.ratio;
+      ctx.save(); ctx.beginPath(); ctx.rect(0, 0, x, H); ctx.clip(); this.drawImage(ea, 0, 0, W, H, 0, 0, W / 2, H); ctx.restore();
+      ctx.save(); ctx.beginPath(); ctx.rect(x, 0, W - x, H); ctx.clip(); this.drawImage(eb, 0, 0, W, H, W / 2, 0, W / 2, H); ctx.restore();
+      ctx.strokeStyle = "rgba(255,255,255,.9)"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+      ctx.fillStyle = "rgba(255,255,255,.9)"; ctx.beginPath(); ctx.arc(x, H / 2, 16, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#282828"; ctx.font = "11px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("◀▶", x, H / 2 + 1);
+      this.label(this.name(0), 8, 8); this.label(this.name(1), W - 8, 8, true);
+    }
+    if (this.dropSide !== null){
+      const x = this.dropSide ? W / 2 : 0;
+      ctx.fillStyle = "rgba(80,160,255,.27)"; ctx.fillRect(x, 0, W / 2, H);
+      ctx.strokeStyle = "#50a0ff"; ctx.lineWidth = 3; ctx.strokeRect(x + 3, 3, W / 2 - 6, H - 6);
+    }
+  },
+  nearDivider(x){ return this.mode === OVERLAY && Math.abs(x - this.W * this.ratio) < 14; }
+};
+
+/* ---------- マウス操作 ---------- */
+const pos = e => { const r = cv.getBoundingClientRect(); return {x: e.clientX - r.left, y: e.clientY - r.top}; };
+const moveDivider = x => { view.ratio = Math.max(0, Math.min(1, x / Math.max(1, view.W))); view.draw(); };
+cv.addEventListener("pointerdown", e => {
+  if (e.button !== 0) return;
+  const p = pos(e); view.last = p; cv.setPointerCapture(e.pointerId);
+  view.drag = view.nearDivider(p.x) ? "divider" : "pan";
+  if (view.drag === "divider") moveDivider(p.x); else cv.classList.add("drag");
+});
+cv.addEventListener("pointermove", e => {
+  const p = pos(e);
+  if (view.drag === "divider") moveDivider(p.x);
+  else if (view.drag === "pan"){ view.pan.x += p.x - view.last.x; view.pan.y += p.y - view.last.y; view.last = p; view.draw(); }
+  else cv.classList.toggle("hres", view.nearDivider(p.x));
+});
+const endDrag = () => { view.drag = null; cv.classList.remove("drag"); };
+cv.addEventListener("pointerup", endDrag); cv.addEventListener("pointercancel", endDrag);
+cv.addEventListener("dblclick", e => { if (!view.nearDivider(pos(e).x)) view.resetView(); });
+cv.addEventListener("wheel", e => {
+  e.preventDefault();
+  let f = e.deltaY < 0 ? 1.15 : 1 / 1.15;
+  const nz = Math.max(0.1, Math.min(50, view.zoom * f)); f = nz / view.zoom;
+  const p = pos(e), {W, H} = view;
+  const cx = view.mode === SIDE ? (p.x < W / 2 ? W / 4 : W * 3 / 4) : W / 2;
+  const qx = p.x - cx, qy = p.y - H / 2;
+  view.pan = {x: qx - (qx - view.pan.x) * f, y: qy - (qy - view.pan.y) * f};
+  view.zoom = nz; view.draw();
+}, {passive: false});
+
+/* ---------- 下部パネル ---------- */
+const fileIn = document.getElementById("fileIn"), dirIn = document.getElementById("dirIn");
+let pickSide = 0;
+const panels = ["左 (A)", "右 (B)"].map((title, i) => {
+  const set = sets[i], el = document.createElement("div");
+  el.className = "panel";
+  el.innerHTML = `<h3></h3><ul></ul><div class="row"><button tabindex="-1">追加…</button><button tabindex="-1">フォルダ…</button><button tabindex="-1">選択を削除</button><button tabindex="-1">全クリア</button></div>`;
+  const h3 = el.querySelector("h3"), ul = el.querySelector("ul"), [add, dir, del, clr] = el.querySelectorAll("button");
+  add.onclick = () => { pickSide = i; fileIn.click(); };
+  dir.onclick = () => { pickSide = i; dirIn.click(); };
+  del.onclick = () => set.remove(set.index);
+  clr.onclick = () => set.clear();
+  ul.addEventListener("click", e => { const li = e.target.closest("li"); if (li) set.setIndex(+li.dataset.i); });
+  el.addEventListener("dragover", e => { e.preventDefault(); el.classList.add("over"); });
+  el.addEventListener("dragleave", () => el.classList.remove("over"));
+  el.addEventListener("drop", async e => { e.preventDefault(); e.stopPropagation(); el.classList.remove("over"); set.add(await filesFromDrop(e.dataTransfer)); });
+  document.getElementById("panels").appendChild(el);
+  return () => {
+    if (!el._shown || el._shown.length !== set.items.length || el._shown.some((f, k) => f !== set.items[k])){
+      ul.innerHTML = "";
+      set.items.forEach((f, k) => { const li = document.createElement("li"); li.textContent = f.name; li.dataset.i = k; li.title = f.name; ul.appendChild(li); });
+      el._shown = set.items.slice();
+    }
+    [...ul.children].forEach((li, k) => li.classList.toggle("cur", k === set.index));
+    const cur = ul.children[set.index]; if (cur) cur.scrollIntoView({block: "nearest"});
+    h3.textContent = `${title}   ${set.items.length ? set.index + 1 : 0} / ${set.items.length}`;
+  };
+});
+for (const inp of [fileIn, dirIn]) inp.addEventListener("change", () => { sets[pickSide].add([...inp.files]); inp.value = ""; });
+sets.forEach(s => s.onchange = () => { panels.forEach(f => f()); view.draw(); });
+panels.forEach(f => f());
+
+/* ---------- キャンバスへのドロップ ---------- */
+const sideAt = e => (e.clientX - cv.getBoundingClientRect().left) < view.W / 2 ? 0 : 1;
+const stage = document.getElementById("stage");
+stage.addEventListener("dragover", e => { e.preventDefault(); view.dropSide = sideAt(e); view.draw(); });
+stage.addEventListener("dragleave", () => { view.dropSide = null; view.draw(); });
+stage.addEventListener("drop", async e => {
+  e.preventDefault(); const side = sideAt(e); view.dropSide = null;
+  sets[side].add(await filesFromDrop(e.dataTransfer)); view.draw();
+});
+window.addEventListener("dragover", e => e.preventDefault());
+window.addEventListener("drop", e => e.preventDefault());
+
+/* ---------- ツールバー・ショートカット ---------- */
+function seg(id, cb){
+  const box = document.getElementById(id);
+  box.addEventListener("mousedown", e => e.preventDefault());
+  box.addEventListener("click", e => { const b = e.target.closest("button"); if (b) cb(+b.dataset.v); });
+  return v => [...box.children].forEach(b => b.classList.toggle("on", +b.dataset.v === v));
+}
+const showMode = seg("segMode", v => setMode(v)), showFit = seg("segFit", v => setFit(!!v));
+function setMode(v){ view.mode = v; showMode(v); view.draw(); }
+function setFit(f){ view.fit = f; showFit(f ? 1 : 0); view.resetView(); }
+const both = d => { L.step(d); R.step(d); };
+const navs = {L: d => L.step(d), R: d => R.step(d), B: both};
+document.getElementById("bar").addEventListener("mousedown", e => { if (e.target.closest("button")) e.preventDefault(); });
+document.querySelectorAll("[data-nav]").forEach(b => b.onclick = () => navs[b.dataset.nav[0]](+b.dataset.nav.slice(1)));
+window.addEventListener("keydown", e => {
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+  const map = {
+    ArrowLeft: () => both(-1), ArrowRight: () => both(1),
+    a: () => L.step(-1), d: () => L.step(1), j: () => R.step(-1), l: () => R.step(1),
+    "1": () => setMode(SIDE), "2": () => setMode(OVERLAY),
+    " ": () => setMode(view.mode === SIDE ? OVERLAY : SIDE),
+    f: () => setFit(!view.fit)
+  };
+  if (map[k]){ e.preventDefault(); map[k](); }
+});
+new ResizeObserver(() => view.resize()).observe(stage);
+view.resize();
+</script>
+</body>
+</html>
