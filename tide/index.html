@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>潮見表マップ</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+<style>
+:root{--ink:#10343f;--sea:#0e7c86;--foam:#eef6f6;--hi:#d1495b;--lo:#2e6fb7;font-family:"Hiragino Sans","Noto Sans JP",system-ui,sans-serif;color:var(--ink)}
+html,body{margin:0;height:100%}
+#map{position:absolute;inset:0}
+#bar{position:absolute;z-index:500;top:10px;left:56px;right:10px;max-width:420px;font-size:13px;pointer-events:none}
+#bar>*{pointer-events:auto}
+#tools{display:flex;gap:6px;width:max-content}
+#tools button{font-size:16px;padding:4px 9px;box-shadow:0 1px 6px #0003}
+.pn{background:#fffffff0;border-radius:6px;padding:8px 12px;margin-top:6px;box-shadow:0 1px 6px #0003}
+#view{position:fixed;inset:0;z-index:1000;background:var(--foam);overflow:auto}
+#view[hidden]{display:none}
+.wrap{max-width:860px;margin:0 auto;padding:16px}
+h1{font-size:22px;margin:4px 0}
+.sub{color:#4b6a72;font-size:13px;margin:0 0 12px}
+.nav{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:12px 0}
+button,input[type=date]{font:inherit;padding:7px 11px;border:1px solid #9bbcc0;background:#fff;border-radius:5px;color:var(--ink);cursor:pointer}
+button:hover{background:#dff0f0}button:focus-visible,a:focus-visible{outline:3px solid var(--sea);outline-offset:2px}
+.date{font-size:18px;font-weight:700;margin:8px 0}
+svg{width:100%;height:auto;background:#fff;border-radius:6px}
+table{border-collapse:collapse;margin-top:14px;width:100%;background:#fff;border-radius:6px}
+td,th{padding:8px 12px;border-bottom:1px solid #dbe8e9;text-align:left}
+.H{color:var(--hi);font-weight:700}.L{color:var(--lo);font-weight:700}
+.err{background:#fff3f3;border:1px solid #e3a5a5;padding:12px;border-radius:6px}
+.note{font-size:12px;color:#4b6a72;margin-top:14px;line-height:1.6}
+
+.nav{gap:6px}.nav button{padding:7px 10px;font-size:14px}
+input[type=date]{width:9.6em;min-width:0;max-width:100%;padding:7px 6px;font-size:14px}
+.badge{display:inline-block;background:var(--sea);color:#fff;border-radius:14px;padding:2px 12px;font-size:16px;margin-left:10px;vertical-align:middle}
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div id="bar">
+<div id="tools"><button id="ib" type="button" title="使い方・読み込み状況" aria-label="使い方・読み込み状況" aria-expanded="false">ℹ️</button><button id="sb" type="button" title="地名検索" aria-label="地名検索" aria-expanded="false">🔍</button></div>
+<div id="info" class="pn" hidden>🌊 マーカー、または地図上の任意の場所をクリックして潮見表へ<br>日本沿岸736港（赤）と周辺の港（灰）を表示。海上の任意の場所もクリックできます<br><span id="status">読み込み中…</span><br><span id="st2"></span><br><span id="st3"></span></div>
+<div id="sp" class="pn" hidden><form id="sf" style="display:flex;gap:4px"><input id="q" placeholder="地名で検索" style="flex:1;padding:6px;border:1px solid #9bbcc0;border-radius:5px;font:inherit"><button>検索</button></form><div id="res"></div></div>
+</div>
+<div id="view" hidden></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script>
+// ---------- 設定 ----------
+const NOAA = 'https://api.tidesandcurrents.noaa.gov';
+const OM   = 'https://marine-api.open-meteo.com/v1/marine';
+const PORTS = `稚内,45.41,141.68;留萌,43.94,141.63;小樽,43.20,141.00;石狩湾新港,43.22,141.30;苫小牧,42.63,141.62;室蘭,42.32,140.97;函館,41.78,140.72;浦河,42.16,142.77;釧路,42.97,144.37;根室(花咲),43.28,145.57;網走,44.02,144.28;紋別,44.35,143.37;青森,40.83,140.76;深浦,40.65,139.93;八戸,40.53,141.52;宮古,39.64,141.98;釜石,39.27,141.89;大船渡,39.02,141.75;石巻,38.43,141.30;仙台(塩釜),38.32,141.03;相馬,37.83,140.97;小名浜,36.94,140.90;秋田,39.75,140.05;酒田,38.92,139.83;鹿島,35.93,140.70;銚子,35.74,140.86;館山,34.99,139.85;千葉,35.58,140.10;東京,35.65,139.77;横浜,35.45,139.65;横須賀,35.28,139.67;小田原,35.25,139.15;熱海,35.10,139.08;伊東,34.97,139.10;三宅島,34.05,139.52;八丈島,33.12,139.80;父島,27.10,142.19;南鳥島,24.29,153.98;新潟,37.93,139.06;直江津,37.18,138.25;富山,36.77,137.22;金沢,36.62,136.60;輪島,37.40,136.90;七尾,37.05,136.97;三国,36.25,136.15;敦賀,35.65,136.07;舞鶴,35.48,135.38;清水,35.01,138.51;焼津,34.87,138.33;御前崎,34.60,138.23;舞阪,34.68,137.62;蒲郡,34.82,137.23;名古屋,35.08,136.88;四日市,34.97,136.65;鳥羽,34.48,136.84;尾鷲,34.07,136.20;串本,33.47,135.77;和歌山,34.22,135.15;大阪,34.65,135.43;神戸,34.68,135.19;明石,34.65,134.99;洲本,34.34,134.90;境,35.54,133.23;浦郷(隠岐),36.07,133.07;浜田,34.90,132.07;宇野(岡山),34.49,133.95;水島,34.50,133.74;尾道,34.40,133.20;呉,34.23,132.55;広島,34.35,132.46;徳山,34.03,131.80;宇部,33.93,131.25;下関,33.95,130.93;高松,34.35,134.05;徳島(小松島),34.00,134.59;鳴門,34.20,134.62;松山,33.86,132.71;今治,34.07,133.00;新居浜,33.97,133.30;宇和島,33.23,132.55;宿毛,32.93,132.73;高知,33.50,133.57;室戸,33.28,134.18;土佐清水,32.78,132.96;門司,33.95,130.97;博多,33.62,130.40;唐津,33.46,129.97;伊万里,33.28,129.88;佐世保,33.16,129.72;長崎,32.74,129.87;厳原,34.20,129.29;福江,32.70,128.84;口之津,32.60,130.20;三角,32.60,130.45;熊本,32.75,130.60;大分,33.27,131.68;佐伯,32.95,131.95;細島,32.43,131.68;油津,31.58,131.41;志布志,31.46,131.12;鹿児島,31.58,130.57;枕崎,31.27,130.30;串木野,31.72,130.27;西之表,30.73,131.00;名瀬,28.38,129.50;那覇,26.21,127.67;本部,26.65,127.88;久米島,26.35,126.78;南大東,25.83,131.23;宮古島(平良),24.80,125.28;石垣,24.34,124.15;徳之島(亀徳),27.74,128.99;徳之島(平土野),27.82,128.90;喜界島,28.32,129.94;沖永良部(和泊),27.38,128.65;与論島,27.04,128.43;奄美(笠利),28.43,129.70;種子島(西之表),30.73,131.00;屋久島(宮之浦),30.38,130.66;釜山,35.10,129.04;香港,22.30,114.17;シンガポール,1.26,103.84;ホノルル,21.31,-157.87;シドニー,-33.85,151.22;ロンドン,51.50,0.05;ロッテルダム,51.95,4.05;ニューヨーク,40.70,-74.01`;
+const JP = PORTS.split(';').map(x=>{const a=x.split(',');return {name:a[0],lat:+a[1],lng:+a[2]};});
+const stations = {};
+
+// ---------- ユーティリティ ----------
+const $ = s => document.querySelector(s);
+const pad = n => String(n).padStart(2,'0');
+const ymd = d => d.getUTCFullYear()+'-'+pad(d.getUTCMonth()+1)+'-'+pad(d.getUTCDate());
+const addDays = (s,n) => { const d=new Date(s+'T00:00Z'); d.setUTCDate(d.getUTCDate()+n); return ymd(d); };
+const todayStr = () => { const d=new Date(); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); };
+// 現地時刻文字列 → 当日0時からの分
+const mins = (s,day) => (Date.parse(s.replace(' ','T')+'Z') - Date.parse(day+'T00:00Z'))/6e4;
+const hhmm = m => pad(Math.floor(m/60))+':'+pad(Math.round(m%60)%60);
+const wd = s => '日月火水木金土'[new Date(s+'T00:00Z').getUTCDay()];
+
+// ---------- 地図 ----------
+const map = L.map('map',{renderer:L.canvas({tolerance:14})}).setView([35.2,136.5],6);
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'© OpenStreetMap contributors'}).addTo(map);
+
+function addStation(s){
+  stations[s.id]=s;
+  L.circleMarker([s.lat,s.lng],{radius:s.osm?6:(s.src==='jp'||s.src==='t')?9:6,color:'#fff',weight:1.5,fillColor:s.osm?'#5b7c99':(s.src==='jp'||s.src==='t')?'#d1495b':'#0e7c86',fillOpacity:.9})
+   .addTo(map)
+   .bindTooltip(s.name,{direction:'top'}).bindPopup(()=>`<b>${s.name}</b><br>${s.sub}${refInfo(s)}<br>緯度 ${s.lat.toFixed(3)} / 経度 ${s.lng.toFixed(3)}<br><a href="#/tide/${s.id}/${todayStr()}">潮見表（タイドグラフ）を表示</a>`);
+}
+map.on('click',e=>{const la=e.latlng.lat.toFixed(2),ln=e.latlng.wrap().lng.toFixed(2);
+  L.popup().setLatLng(e.latlng).setContent(`<b>この地点の潮見表</b><br>${la}, ${ln}<br><a href="#/tide/pt_${la}_${ln}/${todayStr()}">潮見表（タイドグラフ）を表示</a>`).openOn(map);});
+
+fetch(NOAA+'/mdapi/prod/webapi/stations.json?type=tidepredictions').then(r=>r.json()).then(j=>{
+  j.stations.forEach(s=>addStation({id:'us-'+s.id,name:s.name+(s.state?', '+s.state:''),lat:s.lat,lng:s.lng,src:'us',sub:'NOAA 潮汐予測観測点'}));
+  $('#status').textContent='主要港'+JP.length+' + NOAA '+j.stations.length+'地点 + 地図クリックで任意地点';
+}).catch(()=>$('#status').textContent='NOAA地点リストを取得できませんでした（日本の港のみ）');
+
+// ---------- OpenStreetMap の港（Overpass API）を区画ごとに取得・キャッシュ ----------
+const OVERPASS='https://overpass-api.de/api/interpreter';
+const OSMF=['["harbour"="yes"]','["leisure"="marina"]','["seamark:type"="harbour"]','["landuse"="harbour"]','["amenity"="ferry_terminal"]','["industrial"="port"]'];
+const osmQ=bb=>`[out:json][timeout:60];(${OSMF.map(x=>`nwr${x}["name"](${bb});`).join('')});out center tags;`;
+async function ovp(q){
+  for(let k=0;k<2;k++){
+    for(const u of [OVERPASS,'https://overpass.kumi.systems/api/interpreter','https://overpass.private.coffee/api/interpreter']){
+      try{const r=await fetch(u,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'data='+encodeURIComponent(q)}); if(r.ok) return await r.json();}catch(e){}
+    }
+    await new Promise(r=>setTimeout(r,3000));
+  }
+  throw new Error('overpass');
+}
+function addOsm(name,lat,lon){
+  const id='pt_'+lat.toFixed(2)+'_'+lon.toFixed(2);
+  if(stations[id]) return 0;
+  addStation({id,name,lat,lng:lon,src:'jp',sub:'港・マリーナ（OpenStreetMap）',osm:1}); return 1;
+}
+async function loadJapan(){
+  const KEY='tide-osm-jp-v2', st=$('#st3'); let c=null;
+  try{c=JSON.parse(localStorage.getItem(KEY)||'null');}catch(e){}
+  if(!c||Date.now()-c.t>6048e5) c={t:Date.now(),k:{}};
+  const tiles=[[24,122,27,128],[24,128,27,132],[27,128,30,132],[27,140,30,144],[30,128,33,132],[30,132,33,136],[33,128,36,132],[33,132,36,136],[33,136,36,140],[33,140,36,144],[36,132,39,136],[36,136,39,140],[36,140,39,144],[39,138,42,142],[39,142,42,146],[42,139,45.6,143],[42,143,45.6,146]];
+  let fail=0,n=0;
+  for(let i=0;i<tiles.length;i++){
+    const key=tiles[i].join('_');
+    if(!c.k[key]){
+      st.textContent=`周辺の港を読み込み中… ${i+1}/${tiles.length}`;
+      try{
+        const j=await ovp(osmQ(tiles[i].join(',')));
+        c.k[key]=j.elements.filter(e=>(e.center||e).lat!=null).map(e=>{const p=e.center||e,t=e.tags||{};return [t['name:ja']||t.name,+p.lat.toFixed(4),+p.lon.toFixed(4)];});
+        try{localStorage.setItem(KEY,JSON.stringify(c));}catch(e){}
+      }catch(e){fail++;continue;}
+      await new Promise(r=>setTimeout(r,500));
+    }
+    c.k[key].forEach(r=>{n+=addOsm(r[0],r[1],r[2]);});
+  }
+  st.textContent=`周辺の港 ${n}件`+(fail?`（${fail}区画は取得失敗。再読み込みで再試行）`:'');
+}
+
+// ---------- 地名検索（Nominatim） ----------
+const toggle=(btn,box,cb)=>$(btn).addEventListener('click',()=>{
+  const open=$(box).hidden; $(box).hidden=!open; $(btn).setAttribute('aria-expanded',open); if(cb) cb(open);
+});
+toggle('#sb','#sp',open=>{ if(open) $('#q').focus(); else $('#res').innerHTML=''; });
+toggle('#ib','#info');
+$('#sf').addEventListener('submit',async e=>{
+  e.preventDefault(); const q=$('#q').value.trim(); if(!q) return;
+  const r=$('#res'); r.textContent='検索中…';
+  try{
+    const j=await (await fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&limit=6&accept-language=ja&q='+encodeURIComponent(q))).json();
+    r.innerHTML=''; if(!j.length) r.textContent='見つかりませんでした';
+    j.forEach(x=>{
+      const b=document.createElement('button'); b.type='button';
+      b.textContent=x.display_name.split(',').slice(0,3).join(','); b.style.cssText='display:block;width:100%;text-align:left;margin-top:4px;font-size:12px';
+      b.onclick=()=>{
+        const la=(+x.lat).toFixed(2), ln=(+x.lon).toFixed(2);
+        map.flyTo([x.lat,x.lon],12);
+        L.popup().setLatLng([x.lat,x.lon]).setContent(`<b>${x.name||q}</b><br><a href="#/tide/pt_${la}_${ln}/${todayStr()}">潮見表（タイドグラフ）を表示</a>`).openOn(map);
+      };
+      r.appendChild(b);
+    });
+  }catch(err){ r.textContent='検索に失敗しました'; }
+});
+
+// ---------- tide736（日本沿岸736港・海上保安庁の調和定数による推算） ----------
+const T736='https://api.tide736.net/get_tide.php';
+const ports736=[]; let direct=true;
+const dm=v=>{const d=Math.floor(v);return d+(v-d)*100/60;};   // 度.分表記 → 十進度
+const hav=(a,b,c,d)=>{const r=Math.PI/180,x=Math.sin((c-a)*r/2)**2+Math.cos(a*r)*Math.cos(c*r)*Math.sin((d-b)*r/2)**2;return 12742*Math.asin(Math.sqrt(x));};
+function nearest(lat,lng){let b=null;for(const p of ports736){const k=hav(lat,lng,p.lat,p.lng);if(!b||k<b.km)b={p,km:k};}return b&&b.km<=40?b:null;}
+function refInfo(s){if(s.src==='t'||!ports736.length) return ''; const n=nearest(s.lat,s.lng); return n?`<br>基準港：${n.p.name}（約${Math.round(n.km)}km）`:'';}
+async function t736(pc,hc,day){
+  const q=`pc=${pc}&hc=${hc}&yr=${+day.slice(0,4)}&mn=${+day.slice(5,7)}&dy=${+day.slice(8)}&rg=day`;
+  const us=direct?[T736+'?'+q,'proxy.php?'+q]:['proxy.php?'+q,T736+'?'+q];
+  for(let i=0;i<us.length;i++){
+    try{const r=await fetch(us[i]); if(!r.ok) continue; const j=await r.json();
+      if(j.tide){ if(i===1) direct=!direct; return j; }}catch(e){}
+  }
+  throw new Error('潮汐データ(tide736)を取得できませんでした（CORSで拒否される場合は同梱のproxy.phpを設置してください）');
+}
+function addT(pc,hc,name,lat,lng){
+  const id='t'+pc+'_'+hc; if(stations[id]) return;
+  const s={id,name,lat,lng,src:'t',pc,hc,sub:'日本沿岸736港（海上保安庁の調和定数による推算）'};
+  ports736.push(s); addStation(s);
+}
+async function loadT736(){
+  const KEY='tide-t736-v1', st=$('#st2'); let rows=null;
+  try{const c=JSON.parse(localStorage.getItem(KEY)||'null'); if(c&&Date.now()-c.t<2592e6) rows=c.d;}catch(e){}
+  if(!rows){
+    rows=[]; const t=todayStr(); let ok=0, done=0;
+    const one=async pc=>{
+      for(const hc of [1,2,3]){
+        try{const j=await t736(pc,hc,t); ok++; [].concat(j.tide.link||[]).forEach(p=>rows.push([p.prefecture_code,p.harbor_code,p.harbor_namej,+dm(p.latitude).toFixed(4),+dm(p.longitude).toFixed(4)])); break;}catch(e){}
+      }
+      st.textContent=`基準港を読み込み中… ${++done}/47`;
+    };
+    const pcs=Array.from({length:47},(_,i)=>i+1);
+    for(let i=0;i<pcs.length;i+=6) await Promise.all(pcs.slice(i,i+6).map(one));
+    if(ok>=40&&rows.length>300) try{localStorage.setItem(KEY,JSON.stringify({t:Date.now(),d:rows}));}catch(e){}
+  }
+  rows.forEach(r=>addT(...r));
+  st.textContent=ports736.length?`日本沿岸の基準港 ${ports736.length}港`:'基準港リスト(tide736)を取得できませんでした';
+  return ports736.length;
+}
+function addFallback(){JP.forEach(p=>addStation({id:'pt_'+p.lat.toFixed(2)+'_'+p.lng.toFixed(2),name:p.name,lat:p.lat,lng:p.lng,src:'jp',sub:'主要港（海洋モデル）'}));}
+
+// ---------- 潮名・月齢（tide736以外の地点用の概算） ----------
+function moonInfo(day){
+  const jd=Date.parse(day+'T03:00Z')/864e5+2440587.5, age=((jd-2451550.1)%29.530588+29.530588)%29.530588;
+  const k=Math.floor(age%14.765);
+  const title=(k<=2||k===14)?'大潮':(k<=5||k>=11)?'中潮':k<=8?'小潮':k===9?'長潮':'若潮';
+  return {title,age:age.toFixed(1),approx:true};
+}
+const hm=s=>{const a=s.split(':');return +a[0]*60+ +a[1];};
+
+// ---------- データ取得（単位はすべて cm） ----------
+async function load(st,day){
+  let t=st, ref=null;
+  if(st.src==='jp'){ const n=nearest(st.lat,st.lng); if(n){t=n.p; ref=`基準港「${n.p.name}」（約${Math.round(n.km)}km）の推算値を表示しています`;} }
+  if(t.src==='t'){
+    const j=await t736(t.pc,t.hc,day), c=j.tide.chart[day], r1=x=>Math.round(x*10)/10;
+    const ext=[...c.flood.map(e=>({t:hm(e.time),h:r1(e.cm),type:'H'})),...c.edd.map(e=>({t:hm(e.time),h:r1(e.cm),type:'L'}))].sort((a,b)=>a.t-b.t);
+    const pts=c.tide.map(p=>[hm(p.time),p.cm]);
+    return {pts,ext,ref,name:j.tide.port.harbor_namej,tz:'Asia/Tokyo',sun:c.sun,t736:1,
+      moon:{title:c.moon.title,age:c.moon.age,name:c.moon.name},datum:'海図の水深基準面からの潮位（海上保安庁の調和定数による推算・tide736.net）'};
+  }
+  const a=addDays(day,-1), b=addDays(day,1);
+  if(st.src==='jp'){
+    const offs=[[0,0]];
+    for(const r of [.08,.16,.25]) for(const [dy,dx] of [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]]) offs.push([dy*r,dx*r]);
+    const la=offs.map(o=>(st.lat+o[0]).toFixed(3)).join(','), lo=offs.map(o=>(st.lng+o[1]).toFixed(3)).join(',');
+    let j=await (await fetch(`${OM}?latitude=${la}&longitude=${lo}&hourly=sea_level_height_msl&timezone=auto&start_date=${a}&end_date=${b}`)).json();
+    if(j.error) throw new Error(j.reason||'データ取得エラー');
+    j=[].concat(j).find(x=>x.hourly&&x.hourly.sea_level_height_msl.some(v=>v!=null));
+    if(!j) throw new Error('この付近に海洋モデルのデータがありません（内陸・湖など）');
+    const pts=j.hourly.time.map((t,i)=>[mins(t,day),j.hourly.sea_level_height_msl[i]*100]).filter(p=>!isNaN(p[1]));
+    const ext=[];
+    for(let i=1;i<pts.length-1;i++){
+      const y0=pts[i-1][1],y1=pts[i][1],y2=pts[i+1][1], hi=y1>=y0&&y1>y2, lo=y1<=y0&&y1<y2;
+      if(!hi&&!lo) continue;
+      const den=y0-2*y1+y2, o=den?0.5*(y0-y2)/den:0;
+      ext.push({t:pts[i][0]+o*60,h:y1-0.25*(y0-y2)*o,type:hi?'H':'L'});
+    }
+    return {pts,ext,ref,tz:j.timezone,moon:moonInfo(day),datum:'平均海面基準の海洋モデル値（約8km格子の参考値）'};
+  }
+  const id=st.id.slice(3), f=d=>d.replace(/-/g,'');
+  const j=await (await fetch(`${NOAA}/api/prod/datagetter?product=predictions&application=tide-map&begin_date=${f(a)}&end_date=${f(b)}&datum=MLLW&station=${id}&time_zone=lst_ldt&units=metric&interval=hilo&format=json`)).json();
+  if(j.error) throw new Error(j.error.message);
+  const ext=j.predictions.map(p=>({t:mins(p.t,day),h:+p.v*100,type:p.type})), pts=[];
+  for(let i=0;i<ext.length-1;i++){const e0=ext[i],e1=ext[i+1]; for(let t=e0.t;t<e1.t;t+=10){const k=(t-e0.t)/(e1.t-e0.t); pts.push([t,e0.h+(e1.h-e0.h)*(1-Math.cos(Math.PI*k))/2]);}}
+  pts.push([ext.at(-1).t,ext.at(-1).h]);
+  return {pts,ext,moon:moonInfo(day),datum:'最低低潮面(MLLW)基準・NOAA予測'};
+}
+
+// ---------- グラフ（W=画面幅px。スマホでは文字を大きく・縦を高く） ----------
+function smooth(p){
+  let d=`M${p[0][0]},${p[0][1]}`;
+  for(let i=0;i<p.length-1;i++){
+    const a=p[i-1]||p[i],b=p[i],c=p[i+1],e=p[i+2]||c;
+    d+=`C${b[0]+(c[0]-a[0])/6},${b[1]+(c[1]-a[1])/6} ${c[0]-(e[0]-b[0])/6},${c[1]-(e[1]-b[1])/6} ${c[0]},${c[1]}`;
+  }
+  return d;
+}
+function graph(data,day,W){
+  const sm=W<520, fs=sm?13:12, H=sm?440:390, L0=sm?40:48, R=10, T=16, B=30, pw=W-L0-R, ph=H-T-B, ip=sm?44:40;
+  const vis=data.pts.filter(p=>p[0]>=-30&&p[0]<=1470).map(p=>p[1]).concat(data.ext.filter(e=>e.t>=0&&e.t<1440).map(e=>e.h));
+  const lo=Math.min(...vis), hi=Math.max(...vis), sc=(ph-2*ip)/((hi-lo)||1);
+  const X=t=>L0+t/1440*pw, Y=v=>T+ip+(hi-v)*sc;
+  const vt=hi+ip/sc, vb=lo-ip/sc, step=(vt-vb)>240?100:(vt-vb)>110?50:20;
+  let g='';
+  for(let h=0;h<=24;h+=3) g+=`<line x1="${X(h*60)}" x2="${X(h*60)}" y1="${T}" y2="${T+ph}" stroke="#e1ecec"/><text x="${X(h*60)}" y="${H-8}" font-size="${fs}" text-anchor="middle" fill="#4b6a72">${h}</text>`;
+  for(let v=Math.ceil(vb/step)*step;v<=vt;v+=step) g+=`<line x1="${L0}" x2="${W-R}" y1="${Y(v)}" y2="${Y(v)}" stroke="#e1ecec"/><text x="${L0-5}" y="${Y(v)+4}" font-size="${fs}" text-anchor="end" fill="#4b6a72">${Math.round(v)}</text>`;
+  const P=data.pts.filter(p=>p[0]>=-60&&p[0]<=1500).map(p=>[X(p[0]),Y(p[1])]), line=smooth(P);
+  let nowLine='';
+  if(data.tz){
+    const n=new Date(new Date().toLocaleString('en-US',{timeZone:data.tz}));
+    if(day===n.getFullYear()+'-'+pad(n.getMonth()+1)+'-'+pad(n.getDate())){const m=n.getHours()*60+n.getMinutes();
+      nowLine=`<line x1="${X(m)}" x2="${X(m)}" y1="${T}" y2="${T+ph}" stroke="#d1495b" stroke-dasharray="4 3"/>`;}
+  }
+  const marks=data.ext.filter(e=>e.t>=0&&e.t<1440).map(e=>{
+    const x=X(e.t), y=Y(e.h), hiT=e.type==='H', an=x<L0+22?'start':x>W-R-22?'end':'middle', col=hiT?'#d1495b':'#2e6fb7';
+    const y1=hiT?y-26:y+19, y2=hiT?y-10:y+19+fs+3;
+    return `<circle cx="${x}" cy="${y}" r="5" fill="${col}"/><text x="${x}" y="${y1}" font-size="${fs+1}" font-weight="700" text-anchor="${an}" fill="#10343f">${hhmm(e.t)}</text><text x="${x}" y="${y2}" font-size="${fs}" text-anchor="${an}" fill="${col}">${Math.round(e.h)}cm</text>`;
+  }).join('');
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="潮位グラフ"><defs><clipPath id="c"><rect x="${L0}" y="${T}" width="${pw}" height="${ph}"/></clipPath></defs>${g}
+  <g clip-path="url(#c)"><path d="${line}L${P.at(-1)[0]},${T+ph}L${P[0][0]},${T+ph}Z" fill="#0e7c8622"/><path d="${line}" fill="none" stroke="#0e7c86" stroke-width="2.5"/></g>${nowLine}${marks}
+  <text x="2" y="11" font-size="${fs}" fill="#4b6a72">cm</text></svg>`;
+}
+
+// ---------- 潮見表ページ ----------
+async function getStation(id){
+  if(stations[id]) return stations[id];
+  if(id.startsWith('us-')){
+    const j=await (await fetch(`${NOAA}/mdapi/prod/webapi/stations/${id.slice(3)}.json`)).json(), s=j.stations[0];
+    return stations[id]={id,name:s.name+(s.state?', '+s.state:''),lat:s.lat,lng:s.lng,src:'us',sub:'NOAA 潮汐予測観測点'};
+  }
+  let m=id.match(/^t(\d+)_(\d+)$/);
+  if(m) return stations[id]={id,name:'港',lat:0,lng:0,src:'t',pc:+m[1],hc:+m[2],sub:'日本沿岸736港（海上保安庁の調和定数による推算）'};
+  m=id.match(/^pt_(-?[\d.]+)_(-?[\d.]+)$/);
+  if(m) return stations[id]={id,name:'地点 '+m[1]+', '+m[2],lat:+m[1],lng:+m[2],src:'jp',sub:'地図で選んだ地点'};
+  throw new Error('地点が見つかりません');
+}
+let cur=null,lastW=0,rt;
+async function show(id,day){
+  const v=$('#view'); v.innerHTML='<div class="wrap">読み込み中…</div>';
+  try{
+    await ready;
+    const st=await getStation(id); document.title=`${st.name} ${day} 潮見表`;
+    cur={st,day,data:await load(st,day)}; paint();
+  }catch(e){ v.innerHTML=`<div class="wrap"><p><a href="#/">← 地図に戻る</a></p><div class="err">表示できませんでした：${e.message}</div></div>`; }
+}
+function paint(){
+  const {st,day,data}=cur, v=$('#view'), mo=data.moon||{}; lastW=v.clientWidth;
+  const W=Math.min(860,v.clientWidth)-32, nav=(n,l)=>`<button onclick="go('${addDays(day,n)}')">${l}</button>`;
+  v.innerHTML=`<div class="wrap"><p><a href="#/">← 地図に戻る</a></p><h1>${data.name||st.name}</h1><p class="sub">${st.sub}</p>
+  <div class="nav">${nav(-1,'‹ 前日')}<button onclick="go('${todayStr()}')">今日</button>${nav(1,'翌日 ›')}<input type="date" value="${day}" onchange="go(this.value)" aria-label="日付を選択"></div>
+  <div class="date">${day.replace(/-/g,'/')}（${wd(day)}）${mo.title?`<span class="badge">${mo.title}</span>`:''}</div>
+  <p class="sub">月齢 ${mo.age}${mo.name?'（'+mo.name+'）':''}${mo.approx?'（概算）':''}${data.sun?`　日の出 ${data.sun.rise}　日の入 ${data.sun.set}`:''}</p>
+  ${graph(data,day,W)}
+  <p class="note">${data.ref?data.ref+'。':''}${data.datum}。時刻は現地時間。航海・釣り・潮干狩りなど安全に関わる判断には、海上保安庁「潮汐表」や気象庁の公式情報を確認してください。</p></div>`;
+}
+window.go = d => { if(d) location.hash = location.hash.replace(/\/\d{4}-\d\d-\d\d$/,'/'+d); };
+addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>{const v=$('#view');if(cur&&!v.hidden&&v.clientWidth!==lastW)paint();},250);});
+
+// ---------- 起動・ルーティング ----------
+const ready=loadT736().then(n=>{ if(n<100) addFallback(); loadJapan(); return n; });
+function route(){
+  const m=location.hash.match(/^#\/tide\/([\w.\-]+)\/(\d{4}-\d\d-\d\d)$/), v=$('#view');
+  if(!m){ v.hidden=true; document.title='潮見表マップ'; return; }
+  v.hidden=false; show(m[1],m[2]);
+}
+addEventListener('hashchange',route); route();
+</script>
+</body>
+</html>
