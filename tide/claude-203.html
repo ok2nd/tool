@@ -33,13 +33,14 @@ td,th{padding:8px 12px;border-bottom:1px solid #dbe8e9;text-align:left}
 .nav{gap:6px}.nav button{padding:7px 10px;font-size:14px}
 input[type=date]{width:9.6em;min-width:0;max-width:100%;padding:7px 6px;font-size:14px}
 .badge{display:inline-block;background:var(--sea);color:#fff;border-radius:14px;padding:2px 12px;font-size:16px;margin-left:10px;vertical-align:middle}
+select{font:inherit;font-size:14px;padding:3px 4px;max-width:60vw}
 </style>
 </head>
 <body>
 <div id="map"></div>
 <div id="bar">
 <div id="tools"><button id="ib" type="button" title="使い方・読み込み状況" aria-label="使い方・読み込み状況" aria-expanded="false">ℹ️</button><button id="sb" type="button" title="地名検索" aria-label="地名検索" aria-expanded="false">🔍</button></div>
-<div id="info" class="pn" hidden>🌊 マーカー、または地図上の任意の場所をクリックして潮見表へ<br>日本沿岸736港（赤）と周辺の港（灰）を表示。海上の任意の場所もクリックできます<br><span id="status">読み込み中…</span><br><span id="st2"></span><br><span id="st3"></span></div>
+<div id="info" class="pn" hidden>🌊 マーカー、または地図上の任意の場所をクリックして潮見表へ<br>気象庁の潮位観測地点（赤）と周辺の港（灰）を表示。海上の任意の場所もクリックできます<br><span id="status">読み込み中…</span><br><span id="st3"></span></div>
 <div id="sp" class="pn" hidden><form id="sf" style="display:flex;gap:4px"><input id="q" placeholder="地名で検索" style="flex:1;padding:6px;border:1px solid #9bbcc0;border-radius:5px;font:inherit"><button>検索</button></form><div id="res"></div></div>
 </div>
 <div id="view" hidden></div>
@@ -49,8 +50,6 @@ input[type=date]{width:9.6em;min-width:0;max-width:100%;padding:7px 6px;font-siz
 // ---------- 設定 ----------
 const NOAA = 'https://api.tidesandcurrents.noaa.gov';
 const OM   = 'https://marine-api.open-meteo.com/v1/marine';
-const PORTS = `稚内,45.41,141.68;留萌,43.94,141.63;小樽,43.20,141.00;石狩湾新港,43.22,141.30;苫小牧,42.63,141.62;室蘭,42.32,140.97;函館,41.78,140.72;浦河,42.16,142.77;釧路,42.97,144.37;根室(花咲),43.28,145.57;網走,44.02,144.28;紋別,44.35,143.37;青森,40.83,140.76;深浦,40.65,139.93;八戸,40.53,141.52;宮古,39.64,141.98;釜石,39.27,141.89;大船渡,39.02,141.75;石巻,38.43,141.30;仙台(塩釜),38.32,141.03;相馬,37.83,140.97;小名浜,36.94,140.90;秋田,39.75,140.05;酒田,38.92,139.83;鹿島,35.93,140.70;銚子,35.74,140.86;館山,34.99,139.85;千葉,35.58,140.10;東京,35.65,139.77;横浜,35.45,139.65;横須賀,35.28,139.67;小田原,35.25,139.15;熱海,35.10,139.08;伊東,34.97,139.10;三宅島,34.05,139.52;八丈島,33.12,139.80;父島,27.10,142.19;南鳥島,24.29,153.98;新潟,37.93,139.06;直江津,37.18,138.25;富山,36.77,137.22;金沢,36.62,136.60;輪島,37.40,136.90;七尾,37.05,136.97;三国,36.25,136.15;敦賀,35.65,136.07;舞鶴,35.48,135.38;清水,35.01,138.51;焼津,34.87,138.33;御前崎,34.60,138.23;舞阪,34.68,137.62;蒲郡,34.82,137.23;名古屋,35.08,136.88;四日市,34.97,136.65;鳥羽,34.48,136.84;尾鷲,34.07,136.20;串本,33.47,135.77;和歌山,34.22,135.15;大阪,34.65,135.43;神戸,34.68,135.19;明石,34.65,134.99;洲本,34.34,134.90;境,35.54,133.23;浦郷(隠岐),36.07,133.07;浜田,34.90,132.07;宇野(岡山),34.49,133.95;水島,34.50,133.74;尾道,34.40,133.20;呉,34.23,132.55;広島,34.35,132.46;徳山,34.03,131.80;宇部,33.93,131.25;下関,33.95,130.93;高松,34.35,134.05;徳島(小松島),34.00,134.59;鳴門,34.20,134.62;松山,33.86,132.71;今治,34.07,133.00;新居浜,33.97,133.30;宇和島,33.23,132.55;宿毛,32.93,132.73;高知,33.50,133.57;室戸,33.28,134.18;土佐清水,32.78,132.96;門司,33.95,130.97;博多,33.62,130.40;唐津,33.46,129.97;伊万里,33.28,129.88;佐世保,33.16,129.72;長崎,32.74,129.87;厳原,34.20,129.29;福江,32.70,128.84;口之津,32.60,130.20;三角,32.60,130.45;熊本,32.75,130.60;大分,33.27,131.68;佐伯,32.95,131.95;細島,32.43,131.68;油津,31.58,131.41;志布志,31.46,131.12;鹿児島,31.58,130.57;枕崎,31.27,130.30;串木野,31.72,130.27;西之表,30.73,131.00;名瀬,28.38,129.50;那覇,26.21,127.67;本部,26.65,127.88;久米島,26.35,126.78;南大東,25.83,131.23;宮古島(平良),24.80,125.28;石垣,24.34,124.15;徳之島(亀徳),27.74,128.99;徳之島(平土野),27.82,128.90;喜界島,28.32,129.94;沖永良部(和泊),27.38,128.65;与論島,27.04,128.43;奄美(笠利),28.43,129.70;種子島(西之表),30.73,131.00;屋久島(宮之浦),30.38,130.66;釜山,35.10,129.04;香港,22.30,114.17;シンガポール,1.26,103.84;ホノルル,21.31,-157.87;シドニー,-33.85,151.22;ロンドン,51.50,0.05;ロッテルダム,51.95,4.05;ニューヨーク,40.70,-74.01`;
-const JP = PORTS.split(';').map(x=>{const a=x.split(',');return {name:a[0],lat:+a[1],lng:+a[2]};});
 const stations = {};
 
 // ---------- ユーティリティ ----------
@@ -70,7 +69,7 @@ L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribu
 
 function addStation(s){
   stations[s.id]=s;
-  L.circleMarker([s.lat,s.lng],{radius:s.osm?6:(s.src==='jp'||s.src==='t')?9:6,color:'#fff',weight:1.5,fillColor:s.osm?'#5b7c99':(s.src==='jp'||s.src==='t')?'#d1495b':'#0e7c86',fillOpacity:.9})
+  L.circleMarker([s.lat,s.lng],{radius:s.osm?6:s.src==='j'?9:6,color:'#fff',weight:1.5,fillColor:s.osm?'#5b7c99':s.src==='j'?'#d1495b':'#0e7c86',fillOpacity:.9})
    .addTo(map)
    .bindTooltip(s.name,{direction:'top'}).bindPopup(()=>`<b>${s.name}</b><br>${s.sub}${refInfo(s)}<br>緯度 ${s.lat.toFixed(3)} / 経度 ${s.lng.toFixed(3)}<br><a href="#/tide/${s.id}/${todayStr()}">潮見表（タイドグラフ）を表示</a>`);
 }
@@ -79,7 +78,7 @@ map.on('click',e=>{const la=e.latlng.lat.toFixed(2),ln=e.latlng.wrap().lng.toFix
 
 fetch(NOAA+'/mdapi/prod/webapi/stations.json?type=tidepredictions').then(r=>r.json()).then(j=>{
   j.stations.forEach(s=>addStation({id:'us-'+s.id,name:s.name+(s.state?', '+s.state:''),lat:s.lat,lng:s.lng,src:'us',sub:'NOAA 潮汐予測観測点'}));
-  $('#status').textContent='主要港'+JP.length+' + NOAA '+j.stations.length+'地点 + 地図クリックで任意地点';
+  $('#status').textContent='NOAA '+j.stations.length+'地点（米国）';
 }).catch(()=>$('#status').textContent='NOAA地点リストを取得できませんでした（日本の港のみ）');
 
 // ---------- OpenStreetMap の港（Overpass API）を区画ごとに取得・キャッシュ ----------
@@ -147,67 +146,68 @@ $('#sf').addEventListener('submit',async e=>{
   }catch(err){ r.textContent='検索に失敗しました'; }
 });
 
-// ---------- tide736（日本沿岸736港・海上保安庁の調和定数による推算） ----------
-const T736='https://api.tide736.net/get_tide.php';
-const ports736=[]; let direct=true;
-const dm=v=>{const d=Math.floor(v);return d+(v-d)*100/60;};   // 度.分表記 → 十進度
+// ---------- 気象庁 潮位表（全国239地点・天文潮位の推算値） ----------
+// 地点記号,名称,緯度(度分),経度(度分)
+const JMA=`WN,稚内,4524,14141;KE,枝幸,4456,14235;A0,紋別,4421,14322;AS,網走,4401,14417;A6,羅臼,4401,14512;NM,根室,4321,14535;HN,花咲,4317,14534;KP,霧多布,4305,14507;KR,釧路,4259,14422;B1,十勝,4218,14319;A9,浦河,4210,14246;C8,苫小牧東,4236,14149;TM,苫小牧西,4238,14137;SO,白老,4231,14119;A8,室蘭,4221,14057;A3,森,4207,14036;HK,函館,4147,14043;Q0,吉岡,4127,14014;A5,松前,4125,14006;ES,江差,4152,14008;ZP,奥尻,4205,13929;OR,奥尻港,4210,13931;SE,瀬棚,4227,13951;B6,寿都,4248,14014;B5,岩内,4259,14030;Z8,忍路,4313,14052;B3,小樽,4312,14100;IK,石狩新港,4313,14118;B2,留萌,4357,14138;F3,沓形,4511,14108;Q1,竜飛,4115,14023;AO,青森,4050,14046;ZA,浅虫,4054,14052;Q2,大湊,4115,14109;B4,大間,4132,14054;SH,下北,4122,14114;XS,むつ小川原,4056,14123;HG,八戸港,4032,14133;XT,久慈,4012,14148;MY,宮古,3939,14159;Q6,釜石,3916,14153;OF,大船渡,3901,14145;AY,鮎川,3818,14130;E6,石巻,3824,14116;SG,塩釜,3819,14102;SD,仙台新港,3816,14100;ZM,相馬,3750,14058;ON,小名浜,3656,14054;D1,日立,3630,14038;D3,大洗,3618,14034;D2,鹿島,3556,14042;CS,銚子漁港,3545,14052;ZF,勝浦,3508,14015;MR,布良,3455,13950;TT,館山,3459,13951;KZ,木更津,3522,13955;QL,千葉,3534,14003;CB,千葉港,3536,14006;TK,東京,3539,13946;KW,川崎,3531,13945;YK,京浜港,3528,13938;QS,横浜,3527,13939;HM,本牧,3526,13940;QN,横須賀,3517,13939;Z1,油壺,3510,13937;OK,岡田,3447,13923;QO,神津島,3413,13908;MJ,三宅島（坪田）,3403,13933;QP,三宅島（阿古）,3404,13929;D4,八丈島（八重根）,3306,13946;QQ,八丈島（神湊）,3308,13948;CC,父島,2706,14212;MC,南鳥島,2417,15359;D8,湘南港,3518,13929;OD,小田原,3514,13909;Z3,伊東,3454,13908;D6,下田,3441,13858;QK,南伊豆,3438,13853;G9,石廊崎,3437,13851;Z4,田子,3448,13846;UC,内浦,3501,13853;SM,清水港,3501,13831;Z5,焼津,3452,13820;OM,御前崎,3437,13813;MI,舞阪,3441,13737;I4,赤羽根,3436,13711;G4,三河,3444,13719;G5,形原,3447,13711;G8,衣浦,3453,13657;ZD,鬼崎,3454,13649;NG,名古屋,3505,13653;G3,四日市港,3458,13638;TB,鳥羽,3429,13649;OW,尾鷲,3405,13612;KN,熊野,3356,13610;UR,浦神,3334,13554;KS,串本,3329,13546;SR,白浜,3341,13523;GB,御坊,3351,13510;H1,下津,3407,13508;Z9,海南,3409,13512;WY,和歌山,3413,13509;TN,淡輪,3420,13511;KK,関空島,3426,13512;J2,岸和田,3428,13522;IO,泉大津,3431,13524;SI,堺,3436,13528;OS,大阪,3439,13526;AM,尼崎,3442,13524;J5,西宮,3443,13520;KB,神戸,3441,13511;AK,明石,3439,13459;ST,洲本,3421,13454;EI,江井,3428,13450;K1,姫路（飾磨）,3447,13440;SB,三蟠,3436,13359;UN,宇野,3429,13357;MM,水島,3432,13344;LG,乙島,3430,13341;IZ,糸崎,3424,13305;TH,竹原,3420,13255;Q9,呉,3414,13233;Q8,広島,3421,13228;QA,徳山,3402,13148;J9,三田尻,3402,13135;WH,宇部,3356,13115;CF,長府,3401,13100;A1,弟子待,3356,13056;TI,田ノ首,3355,13055;OH,大山の鼻,3355,13054;HR,南風泊,3357,13053;MT,松山,3352,13243;M3,波止浜,3406,13256;M0,今治市小島,3408,13259;M1,来島航路,3407,13259;L0,今治,3404,13300;NI,新居浜,3358,13316;L8,伊予三島,3359,13333;TX,多度津,3417,13345;AX,青木,3422,13341;J8,与島,3423,13349;TA,高松,3421,13403;KM,小松島,3401,13435;J6,橘,3352,13438;AW,阿波由岐,3346,13436;HW,日和佐,3343,13433;L7,甲浦,3333,13418;MU,室戸岬,3316,13410;KC,高知,3330,13334;V7,須崎,3323,13318;ZH,久礼,3320,13315;L6,高知下田,3256,13300;TS,土佐清水,3247,13258;SU,片島,3255,13242;UW,宇和島,3314,13233;N1,日明,3355,13053;N0,砂津,3354,13053;MO,門司,3357,13057;AH,青浜,3357,13101;O3,苅田,3348,13100;BP,別府,3318,13130;QC,大分,3316,13141;X5,佐伯,3257,13158;Z6,細島,3226,13140;MG,宮崎,3154,13127;AB,油津,3135,13125;X6,志布志,3129,13107;QG,大泊,3101,13041;KG,鹿児島,3136,13034;MK,枕崎,3116,13018;ZJ,阿久根,3201,13011;QH,西之表,3044,13100;TJ,種子島,3028,13058;QI,中之島,2951,12951;QJ,名瀬,2824,12930;O9,奄美,2819,12932;NK,中城湾港,2620,12750;ZO,沖縄,2611,12749;NH,那覇,2613,12740;DJ,南大東,2552,13114;R1,平良,2449,12517;IS,石垣,2420,12410;IJ,西表,2421,12345;YJ,与那国,2427,12257;O7,水俣,3212,13022;O5,八代,3231,13034;HS,本渡瀬戸,3226,13013;RH,苓北,3228,13002;MS,三角,3237,13027;KU,熊本,3245,13034;O6,大牟田,3301,13025;OU,大浦,3259,13013;KT,口之津,3236,13012;NS,長崎,3244,12952;KO,皇后,3243,12950;FE,福江,3242,12851;QD,佐世保,3309,12943;X2,平戸瀬戸,3322,12935;ZL,仮屋,3328,12951;KA,唐津,3328,12958;QF,博多,3337,13024;X3,郷ノ浦,3345,12941;QE,厳原,3412,12918;O1,対馬,3416,12919;N5,対馬比田勝,3439,12929;K5,萩,3426,13125;ZK,須佐,3438,13136;HA,浜田,3454,13204;SK,境,3533,13315;SA,西郷,3612,13320;ZE,田後,3536,13419;T6,津居山,3539,13450;T2,宮津,3532,13512;MZ,舞鶴,3529,13523;XM,敦賀,3540,13604;ZG,三国,3615,13609;T1,金沢,3637,13636;Z7,輪島,3724,13654;SZ,能登,3730,13709;XO,七尾,3703,13658;XQ,伏木富山,3648,13704;SN,新湊,3647,13707;TY,富山,3646,13713;I7,生地,3653,13725;T3,直江津,3711,13815;ZC,柏崎,3721,13831;S6,新潟西港,3756,13904;I5,新潟東港,3759,13913;ZN,小木,3749,13817;RZ,両津,3805,13826;S0,佐渡,3819,13831;QR,粟島,3828,13915;ZB,鼠ヶ関,3834,13933;S9,酒田,3855,13949;ZQ,飛島,3911,13933;S1,秋田,3945,14004;S2,船川港,3955,13951;ZI,男鹿,3957,13942;FK,深浦,4039,13956`;
+const jmaSt=JMA.split(';').map(x=>{const a=x.split(','),la=+a[2],ln=+a[3];return {code:a[0],name:a[1],lat:Math.floor(la/100)+(la%100)/60,lng:Math.floor(ln/100)+(ln%100)/60};});
+jmaSt.forEach(p=>addStation({id:'j_'+p.code,name:p.name,lat:p.lat,lng:p.lng,src:'j',code:p.code,sub:'気象庁 潮位表（天文潮位の推算値）'}));
 const hav=(a,b,c,d)=>{const r=Math.PI/180,x=Math.sin((c-a)*r/2)**2+Math.cos(a*r)*Math.cos(c*r)*Math.sin((d-b)*r/2)**2;return 12742*Math.asin(Math.sqrt(x));};
-function nearest(lat,lng){let b=null;for(const p of ports736){const k=hav(lat,lng,p.lat,p.lng);if(!b||k<b.km)b={p,km:k};}return b&&b.km<=40?b:null;}
-function refInfo(s){if(s.src==='t'||!ports736.length) return ''; const n=nearest(s.lat,s.lng); return n?`<br>基準港：${n.p.name}（約${Math.round(n.km)}km）`:'';}
-async function t736(pc,hc,day){
-  const q=`pc=${pc}&hc=${hc}&yr=${+day.slice(0,4)}&mn=${+day.slice(5,7)}&dy=${+day.slice(8)}&rg=day`;
-  const us=direct?[T736+'?'+q,'proxy.php?'+q]:['proxy.php?'+q,T736+'?'+q];
-  for(let i=0;i<us.length;i++){
-    try{const r=await fetch(us[i]); if(!r.ok) continue; const j=await r.json();
-      if(j.tide){ if(i===1) direct=!direct; return j; }}catch(e){}
+function nearestList(lat,lng,n){return jmaSt.map(p=>({p,km:hav(lat,lng,p.lat,p.lng)})).filter(x=>x.km<=120).sort((a,b)=>a.km-b.km).slice(0,n);}
+function refInfo(s){if(s.src!=='jp') return ''; const c=nearestList(s.lat,s.lng,1)[0]; return c&&c.km<=60?`<br>基準観測点：${c.p.name}（約${Math.round(c.km)}km）`:'';}
+// 年間テキストデータ（1行=1日・136桁）を解析
+function parseJma(txt){
+  const m={};
+  txt.split('\n').forEach(l=>{
+    if(l.length<136) return;
+    const hr=[]; for(let i=0;i<24;i++) hr.push(+l.substr(i*3,3));
+    // 時刻は「時2桁+分2桁」で各々空白埋め（例: 0:07 → " 0 7"）。欠測は 9999 / 999
+    const ex=(o,type)=>{const r=[]; for(let i=0;i<4;i++){const ts=l.substr(o+i*7,4),h=+l.substr(o+i*7+4,3),hh=+ts.substr(0,2),mm=+ts.substr(2,2);
+      if(ts!=='9999'&&h!==999&&hh<24&&mm<60&&!isNaN(hh+mm+h)) r.push({t:hh*60+mm,h,type});} return r;};
+    const key=(2000+ +l.substr(72,2))+'-'+pad(+l.substr(74,2))+'-'+pad(+l.substr(76,2));
+    m[key]={hr,ext:[...ex(80,'H'),...ex(108,'L')].sort((a,b)=>a.t-b.t)};
+  });
+  return m;
+}
+const jmaCache={}; let jmaDirect=true;
+async function jmaYear(code,yr){
+  const k=code+yr; if(jmaCache[k]) return jmaCache[k];
+  const u=`https://www.data.jma.go.jp/kaiyou/data/db/tide/suisan/txt/${yr}/${code}.txt`, p=`proxy.php?jma=${code}&yr=${yr}`, us=jmaDirect?[u,p]:[p,u];
+  for(let i=0;i<2;i++){
+    try{const r=await fetch(us[i]); if(!r.ok) continue; const t=await r.text();
+      if(t.length>1000){ if(i===1) jmaDirect=!jmaDirect; return jmaCache[k]=parseJma(t); }}catch(e){}
   }
-  throw new Error('潮汐データ(tide736)を取得できませんでした（CORSで拒否される場合は同梱のproxy.phpを設置してください）');
+  throw new Error('気象庁の潮位表データを取得できませんでした（ブラウザから直接取得できない場合は、同梱のproxy.phpをindex.htmlと同じ場所に設置してください）');
 }
-function addT(pc,hc,name,lat,lng){
-  const id='t'+pc+'_'+hc; if(stations[id]) return;
-  const s={id,name,lat,lng,src:'t',pc,hc,sub:'日本沿岸736港（海上保安庁の調和定数による推算）'};
-  ports736.push(s); addStation(s);
-}
-async function loadT736(){
-  const KEY='tide-t736-v1', st=$('#st2'); let rows=null;
-  try{const c=JSON.parse(localStorage.getItem(KEY)||'null'); if(c&&Date.now()-c.t<2592e6) rows=c.d;}catch(e){}
-  if(!rows){
-    rows=[]; const t=todayStr(); let ok=0, done=0;
-    const one=async pc=>{
-      for(const hc of [1,2,3]){
-        try{const j=await t736(pc,hc,t); ok++; [].concat(j.tide.link||[]).forEach(p=>rows.push([p.prefecture_code,p.harbor_code,p.harbor_namej,+dm(p.latitude).toFixed(4),+dm(p.longitude).toFixed(4)])); break;}catch(e){}
-      }
-      st.textContent=`基準港を読み込み中… ${++done}/47`;
-    };
-    const pcs=Array.from({length:47},(_,i)=>i+1);
-    for(let i=0;i<pcs.length;i+=6) await Promise.all(pcs.slice(i,i+6).map(one));
-    if(ok>=40&&rows.length>300) try{localStorage.setItem(KEY,JSON.stringify({t:Date.now(),d:rows}));}catch(e){}
-  }
-  rows.forEach(r=>addT(...r));
-  st.textContent=ports736.length?`日本沿岸の基準港 ${ports736.length}港`:'基準港リスト(tide736)を取得できませんでした';
-  return ports736.length;
-}
-function addFallback(){JP.forEach(p=>addStation({id:'pt_'+p.lat.toFixed(2)+'_'+p.lng.toFixed(2),name:p.name,lat:p.lat,lng:p.lng,src:'jp',sub:'主要港（海洋モデル）'}));}
 
 // ---------- 潮名・月齢（tide736以外の地点用の概算） ----------
 function moonInfo(day){
   const jd=Date.parse(day+'T03:00Z')/864e5+2440587.5, age=((jd-2451550.1)%29.530588+29.530588)%29.530588;
   const k=Math.floor(age%14.765);
   const title=(k<=2||k===14)?'大潮':(k<=5||k>=11)?'中潮':k<=8?'小潮':k===9?'長潮':'若潮';
-  return {title,age:age.toFixed(1),approx:true};
+  return {title,age:age.toFixed(1)};
 }
 const hm=s=>{const a=s.split(':');return +a[0]*60+ +a[1];};
 
 // ---------- データ取得（単位はすべて cm） ----------
-async function load(st,day){
-  let t=st, ref=null;
-  if(st.src==='jp'){ const n=nearest(st.lat,st.lng); if(n){t=n.p; ref=`基準港「${n.p.name}」（約${Math.round(n.km)}km）の推算値を表示しています`;} }
-  if(t.src==='t'){
-    const j=await t736(t.pc,t.hc,day), c=j.tide.chart[day], r1=x=>Math.round(x*10)/10;
-    const ext=[...c.flood.map(e=>({t:hm(e.time),h:r1(e.cm),type:'H'})),...c.edd.map(e=>({t:hm(e.time),h:r1(e.cm),type:'L'}))].sort((a,b)=>a.t-b.t);
-    const pts=c.tide.map(p=>[hm(p.time),p.cm]);
-    return {pts,ext,ref,name:j.tide.port.harbor_namej,tz:'Asia/Tokyo',sun:c.sun,t736:1,
-      moon:{title:c.moon.title,age:c.moon.age,name:c.moon.name},datum:'海図の水深基準面からの潮位（海上保安庁の調和定数による推算・tide736.net）'};
+async function load(st,day,refCode){
+  let ref=null, jm=st.src==='j'?st:null, cands=[];
+  if(st.src==='jp'){
+    cands=nearestList(st.lat,st.lng,5);
+    const pick=cands.find(c=>c.p.code===refCode)||(cands[0]&&cands[0].km<=60?cands[0]:null);
+    if(pick){ jm=pick.p; ref=`基準観測点「${jm.name}」（約${Math.round(pick.km)}km）の推算値`; }
+  }
+  if(jm){
+    const D=await jmaYear(jm.code,day.slice(0,4)), cur=D[day];
+    if(!cur) throw new Error('この日付の潮位表はありません（気象庁の潮位表は当年・翌年分のみ）');
+    const pv=D[addDays(day,-1)], nx=D[addDays(day,1)], E=[], H=[];
+    cur.ext.forEach(e=>E.push([e.t,e.h]));
+    if(pv){ pv.ext.forEach(e=>{if(e.t-1440>=-100)E.push([e.t-1440,e.h]);}); H.push([-120,pv.hr[22]],[-60,pv.hr[23]]); }
+    cur.hr.forEach((h,i)=>H.push([i*60,h]));
+    if(nx){ nx.ext.forEach(e=>{if(e.t+1440<=1560)E.push([e.t+1440,e.h]);}); H.push([1440,nx.hr[0]],[1500,nx.hr[1]]); }
+    const pts=H.filter(p=>!E.some(e=>Math.abs(e[0]-p[0])<25)).concat(E).sort((a,b)=>a[0]-b[0]);
+    return {pts,ext:cur.ext,ref,tz:'Asia/Tokyo',moon:moonInfo(day),sel:jm.code,
+      cands:cands.map(c=>({code:c.p.code,name:c.p.name,km:c.km})),
+      datum:'気象庁「潮位表」の天文潮位（推算値）。潮位表基準面からの高さ。気象・高潮による偏差は含みません'};
   }
   const a=addDays(day,-1), b=addDays(day,1);
   if(st.src==='jp'){
@@ -279,9 +279,7 @@ async function getStation(id){
     const j=await (await fetch(`${NOAA}/mdapi/prod/webapi/stations/${id.slice(3)}.json`)).json(), s=j.stations[0];
     return stations[id]={id,name:s.name+(s.state?', '+s.state:''),lat:s.lat,lng:s.lng,src:'us',sub:'NOAA 潮汐予測観測点'};
   }
-  let m=id.match(/^t(\d+)_(\d+)$/);
-  if(m) return stations[id]={id,name:'港',lat:0,lng:0,src:'t',pc:+m[1],hc:+m[2],sub:'日本沿岸736港（海上保安庁の調和定数による推算）'};
-  m=id.match(/^pt_(-?[\d.]+)_(-?[\d.]+)$/);
+  const m=id.match(/^pt_(-?[\d.]+)_(-?[\d.]+)$/);
   if(m) return stations[id]={id,name:'地点 '+m[1]+', '+m[2],lat:+m[1],lng:+m[2],src:'jp',sub:'地図で選んだ地点'};
   throw new Error('地点が見つかりません');
 }
@@ -289,28 +287,28 @@ let cur=null,lastW=0,rt;
 async function show(id,day){
   const v=$('#view'); v.innerHTML='<div class="wrap">読み込み中…</div>';
   try{
-    await ready;
-    const st=await getStation(id); document.title=`${st.name} ${day} 潮見表`;
-    cur={st,day,data:await load(st,day)}; paint();
+    const parts=id.split('~'), st=await getStation(parts[0]); document.title=`${st.name} ${day} 潮見表`;
+    cur={st,day,base:parts[0],data:await load(st,day,parts[1])}; paint();
   }catch(e){ v.innerHTML=`<div class="wrap"><p><a href="#/">← 地図に戻る</a></p><div class="err">表示できませんでした：${e.message}</div></div>`; }
 }
 function paint(){
-  const {st,day,data}=cur, v=$('#view'), mo=data.moon||{}; lastW=v.clientWidth;
+  const {st,day,data,base}=cur, v=$('#view'), mo=data.moon||{}; lastW=v.clientWidth;
   const W=Math.min(860,v.clientWidth)-32, nav=(n,l)=>`<button onclick="go('${addDays(day,n)}')">${l}</button>`;
-  v.innerHTML=`<div class="wrap"><p><a href="#/">← 地図に戻る</a></p><h1>${data.name||st.name}</h1><p class="sub">${st.sub}</p>
+  v.innerHTML=`<div class="wrap"><p><a href="#/">← 地図に戻る</a></p><h1>${data.name||st.name}</h1><p class="sub">${data.cands&&data.cands.length?`基準観測点（気象庁）：<select onchange="setRef(this.value)" aria-label="基準観測点">${data.cands.map(c=>`<option value="${c.code}"${c.code===data.sel?' selected':''}>${c.name}（約${Math.round(c.km)}km）</option>`).join('')}</select>`:st.sub}</p>
   <div class="nav">${nav(-1,'‹ 前日')}<button onclick="go('${todayStr()}')">今日</button>${nav(1,'翌日 ›')}<input type="date" value="${day}" onchange="go(this.value)" aria-label="日付を選択"></div>
   <div class="date">${day.replace(/-/g,'/')}（${wd(day)}）${mo.title?`<span class="badge">${mo.title}</span>`:''}</div>
-  <p class="sub">月齢 ${mo.age}${mo.name?'（'+mo.name+'）':''}${mo.approx?'（概算）':''}${data.sun?`　日の出 ${data.sun.rise}　日の入 ${data.sun.set}`:''}</p>
+  <p class="sub">月齢 ${mo.age}${mo.name?'（'+mo.name+'）':''}${data.sun?`　日の出 ${data.sun.rise}　日の入 ${data.sun.set}`:''}</p>
   ${graph(data,day,W)}
   <p class="note">${data.ref?data.ref+'。':''}${data.datum}。時刻は現地時間。航海・釣り・潮干狩りなど安全に関わる判断には、海上保安庁「潮汐表」や気象庁の公式情報を確認してください。</p></div>`;
 }
+window.setRef = c => { location.hash = location.hash.replace(/^#\/tide\/([\w.\-]+)(~\w+)?\//,'#/tide/$1~'+c+'/'); };
 window.go = d => { if(d) location.hash = location.hash.replace(/\/\d{4}-\d\d-\d\d$/,'/'+d); };
 addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>{const v=$('#view');if(cur&&!v.hidden&&v.clientWidth!==lastW)paint();},250);});
 
 // ---------- 起動・ルーティング ----------
-const ready=loadT736().then(n=>{ if(n<100) addFallback(); loadJapan(); return n; });
+loadJapan();
 function route(){
-  const m=location.hash.match(/^#\/tide\/([\w.\-]+)\/(\d{4}-\d\d-\d\d)$/), v=$('#view');
+  const m=location.hash.match(/^#\/tide\/([\w.\-~]+)\/(\d{4}-\d\d-\d\d)$/), v=$('#view');
   if(!m){ v.hidden=true; document.title='潮見表マップ'; return; }
   v.hidden=false; show(m[1],m[2]);
 }

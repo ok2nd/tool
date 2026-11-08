@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>日本全国 潮汐・潮見表</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:"Yu Gothic",Meiryo,sans-serif;background:#f3f6f8;color:#223}
+header{height:62px;background:#12496e;color:white;display:flex;align-items:center;padding:0 16px;gap:14px}h1{font-size:20px;margin:0}
+#search{padding:8px 12px;border:0;border-radius:6px;width:260px}#map{height:calc(100vh - 62px)}#tide{display:none;max-width:1100px;margin:auto;padding:18px}
+button{padding:9px 14px;border:1px solid #bbb;border-radius:6px;background:white;cursor:pointer}button:hover{background:#eef6fb}
+.bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:15px}.card{background:white;border-radius:9px;padding:16px;margin-bottom:16px;box-shadow:0 1px 5px #ccd}
+#status{position:fixed;z-index:1000;bottom:10px;left:10px;background:white;padding:7px 10px;border-radius:5px;box-shadow:0 1px 5px #aaa}
+.popup a{display:block;margin-top:8px;background:#1476b8;color:white;padding:8px;text-decoration:none;border-radius:5px;text-align:center}
+table{width:100%;border-collapse:collapse}th,td{padding:9px;border-bottom:1px solid #ddd;text-align:left}
+#apiPanel{font-size:12px;color:#556;margin-left:auto}#apiUrl{width:280px;padding:6px}
+@media(max-width:700px){header{height:auto;min-height:62px;flex-wrap:wrap;padding:10px}#search{width:100%}#map{height:calc(100vh - 110px)}#apiPanel{display:none}}
+</style>
+</head>
+<body>
+<header id="mapHeader"><h1>日本全国 潮汐・潮見表</h1><input id="search" placeholder="地点名を検索（例：神戸、石垣）"><span id="apiPanel">潮汐API URL：<input id="apiUrl" placeholder="APIエンドポイント（任意）"></span></header>
+<div id="map"></div><div id="status">地点を読み込み中...</div>
+
+<div id="tide">
+  <div class="bar"><button onclick="showMap()">← 地図へ</button><strong id="stationTitle"></strong></div>
+  <div class="bar"><button onclick="moveDay(-1)">← 前日</button><input type="date" id="date"><button onclick="moveDay(1)">翌日 →</button><button onclick="goToday()">今日</button><button onclick="copyUrl()">URLをコピー</button></div>
+  <div class="card" id="message">潮汐データを読み込みます。</div>
+  <div class="card"><canvas id="chart"></canvas></div>
+  <div class="card"><h2>満潮・干潮</h2><table><thead><tr><th>種類</th><th>時刻</th><th>潮位</th></tr></thead><tbody id="events"></tbody></table></div>
+</div>
+
+<script>
+const STATIONS=[{"id": "jp001", "name": "稚内", "lat": 45.415, "lng": 141.673}, {"id": "jp002", "name": "網走", "lat": 44.02, "lng": 144.273}, {"id": "jp003", "name": "紋別", "lat": 44.354, "lng": 143.354}, {"id": "jp004", "name": "小樽", "lat": 43.198, "lng": 141.003}, {"id": "jp005", "name": "石狩", "lat": 43.235, "lng": 141.347}, {"id": "jp006", "name": "留萌", "lat": 43.941, "lng": 141.637}, {"id": "jp007", "name": "函館", "lat": 41.768, "lng": 140.729}, {"id": "jp008", "name": "室蘭", "lat": 42.315, "lng": 140.974}, {"id": "jp009", "name": "苫小牧", "lat": 42.634, "lng": 141.605}, {"id": "jp010", "name": "釧路", "lat": 42.985, "lng": 144.381}, {"id": "jp011", "name": "根室", "lat": 43.33, "lng": 145.585}, {"id": "jp012", "name": "浦河", "lat": 42.168, "lng": 142.769}, {"id": "jp013", "name": "青森", "lat": 40.823, "lng": 140.742}, {"id": "jp014", "name": "八戸", "lat": 40.541, "lng": 141.523}, {"id": "jp015", "name": "むつ", "lat": 41.292, "lng": 141.183}, {"id": "jp016", "name": "大間", "lat": 41.526, "lng": 140.912}, {"id": "jp017", "name": "宮古", "lat": 39.641, "lng": 141.954}, {"id": "jp018", "name": "釜石", "lat": 39.276, "lng": 141.885}, {"id": "jp019", "name": "大船渡", "lat": 39.072, "lng": 141.716}, {"id": "jp020", "name": "久慈", "lat": 40.19, "lng": 141.821}, {"id": "jp021", "name": "気仙沼", "lat": 38.908, "lng": 141.569}, {"id": "jp022", "name": "石巻", "lat": 38.431, "lng": 141.304}, {"id": "jp023", "name": "仙台", "lat": 38.26, "lng": 140.879}, {"id": "jp024", "name": "塩釜", "lat": 38.314, "lng": 141.022}, {"id": "jp025", "name": "相馬", "lat": 37.796, "lng": 140.924}, {"id": "jp026", "name": "小名浜", "lat": 36.95, "lng": 140.905}, {"id": "jp027", "name": "日立", "lat": 36.59, "lng": 140.662}, {"id": "jp028", "name": "大洗", "lat": 36.312, "lng": 140.575}, {"id": "jp029", "name": "鹿島", "lat": 35.964, "lng": 140.644}, {"id": "jp030", "name": "銚子", "lat": 35.734, "lng": 140.826}, {"id": "jp031", "name": "勝浦", "lat": 35.153, "lng": 140.314}, {"id": "jp032", "name": "館山", "lat": 34.996, "lng": 139.87}, {"id": "jp033", "name": "東京", "lat": 35.649, "lng": 139.771}, {"id": "jp034", "name": "横浜", "lat": 35.443, "lng": 139.638}, {"id": "jp035", "name": "横須賀", "lat": 35.281, "lng": 139.672}, {"id": "jp036", "name": "三崎", "lat": 35.142, "lng": 139.619}, {"id": "jp037", "name": "小田原", "lat": 35.252, "lng": 139.159}, {"id": "jp038", "name": "熱海", "lat": 35.095, "lng": 139.073}, {"id": "jp039", "name": "伊東", "lat": 34.965, "lng": 139.102}, {"id": "jp040", "name": "下田", "lat": 34.676, "lng": 138.945}, {"id": "jp041", "name": "清水", "lat": 35.014, "lng": 138.491}, {"id": "jp042", "name": "焼津", "lat": 34.868, "lng": 138.326}, {"id": "jp043", "name": "御前崎", "lat": 34.637, "lng": 138.219}, {"id": "jp044", "name": "浜松", "lat": 34.71, "lng": 137.729}, {"id": "jp045", "name": "豊橋", "lat": 34.764, "lng": 137.384}, {"id": "jp046", "name": "名古屋", "lat": 35.091, "lng": 136.879}, {"id": "jp047", "name": "四日市", "lat": 34.966, "lng": 136.624}, {"id": "jp048", "name": "津", "lat": 34.73, "lng": 136.508}, {"id": "jp049", "name": "鳥羽", "lat": 34.483, "lng": 136.844}, {"id": "jp050", "name": "尾鷲", "lat": 34.071, "lng": 136.191}, {"id": "jp051", "name": "熊野", "lat": 33.889, "lng": 136.099}, {"id": "jp052", "name": "敦賀", "lat": 35.645, "lng": 136.055}, {"id": "jp053", "name": "小浜", "lat": 35.496, "lng": 135.746}, {"id": "jp054", "name": "舞鶴", "lat": 35.474, "lng": 135.386}, {"id": "jp055", "name": "大阪", "lat": 34.651, "lng": 135.433}, {"id": "jp056", "name": "堺", "lat": 34.573, "lng": 135.483}, {"id": "jp057", "name": "神戸", "lat": 34.69, "lng": 135.195}, {"id": "jp058", "name": "明石", "lat": 34.643, "lng": 134.997}, {"id": "jp059", "name": "姫路", "lat": 34.815, "lng": 134.685}, {"id": "jp060", "name": "洲本", "lat": 34.343, "lng": 134.897}, {"id": "jp061", "name": "和歌山", "lat": 34.219, "lng": 135.167}, {"id": "jp062", "name": "海南", "lat": 34.154, "lng": 135.208}, {"id": "jp063", "name": "御坊", "lat": 33.893, "lng": 135.152}, {"id": "jp064", "name": "串本", "lat": 33.472, "lng": 135.782}, {"id": "jp065", "name": "岡山", "lat": 34.65, "lng": 133.935}, {"id": "jp066", "name": "宇野", "lat": 34.487, "lng": 133.953}, {"id": "jp067", "name": "水島", "lat": 34.504, "lng": 133.744}, {"id": "jp068", "name": "福山", "lat": 34.486, "lng": 133.362}, {"id": "jp069", "name": "尾道", "lat": 34.409, "lng": 133.204}, {"id": "jp070", "name": "広島", "lat": 34.35, "lng": 132.46}, {"id": "jp071", "name": "呉", "lat": 34.244, "lng": 132.566}, {"id": "jp072", "name": "竹原", "lat": 34.341, "lng": 132.907}, {"id": "jp073", "name": "岩国", "lat": 34.165, "lng": 132.22}, {"id": "jp074", "name": "徳山", "lat": 34.051, "lng": 131.807}, {"id": "jp075", "name": "下松", "lat": 34.0, "lng": 131.871}, {"id": "jp076", "name": "宇部", "lat": 33.943, "lng": 131.251}, {"id": "jp077", "name": "下関", "lat": 33.957, "lng": 130.941}, {"id": "jp078", "name": "鳥取", "lat": 35.543, "lng": 134.217}, {"id": "jp079", "name": "境港", "lat": 35.545, "lng": 133.232}, {"id": "jp080", "name": "浜田", "lat": 34.899, "lng": 132.079}, {"id": "jp081", "name": "益田", "lat": 34.674, "lng": 131.842}, {"id": "jp082", "name": "徳島", "lat": 34.065, "lng": 134.558}, {"id": "jp083", "name": "小松島", "lat": 34.004, "lng": 134.59}, {"id": "jp084", "name": "日和佐", "lat": 33.733, "lng": 134.529}, {"id": "jp085", "name": "高松", "lat": 34.342, "lng": 134.046}, {"id": "jp086", "name": "坂出", "lat": 34.316, "lng": 133.857}, {"id": "jp087", "name": "丸亀", "lat": 34.289, "lng": 133.797}, {"id": "jp088", "name": "宇和島", "lat": 33.224, "lng": 132.56}, {"id": "jp089", "name": "松山", "lat": 33.84, "lng": 132.766}, {"id": "jp090", "name": "今治", "lat": 34.066, "lng": 132.997}, {"id": "jp091", "name": "高知", "lat": 33.559, "lng": 133.531}, {"id": "jp092", "name": "須崎", "lat": 33.398, "lng": 133.282}, {"id": "jp093", "name": "室戸", "lat": 33.285, "lng": 134.15}, {"id": "jp094", "name": "博多", "lat": 33.594, "lng": 130.404}, {"id": "jp095", "name": "北九州", "lat": 33.884, "lng": 130.882}, {"id": "jp096", "name": "唐津", "lat": 33.45, "lng": 129.969}, {"id": "jp097", "name": "呼子", "lat": 33.534, "lng": 129.888}, {"id": "jp098", "name": "大牟田", "lat": 33.031, "lng": 130.446}, {"id": "jp099", "name": "佐世保", "lat": 33.16, "lng": 129.725}, {"id": "jp100", "name": "長崎", "lat": 32.745, "lng": 129.873}, {"id": "jp101", "name": "島原", "lat": 32.788, "lng": 130.371}, {"id": "jp102", "name": "平戸", "lat": 33.368, "lng": 129.554}, {"id": "jp103", "name": "熊本", "lat": 32.789, "lng": 130.7}, {"id": "jp104", "name": "八代", "lat": 32.507, "lng": 130.602}, {"id": "jp105", "name": "三角", "lat": 32.617, "lng": 130.448}, {"id": "jp106", "name": "牛深", "lat": 32.193, "lng": 130.025}, {"id": "jp107", "name": "大分", "lat": 33.239, "lng": 131.613}, {"id": "jp108", "name": "別府", "lat": 33.279, "lng": 131.5}, {"id": "jp109", "name": "佐伯", "lat": 32.96, "lng": 131.9}, {"id": "jp110", "name": "宮崎", "lat": 31.907, "lng": 131.424}, {"id": "jp111", "name": "日向", "lat": 32.422, "lng": 131.628}, {"id": "jp112", "name": "油津", "lat": 31.579, "lng": 131.41}, {"id": "jp113", "name": "鹿児島", "lat": 31.596, "lng": 130.558}, {"id": "jp114", "name": "志布志", "lat": 31.48, "lng": 131.098}, {"id": "jp115", "name": "枕崎", "lat": 31.273, "lng": 130.296}, {"id": "jp116", "name": "奄美", "lat": 28.377, "lng": 129.493}, {"id": "jp117", "name": "名瀬", "lat": 28.377, "lng": 129.493}, {"id": "jp118", "name": "那覇", "lat": 26.212, "lng": 127.681}, {"id": "jp119", "name": "糸満", "lat": 26.124, "lng": 127.669}, {"id": "jp120", "name": "名護", "lat": 26.591, "lng": 127.977}, {"id": "jp121", "name": "石垣", "lat": 24.34, "lng": 124.155}, {"id": "jp122", "name": "宮古島", "lat": 24.805, "lng": 125.281}, {"id": "jp123", "name": "与那国", "lat": 24.467, "lng": 122.996}, {"id": "jp124", "name": "父島", "lat": 27.094, "lng": 142.191}, {"id": "jp125", "name": "八丈島", "lat": 33.103, "lng": 139.785}, {"id": "jp126", "name": "新潟", "lat": 37.902, "lng": 139.023}, {"id": "jp127", "name": "柏崎", "lat": 37.371, "lng": 138.558}, {"id": "jp128", "name": "酒田", "lat": 38.914, "lng": 139.836}, {"id": "jp129", "name": "秋田", "lat": 39.719, "lng": 140.103}];
+
+// 追加の沿岸・港湾地点。地点選択をしやすくするため、全国をより細かく収録。
+const EXTRA_STATIONS = [
+["宗谷岬",45.521,141.936],["枝幸",44.940,142.590],["雄武",44.583,142.963],["常呂",44.115,143.989],["羅臼",44.018,145.189],["知床",44.071,145.117],
+["岩内",42.979,140.514],["余市",43.196,140.781],["積丹",43.363,140.478],["寿都",42.800,140.228],["江差",41.869,140.128],["松前",41.430,140.106],["恵山",41.805,141.164],
+["八雲",42.255,140.268],["長万部",42.514,140.377],["登別",42.450,141.108],["浦河港",42.160,142.780],["広尾",42.290,143.320],["厚岸",43.060,144.850],
+["大間崎",41.540,140.910],["野辺地",40.870,141.130],["三沢",40.680,141.370],["階上",40.430,141.630],
+["普代",40.010,141.890],["山田",39.470,141.950],["大槌",39.360,141.900],["陸前高田",39.020,141.630],
+["女川",38.450,141.450],["松島",38.380,141.070],["閖上",38.170,140.950],["山元",37.950,140.900],
+["新地",37.870,140.930],["広野",37.210,141.000],["富岡",37.320,141.010],
+["北茨城",36.840,140.780],["那珂湊",36.350,140.600],["波崎",35.740,140.830],
+["九十九里",35.530,140.450],["大原",35.250,140.380],["鴨川",35.110,140.100],["富浦",35.050,139.840],
+["木更津",35.380,139.920],["千葉港",35.610,140.090],["浦安",35.650,139.900],
+["川崎",35.520,139.760],["逗子",35.290,139.580],["葉山",35.270,139.580],["平塚",35.310,139.350],
+["真鶴",35.160,139.140],["網代",35.040,139.090],["伊豆大島",34.750,139.360],["神津島",34.200,139.130],
+["南伊豆",34.630,138.900],["西伊豆",34.800,138.770],["土肥",34.910,138.780],["沼津",35.090,138.860],
+["富士",35.140,138.680],["蒲郡",34.820,137.230],["常滑",34.890,136.840],["半田",34.900,136.930],
+["桑名",35.060,136.690],["鈴鹿",34.880,136.580],["伊勢",34.500,136.710],["南伊勢",34.320,136.690],
+["紀伊長島",34.210,136.340],["新宮",33.720,135.990],
+["高浜",35.490,135.550],["宮津",35.540,135.190],["京丹後",35.670,135.000],
+["尼崎",34.730,135.410],["西宮",34.710,135.340],["芦屋",34.720,135.300],["淡路島北",34.560,134.990],["淡路島南",34.220,134.720],
+["加古川",34.750,134.840],["相生",34.800,134.470],["赤穂",34.750,134.390],
+["備前",34.670,134.190],["日生",34.730,134.270],["玉野",34.490,133.950],["笠岡",34.500,133.500],
+["三原",34.400,133.080],["大崎上島",34.250,132.920],["東広島",34.330,132.740],
+["廿日市",34.350,132.330],["大竹",34.220,132.220],
+["柳井",33.970,132.100],["光",33.960,131.940],["防府",34.050,131.570],
+["萩",34.410,131.400],["長門",34.380,131.190],
+["岩美",35.580,134.330],["香住",35.650,134.630],["豊岡",35.610,134.830],
+["出雲",35.400,132.830],["江津",35.000,132.220],
+["鳴門",34.180,134.610],["阿南",33.920,134.660],["牟岐",33.670,134.420],
+["さぬき",34.330,134.170],["観音寺",34.130,133.650],
+["新居浜",33.960,133.280],["西条",33.920,133.180],["大洲",33.500,132.540],["八幡浜",33.460,132.420],["愛南",32.960,132.560],
+["土佐清水",32.780,132.950],["宿毛",32.940,132.720],["安芸",33.500,133.900],
+["宗像",33.800,130.500],["福津",33.770,130.480],["糸島",33.560,130.190],
+["伊万里",33.260,129.880],["松浦",33.340,129.710],["壱岐",33.750,129.700],["対馬厳原",34.200,129.290],
+["五島福江",32.700,128.840],["上五島",32.980,129.100],
+["荒尾",32.980,130.430],["天草本渡",32.460,130.190],
+["杵築",33.420,131.620],["国東",33.560,131.730],
+["延岡",32.580,131.670],["都井岬",31.380,131.330],
+["指宿",31.250,130.630],["阿久根",32.020,130.200],["出水",32.100,130.350],["種子島",30.730,130.990],["屋久島",30.330,130.530],
+["徳之島",27.840,128.940],["沖永良部",27.370,128.580],["与論島",27.040,128.420],
+["沖縄北谷",26.320,127.760],["宜野湾",26.280,127.760],["うるま",26.380,127.860],["久米島",26.340,126.800],
+["慶良間",26.200,127.300],["南大東島",25.830,131.230],["西表島",24.360,123.820],["竹富島",24.330,124.090]
+];
+EXTRA_STATIONS.forEach((x,i)=>STATIONS.push({id:"extra"+String(i+1).padStart(3,"0"),name:x[0],lat:x[1],lng:x[2]}));
+
+let map, layer, chart, currentStation, currentDate;
+const qs=new URLSearchParams(location.search);
+
+function initMap(){
+ map=L.map('map').setView([36.3,138.2],5);
+ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap'}).addTo(map);
+ layer=L.layerGroup().addTo(map); renderStations(STATIONS);
+ document.getElementById('search').addEventListener('input',e=>{
+   const q=e.target.value.trim().toLowerCase();
+   const a=q?STATIONS.filter(s=>s.name.toLowerCase().includes(q)):STATIONS;
+   renderStations(a);
+   document.getElementById('status').textContent=`地点 ${a.length} 件`;
+   if(a.length===1){map.setView([a[0].lat,a[0].lng],10);}
+ });
+}
+function renderStations(a){
+ layer.clearLayers();
+ const r = map.getZoom() <= 5 ? 9 : map.getZoom() <= 7 ? 11 : 13;
+ a.forEach(s=>{
+   // 濃い外枠＋白い中間リング＋青い中心の3層で、背景上でも見やすくする
+   const outer=L.circleMarker([s.lat,s.lng],{
+     radius:r+3,weight:2,color:'#16324f',fillColor:'#ffffff',fillOpacity:1,opacity:1
+   }).addTo(layer);
+   const inner=L.circleMarker([s.lat,s.lng],{
+     radius:r,weight:2,color:'#ffffff',fillColor:'#1976d2',fillOpacity:1,opacity:1
+   }).addTo(layer);
+   const html=`<b>${s.name}</b><br><small>${s.lat.toFixed(4)}, ${s.lng.toFixed(4)}</small><a href="?station=${encodeURIComponent(s.id)}">潮見表・タイドグラフ</a>`;
+   inner.bindTooltip(s.name,{direction:'top',offset:[0,-r],opacity:.95});
+   inner.bindPopup(html);
+   outer.on('click',()=>inner.openPopup());
+   outer.on('mouseover',()=>inner.openTooltip());
+   outer.on('mouseout',()=>inner.closeTooltip());
+ });
+}
+function stationById(id){return STATIONS.find(s=>s.id===id)}
+function showMap(){
+ history.pushState({},'',location.pathname);
+ document.getElementById('tide').style.display='none';
+ document.getElementById('map').style.display='block';
+ document.getElementById('mapHeader').style.display='flex';
+ setTimeout(()=>map.invalidateSize(),10);
+}
+function updateUrl(){
+ const u=new URL(location.href);u.search='';
+ u.searchParams.set('station',currentStation.id);u.searchParams.set('date',currentDate);
+ history.pushState({},'',u);
+}
+function openTide(id){
+ currentStation=stationById(id); if(!currentStation)return;
+ currentDate=qs.get('date')||new Date().toISOString().slice(0,10);
+ document.getElementById('map').style.display='none';document.getElementById('mapHeader').style.display='none';document.getElementById('tide').style.display='block';
+ document.getElementById('stationTitle').textContent=currentStation.name+' 潮見表・タイドグラフ';
+ document.getElementById('date').value=currentDate;
+ document.getElementById('date').onchange=e=>{currentDate=e.target.value;updateUrl();loadTide();};
+ updateUrl();loadTide();
+}
+function moveDay(n){const d=new Date(currentDate+'T12:00:00');d.setDate(d.getDate()+n);currentDate=d.toISOString().slice(0,10);document.getElementById('date').value=currentDate;updateUrl();loadTide();}
+function goToday(){currentDate=new Date().toISOString().slice(0,10);document.getElementById('date').value=currentDate;updateUrl();loadTide();}
+async function copyUrl(){try{await navigator.clipboard.writeText(location.href);alert('URLをコピーしました。')}catch(e){prompt('コピーしてください',location.href)}}
+function apiUrl(){
+ // API URLを localStorage に保存。ブラウザだけで外部APIを直接呼ぶ場合、API側のCORS許可が必要。
+ const el=document.getElementById('apiUrl'); if(el.value) localStorage.setItem('tideApiUrl',el.value); return el.value||localStorage.getItem('tideApiUrl')||'';
+}
+function normalize(raw){
+ const arr=raw.data||raw.points||raw.predictions||raw.tides||raw.values||raw.result||[];
+ return arr.map(x=>({time:x.time||x.datetime||x.dateTime||x.timestamp,height:Number(x.height??x.value??x.tide??x.level)})).filter(x=>Number.isFinite(x.height));
+}
+function extrema(a){const e=[];for(let i=1;i<a.length-1;i++){if(a[i].height>a[i-1].height&&a[i].height>a[i+1].height)e.push({type:'満潮',...a[i]});if(a[i].height<a[i-1].height&&a[i].height<a[i+1].height)e.push({type:'干潮',...a[i]})}return e;}
+function makeDemoTide(){
+ // API未設定時の表示確認用。実測値・公式推算値ではない簡易モデル。
+ const points=[];
+ const d=new Date(currentDate+'T00:00:00');
+ const phase=(currentStation.lat*0.19+currentStation.lng*0.07)%6.283;
+ const amp=55+Math.abs(currentStation.lat%9)*7;
+ const base=100;
+ for(let m=0;m<=24*60;m+=10){
+   const t=m/60;
+   const h=base
+     + amp*Math.sin((2*Math.PI/12.42)*t+phase)
+     + amp*0.18*Math.sin((2*Math.PI/6.21)*t+phase*1.7);
+   const x=new Date(d.getTime()+m*60000);
+   const hh=String(x.getHours()).padStart(2,'0');
+   const mm=String(x.getMinutes()).padStart(2,'0');
+   points.push({time:`${hh}:${mm}`,height:h});
+ }
+ return points;
+}
+async function loadTide(){
+ const msg=document.getElementById('message');
+ const base=apiUrl();
+
+ if(!base){
+   const pts=makeDemoTide();
+   draw(pts);
+   showEvents(extrema(pts));
+   msg.innerHTML=`<b>${currentStation.name}　${currentDate}</b><br><span style="color:#b45309">潮汐APIが未設定のため、表示確認用の簡易タイドグラフです。実際の潮汐値ではありません。</span>`;
+   return;
+ }
+
+ msg.textContent='潮汐データを取得中...';
+ try{
+   const u=new URL(base);
+   u.searchParams.set('lat',currentStation.lat);
+   u.searchParams.set('lng',currentStation.lng);
+   u.searchParams.set('date',currentDate);
+   const r=await fetch(u);
+   if(!r.ok)throw new Error('HTTP '+r.status);
+   const raw=await r.json();
+   const pts=normalize(raw);
+   if(!pts.length)throw new Error('レスポンスの潮位データ形式を認識できません');
+   draw(pts);
+   showEvents(extrema(pts));
+   msg.innerHTML=`<b>${currentStation.name}　${currentDate}</b><br>潮汐APIから取得したデータ`;
+ }catch(e){
+   const pts=makeDemoTide();
+   draw(pts);
+   showEvents(extrema(pts));
+   msg.innerHTML=`<b>${currentStation.name}　${currentDate}</b><br><span style="color:#b91c1c">潮汐API取得エラー：${e.message}</span><br><span style="color:#b45309">代わりに表示確認用の簡易タイドグラフを表示しています。実際の潮汐値ではありません。</span>`;
+ }
+}
+function draw(a){const c=document.getElementById('chart');if(chart)chart.destroy();chart=new Chart(c,{type:'line',data:{labels:a.map(p=>String(p.time).replace(/^.*T/,'').slice(0,5)),datasets:[{label:'潮位',data:a.map(p=>p.height),borderWidth:2,pointRadius:0,tension:.25}]},options:{responsive:true,scales:{x:{title:{display:true,text:'時刻'}},y:{title:{display:true,text:'潮位'}}}}});}
+function showEvents(e){document.getElementById('events').innerHTML=e.map(x=>`<tr><td>${x.type}</td><td>${String(x.time).replace(/^.*T/,'').slice(0,5)}</td><td>${x.height.toFixed(1)}</td></tr>`).join('');}
+document.getElementById('status').textContent='地点 '+STATIONS.length+' 件';
+initMap();
+document.getElementById('apiUrl').value=localStorage.getItem('tideApiUrl')||'';
+if(qs.get('station'))openTide(qs.get('station'));
+</script>
+</body></html>

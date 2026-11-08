@@ -1,0 +1,517 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>日本全国 潮見表・タイドグラフ | tide736.net API</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+
+<style>
+:root{
+  --blue:#1267a8; --blue2:#0b4f86; --bg:#eef3f7; --card:#fff;
+  --line:#d8e1e8; --text:#182633;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Yu Gothic UI","Yu Gothic",Meiryo,sans-serif;background:var(--bg);color:var(--text)}
+header{height:62px;background:linear-gradient(135deg,#0d4775,#126eae);color:#fff;display:flex;align-items:center;padding:0 18px;gap:16px}
+header h1{font-size:20px;margin:0;white-space:nowrap}
+header .note{font-size:12px;opacity:.9}
+#search{width:300px;max-width:35vw;padding:9px 12px;border-radius:7px;border:0;font-size:14px}
+#map{height:calc(100vh - 62px)}
+#mapStatus{position:fixed;z-index:1000;bottom:14px;left:14px;background:#fff;padding:9px 12px;border-radius:8px;box-shadow:0 2px 10px #7896a055;font-size:13px}
+#tidePage{display:none;max-width:1180px;margin:0 auto;padding:20px}
+.toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.toolbar .title{font-size:22px;font-weight:700;margin-right:auto}
+button,input[type=date]{font:inherit}
+button{padding:9px 14px;border:1px solid #b8c7d2;border-radius:7px;background:#fff;cursor:pointer}
+button:hover{background:#eaf4fb}
+button.primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+.card{background:#fff;border-radius:11px;padding:18px;margin-bottom:15px;box-shadow:0 2px 8px #7896a030;border:1px solid #e1e7eb}
+#message{line-height:1.7}
+#chartWrap{height:420px}
+#chart{width:100%;height:100%}
+.infoGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.infoBox{background:#f5f9fc;padding:11px;border-radius:7px}
+.infoBox small{display:block;color:#657685}
+table{width:100%;border-collapse:collapse}
+th,td{padding:9px 10px;border-bottom:1px solid var(--line);text-align:left}
+th{background:#f5f8fa}
+.apiError{color:#b42318}
+.warn{color:#9a6700}
+#loading{position:fixed;z-index:2000;inset:0;background:#ffffffcc;display:none;align-items:center;justify-content:center;font-size:18px;font-weight:bold}
+.legend{font-size:12px;color:#5d6d78}
+@media(max-width:760px){
+ header{height:auto;min-height:62px;flex-wrap:wrap;padding:10px}
+ header h1{font-size:17px} header .note{display:none}
+ #search{max-width:none;width:100%}
+ #map{height:calc(100vh - 112px)}
+ #tidePage{padding:10px}
+ #chartWrap{height:320px}
+ .toolbar .title{width:100%;font-size:19px}
+ .infoGrid{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<header id="mapHeader">
+  <h1>日本全国 潮見表・タイドグラフ</h1>
+  <input id="search" placeholder="港名を検索（例：明石、神戸、外浦）">
+  <span class="note">tide736.net API</span>
+</header>
+
+<div id="map"></div>
+<div id="mapStatus">港データを準備中...</div>
+
+<div id="tidePage">
+  <div class="toolbar">
+    <button onclick="showMap()">← 地図へ</button>
+    <div class="title" id="stationTitle">潮見表</div>
+  </div>
+
+  <div class="toolbar">
+    <button onclick="moveDate(-1)">← 前日</button>
+    <input type="date" id="dateInput">
+    <button onclick="moveDate(1)">翌日 →</button>
+    <button onclick="goToday()">今日</button>
+    <button class="primary" onclick="copyUrl()">URLをコピー</button>
+  </div>
+
+  <div class="card" id="message">読み込み中...</div>
+
+  <div class="card">
+    <div id="chartWrap"><canvas id="chart"></canvas></div>
+    <div class="legend">潮位：cm</div>
+  </div>
+
+  <div class="card">
+    <h2>満潮・干潮</h2>
+    <table>
+      <thead><tr><th>種類</th><th>時刻</th><th>潮位</th></tr></thead>
+      <tbody id="events"></tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>太陽・月・潮名</h2>
+    <div class="infoGrid" id="astroInfo"></div>
+  </div>
+</div>
+
+<div id="loading">港データを読み込み中...</div>
+
+<script>
+/*
+  日本全国 潮見表・タイドグラフ
+  データ取得：tide736.net API
+
+  API:
+  https://api.tide736.net/get_tide.php
+  pc: 都道府県コード
+  hc: 港コード
+  yr,mn,dy: 年月日
+  rg: day / week / month
+
+  初回は各都道府県の hc=1 を問い合わせ、レスポンスの
+  tide.port と tide.link から港一覧を収集して localStorage に保存します。
+*/
+
+const API_BASE = 'https://api.tide736.net/get_tide.php';
+const CACHE_KEY = 'tide736_station_cache_v1';
+const CACHE_MAX_AGE = 7 * 24 * 60 * 60 * 1000;
+
+let map;
+let stationLayer;
+let allStations = [];
+let currentStation = null;
+let currentDate = null;
+let chart = null;
+
+function pad(n){ return String(n).padStart(2,'0'); }
+function dateString(d){ return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
+
+async function apiFetch(params){
+  const u = new URL(API_BASE);
+  Object.entries(params).forEach(([k,v]) => u.searchParams.set(k,v));
+  const res = await fetch(u.toString(), {method:'GET'});
+  if(!res.ok) throw new Error(`HTTP ${res.status}`);
+  const json = await res.json();
+  if(json.status !== 1) throw new Error(json.message || 'APIエラー');
+  return json;
+}
+
+function normalizeStation(x){
+  return {
+    pc: Number(x.prefecture_code),
+    hc: Number(x.harbor_code),
+    name: x.harbor_namej || x.harbor_name || '名称不明',
+    lat: Number(x.latitude),
+    lng: Number(x.longitude),
+    tideType: x.tide_type
+  };
+}
+
+async function loadStations(){
+  // キャッシュがあればまず利用
+  try{
+    const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
+    if(cached && Array.isArray(cached.stations) &&
+       cached.stations.length > 0 &&
+       Date.now() - cached.savedAt < CACHE_MAX_AGE){
+      allStations = cached.stations;
+      return;
+    }
+  }catch(e){}
+
+  document.getElementById('loading').style.display='flex';
+
+  const mapByKey = new Map();
+
+  // tide736 API の port/link 情報を利用して港コード体系を取得
+  // 同時アクセスを抑えるため少数ずつ順番に問い合わせる。
+  for(let pc=1; pc<=47; pc++){
+    try{
+      const json = await apiFetch({
+        pc: pc, hc: 1,
+        yr: 2026, mn: 1, dy: 1, rg: 'day'
+      });
+
+      const tide = json.tide || {};
+      if(tide.port){
+        const s = normalizeStation(tide.port);
+        if(Number.isFinite(s.lat) && Number.isFinite(s.lng))
+          mapByKey.set(`${s.pc}-${s.hc}`, s);
+      }
+      if(Array.isArray(tide.link)){
+        tide.link.forEach(x=>{
+          const s = normalizeStation(x);
+          if(Number.isFinite(s.lat) && Number.isFinite(s.lng))
+            mapByKey.set(`${s.pc}-${s.hc}`, s);
+        });
+      }
+    }catch(e){
+      // 内陸県など、hc=1 が存在しない場合は無視
+    }
+    updateStatus(`港コードを取得中... 都道府県コード ${pc}/47　${mapByKey.size} 港`);
+  }
+
+  allStations = [...mapByKey.values()]
+    .sort((a,b)=>a.name.localeCompare(b.name,'ja'));
+
+  // 取得できたデータだけ保存
+  if(allStations.length){
+    localStorage.setItem(CACHE_KEY, JSON.stringify({
+      savedAt: Date.now(),
+      stations: allStations
+    }));
+  }
+
+  document.getElementById('loading').style.display='none';
+}
+
+function initMap(){
+  map = L.map('map', {preferCanvas:true}).setView([36.3,138.2],5);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+    maxZoom:19,
+    attribution:'&copy; OpenStreetMap contributors'
+  }).addTo(map);
+
+  stationLayer = L.layerGroup().addTo(map);
+
+  map.on('zoomend', ()=>renderStations(filteredStations()));
+
+  document.getElementById('search').addEventListener('input', ()=>{
+    renderStations(filteredStations());
+  });
+}
+
+function filteredStations(){
+  const q = document.getElementById('search').value.trim().toLowerCase();
+  return q ? allStations.filter(s=>s.name.toLowerCase().includes(q)) : allStations;
+}
+
+function renderStations(stations){
+  stationLayer.clearLayers();
+
+  const z = map.getZoom();
+  const r = z <= 5 ? 7 : z <= 7 ? 9 : 11;
+
+  stations.forEach(s=>{
+    // 濃い紺の外枠＋白リング＋青中心で見やすくする
+    const outer = L.circleMarker([s.lat,s.lng],{
+      radius:r+3,
+      color:'#16324f',
+      weight:2,
+      fillColor:'#ffffff',
+      fillOpacity:1,
+      opacity:1
+    }).addTo(stationLayer);
+
+    const inner = L.circleMarker([s.lat,s.lng],{
+      radius:r,
+      color:'#ffffff',
+      weight:2,
+      fillColor:'#1676d2',
+      fillOpacity:1,
+      opacity:1
+    }).addTo(stationLayer);
+
+    const popup = `
+      <div style="min-width:150px">
+        <b style="font-size:16px">${escapeHtml(s.name)}</b><br>
+        <small>港コード：${s.pc}-${s.hc}</small><br>
+        <button style="margin-top:8px;background:#1267a8;color:#fff;border:0;padding:7px 10px;border-radius:5px;cursor:pointer"
+          onclick="openTide(${s.pc},${s.hc})">潮見表・タイドグラフ</button>
+      </div>`;
+
+    inner.bindTooltip(s.name,{
+      direction:'top', offset:[0,-r],
+      opacity:.95, permanent:false
+    });
+    inner.bindPopup(popup);
+
+    outer.on('click',()=>inner.openPopup());
+    outer.on('mouseover',()=>inner.openTooltip());
+    outer.on('mouseout',()=>inner.closeTooltip());
+  });
+
+  updateStatus(`潮汐地点 ${stations.length} 件 / 取得済み ${allStations.length} 件`);
+}
+
+function escapeHtml(v){
+  return String(v).replace(/[&<>"']/g,m=>({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[m]));
+}
+
+function updateStatus(text){
+  document.getElementById('mapStatus').textContent=text;
+}
+
+function findStation(pc,hc){
+  return allStations.find(s=>s.pc===Number(pc)&&s.hc===Number(hc));
+}
+
+function openTide(pc,hc){
+  currentStation = findStation(pc,hc) || {pc:Number(pc),hc:Number(hc),name:'潮汐地点'};
+  currentDate = new URL(location.href).searchParams.get('date') || dateString(new Date());
+
+  document.getElementById('map').style.display='none';
+  document.getElementById('mapHeader').style.display='none';
+  document.getElementById('mapStatus').style.display='none';
+  document.getElementById('tidePage').style.display='block';
+
+  document.getElementById('dateInput').value=currentDate;
+  document.getElementById('dateInput').onchange=e=>{
+    currentDate=e.target.value;
+    updateUrl();
+    loadTide();
+  };
+
+  document.getElementById('stationTitle').textContent=
+    `${currentStation.name} 潮見表・タイドグラフ`;
+
+  updateUrl();
+  loadTide();
+}
+
+function updateUrl(){
+  if(!currentStation) return;
+  const u = new URL(location.href);
+  u.search='';
+  u.searchParams.set('pc',currentStation.pc);
+  u.searchParams.set('hc',currentStation.hc);
+  u.searchParams.set('date',currentDate);
+  history.replaceState({},'',u.toString());
+}
+
+function showMap(){
+  history.replaceState({},'',location.pathname);
+  document.getElementById('tidePage').style.display='none';
+  document.getElementById('map').style.display='block';
+  document.getElementById('mapHeader').style.display='flex';
+  document.getElementById('mapStatus').style.display='block';
+  setTimeout(()=>map.invalidateSize(),50);
+}
+
+function moveDate(delta){
+  const d = new Date(currentDate+'T12:00:00');
+  d.setDate(d.getDate()+delta);
+  currentDate=dateString(d);
+  document.getElementById('dateInput').value=currentDate;
+  updateUrl();
+  loadTide();
+}
+
+function goToday(){
+  currentDate=dateString(new Date());
+  document.getElementById('dateInput').value=currentDate;
+  updateUrl();
+  loadTide();
+}
+
+async function copyUrl(){
+  try{
+    await navigator.clipboard.writeText(location.href);
+    alert('URLをコピーしました。');
+  }catch(e){
+    prompt('URLをコピーしてください',location.href);
+  }
+}
+
+async function loadTide(){
+  const msg=document.getElementById('message');
+  msg.textContent='潮汐データを取得中...';
+
+  const [yr,mn,dy] = currentDate.split('-').map(Number);
+
+  try{
+    const json=await apiFetch({
+      pc:currentStation.pc,
+      hc:currentStation.hc,
+      yr,mn,dy,
+      rg:'day'
+    });
+
+    const tide=json.tide || {};
+    const port=tide.port || {};
+    const day=tide.chart?.[currentDate];
+
+    if(!day) throw new Error('指定日の潮汐データがありません');
+
+    currentStation={
+      ...currentStation,
+      name:port.harbor_namej || currentStation.name,
+      lat:Number(port.latitude),
+      lng:Number(port.longitude)
+    };
+
+    document.getElementById('stationTitle').textContent=
+      `${currentStation.name} 潮見表・タイドグラフ`;
+
+    const tideTitle=day.moon?.title || '';
+    msg.innerHTML=`<b>${escapeHtml(currentStation.name)}　${currentDate}</b>
+      ${tideTitle ? `　<span style="color:#1267a8;font-weight:bold">${escapeHtml(tideTitle)}</span>`:''}
+      <br><small>tide736.net APIから取得した潮汐データ</small>`;
+
+    const points=Array.isArray(day.tide) ? day.tide : [];
+    drawChart(points);
+    drawEvents(day.flood || [], day.edd || []);
+    drawAstro(day, port);
+
+  }catch(e){
+    if(chart){chart.destroy();chart=null;}
+    document.getElementById('events').innerHTML='';
+    document.getElementById('astroInfo').innerHTML='';
+    msg.innerHTML=`<b class="apiError">潮汐データを取得できませんでした。</b><br>
+      ${escapeHtml(e.message)}<br>
+      <span class="warn">API側の一時的なアクセス制限や、ブラウザのCORS制限の可能性もあります。</span>`;
+  }
+}
+
+function drawChart(points){
+  const labels=points.map(p=>p.time);
+  const values=points.map(p=>Number(p.cm));
+
+  if(chart) chart.destroy();
+
+  chart=new Chart(document.getElementById('chart'),{
+    type:'line',
+    data:{
+      labels,
+      datasets:[{
+        label:'潮位 (cm)',
+        data:values,
+        borderColor:'#1267a8',
+        backgroundColor:'rgba(18,103,168,.16)',
+        fill:true,
+        tension:.25,
+        pointRadius:0,
+        borderWidth:2
+      }]
+    },
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{display:true},
+        tooltip:{
+          callbacks:{
+            label:c=>` 潮位 ${Number(c.raw).toFixed(1)} cm`
+          }
+        }
+      },
+      scales:{
+        x:{
+          ticks:{maxTicksLimit:12},
+          title:{display:true,text:'時刻'}
+        },
+        y:{
+          title:{display:true,text:'潮位 (cm)'}
+        }
+      }
+    }
+  });
+}
+
+function drawEvents(flood,edd){
+  const rows=[];
+  flood.forEach(x=>rows.push({type:'満潮',time:x.time,cm:x.cm,order:x.unix||0}));
+  edd.forEach(x=>rows.push({type:'干潮',time:x.time,cm:x.cm,order:x.unix||0}));
+  rows.sort((a,b)=>a.order-b.order);
+
+  document.getElementById('events').innerHTML=
+    rows.map(x=>`<tr>
+      <td>${x.type}</td>
+      <td>${escapeHtml(x.time)}</td>
+      <td>${Number(x.cm).toFixed(1)} cm</td>
+    </tr>`).join('') || '<tr><td colspan="3">データがありません</td></tr>';
+}
+
+function drawAstro(day,port){
+  const sun=day.sun || {};
+  const moon=day.moon || {};
+
+  const items=[
+    ['日の出',sun.rise || '-'],
+    ['日の入',sun.set || '-'],
+    ['正中',sun.midline || '-'],
+    ['月齢',moon.age ?? '-'],
+    ['月の明るさ',moon.brightness ? `${moon.brightness}%` : '-'],
+    ['潮名',moon.title || '-'],
+    ['港の平均水面',port.level!=null ? `${port.level} cm` : '-'],
+    ['月の出',moon.rise || '-'],
+    ['月の入',moon.set || '-']
+  ];
+
+  document.getElementById('astroInfo').innerHTML=
+    items.map(([k,v])=>`<div class="infoBox"><small>${escapeHtml(k)}</small><b>${escapeHtml(v)}</b></div>`).join('');
+}
+
+async function start(){
+  initMap();
+  await loadStations();
+
+  if(!allStations.length){
+    updateStatus('港一覧を取得できませんでした。APIまたはCORSの状態を確認してください。');
+  }else{
+    renderStations(allStations);
+  }
+
+  const q=new URLSearchParams(location.search);
+  const pc=q.get('pc'), hc=q.get('hc');
+  if(pc && hc){
+    currentDate=q.get('date') || dateString(new Date());
+    openTide(Number(pc),Number(hc));
+  }
+}
+
+start();
+</script>
+</body>
+</html>
