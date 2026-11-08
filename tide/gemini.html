@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>日本全国 潮汐・潮見表（タイドグラフ）</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Leaflet CSS & JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+        }
+        #map {
+            height: calc(100vh - 64px);
+            min-height: 400px;
+        }
+        /* Custom Leaflet Popup Styling */
+        .leaflet-popup-content-wrapper {
+            border-radius: 12px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        }
+        .leaflet-container {
+            font-family: inherit;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 flex flex-col min-h-screen">
+
+    <!-- Header Navigation -->
+    <header class="bg-slate-900 text-white h-16 px-4 flex items-center justify-between shadow-md sticky top-0 z-50">
+        <div class="flex items-center space-x-3 cursor-pointer" onclick="goHome()">
+            <div class="bg-cyan-600 p-2 rounded-lg text-white">
+                <i class="fa-solid fa-water text-xl"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-lg leading-tight tracking-wide">潮見Navi</h1>
+                <p class="text-xs text-slate-400">日本全国 潮汐・タイドグラフ</p>
+            </div>
+        </div>
+        
+        <div class="flex items-center space-x-2">
+            <button id="btn-map-view" onclick="switchView('map')" class="px-3 py-1.5 text-sm font-medium rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white transition flex items-center gap-1.5">
+                <i class="fa-solid fa-map-location-dot"></i>
+                <span>マップ</span>
+            </button>
+            <button id="btn-share" onclick="copyShareUrl()" class="px-3 py-1.5 text-sm font-medium rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 transition flex items-center gap-1.5 border border-slate-700">
+                <i class="fa-solid fa-share-nodes"></i>
+                <span class="hidden sm:inline">共有</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed bottom-5 right-5 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl transition-all opacity-0 translate-y-5 pointer-events-none z-50 flex items-center gap-2 border border-slate-700">
+        <i class="fa-solid fa-circle-check text-cyan-400"></i>
+        <span id="toast-message" class="text-sm">URLをクリップボードにコピーしました</span>
+    </div>
+
+    <!-- MAIN CONTAINER -->
+    <main class="flex-1 relative overflow-hidden">
+        
+        <!-- MAP VIEW -->
+        <div id="view-map" class="w-full h-full relative">
+            <div id="map" class="w-full"></div>
+            <!-- Floating helper banner -->
+            <div class="absolute top-4 left-1/2 -translate-x-1/2 z-[400] bg-slate-900/90 text-white px-4 py-2.5 rounded-full shadow-lg text-xs md:text-sm backdrop-blur-sm border border-slate-700 flex items-center gap-2 pointer-events-none">
+                <i class="fa-solid fa-location-dot text-cyan-400"></i>
+                <span>地図上のピンをタップして潮汐表を表示できます</span>
+            </div>
+        </div>
+
+        <!-- GRAPH / STATION DETAIL VIEW -->
+        <div id="view-graph" class="hidden w-full max-w-5xl mx-auto p-4 md:p-6 space-y-6">
+            
+            <!-- Back Navigation & Location Title -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                <div>
+                    <div class="flex items-center gap-2 text-xs font-semibold text-cyan-600 uppercase tracking-wider mb-1">
+                        <i class="fa-solid fa-anchor"></i> 観測地点
+                    </div>
+                    <h2 id="station-name" class="text-2xl md:text-3xl font-extrabold text-slate-900">--</h2>
+                    <p id="station-coords" class="text-xs text-slate-500 mt-1">緯度: -- / 経度: --</p>
+                </div>
+
+                <!-- Date Controller -->
+                <div class="flex flex-wrap items-center gap-2">
+                    <button onclick="changeDate(-1)" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium transition flex items-center gap-1">
+                        <i class="fa-solid fa-chevron-left"></i> 前日
+                    </button>
+                    <input type="date" id="date-picker" onchange="onDatePickerChange(this.value)" class="px-3 py-1.5 border border-slate-300 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-cyan-500">
+                    <button onclick="changeDate(1)" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium transition flex items-center gap-1">
+                        翌日 <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+                    <button onclick="setToday()" class="px-3 py-2 bg-cyan-50 hover:bg-cyan-100 text-cyan-700 border border-cyan-200 rounded-lg text-sm font-medium transition">
+                        今日
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tide Info Badges -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-center">
+                    <span class="text-xs font-medium text-slate-500">潮回り</span>
+                    <span id="tide-type" class="text-xl font-bold text-cyan-700 mt-1">--</span>
+                </div>
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-center">
+                    <span class="text-xs font-medium text-slate-500">日出 / 日入</span>
+                    <span id="sun-times" class="text-sm font-bold text-slate-800 mt-1">--</span>
+                </div>
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-center">
+                    <span class="text-xs font-medium text-slate-500">最高潮位</span>
+                    <span id="max-tide" class="text-xl font-bold text-blue-600 mt-1">-- cm</span>
+                </div>
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-center">
+                    <span class="text-xs font-medium text-slate-500">最低潮位</span>
+                    <span id="min-tide" class="text-xl font-bold text-emerald-600 mt-1">-- cm</span>
+                </div>
+            </div>
+
+            <!-- Tide Graph Card -->
+            <div class="bg-white p-4 md:p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                    <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-chart-area text-cyan-600"></i>
+                        <span>24時間 潮位変化グラフ</span>
+                    </h3>
+                    <span class="text-xs text-slate-400">単位: cm</span>
+                </div>
+                <div class="relative w-full h-72 md:h-96">
+                    <canvas id="tideChart"></canvas>
+                </div>
+            </div>
+
+            <!-- High/Low Tide Details Table -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- 満潮 High Tides -->
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                    <h4 class="font-bold text-blue-600 flex items-center gap-2 mb-3">
+                        <i class="fa-solid fa-arrow-up text-blue-500"></i> 満潮（ハイタイド）
+                    </h4>
+                    <div id="high-tides-list" class="space-y-2">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- 干潮 Low Tides -->
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                    <h4 class="font-bold text-emerald-600 flex items-center gap-2 mb-3">
+                        <i class="fa-solid fa-arrow-down text-emerald-500"></i> 干潮（ロータイド）
+                    </h4>
+                    <div id="low-tides-list" class="space-y-2">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- JavaScript Core Logic -->
+    <script>
+        // -------------------------------------------------------------
+        // 1. DATA & HARMONIC CONSTANTS FOR STATIONS (Japan Coastal)
+        // -------------------------------------------------------------
+        // Base harmonic constituents (M2, S2, K1, O1, Z0) for simplified prediction
+        const STATIONS = [
+            { id: 'kobe', name: '神戸 (Kobe)', lat: 34.68, lng: 135.19, z0: 100, M2: 38, S2: 17, K1: 26, O1: 21, M2_phase: 210, S2_phase: 250, K1_phase: 180, O1_phase: 140 },
+            { id: 'tokyo', name: '東京 (Tokyo)', lat: 35.65, lng: 139.77, z0: 110, M2: 45, S2: 20, K1: 30, O1: 24, M2_phase: 195, S2_phase: 235, K1_phase: 170, O1_phase: 130 },
+            { id: 'yokohama', name: '横浜 (Yokohama)', lat: 35.44, lng: 139.64, z0: 105, M2: 44, S2: 19, K1: 29, O1: 23, M2_phase: 198, S2_phase: 238, K1_phase: 172, O1_phase: 132 },
+            { id: 'osaka', name: '大阪 (Osaka)', lat: 34.65, lng: 135.43, z0: 100, M2: 40, S2: 18, K1: 25, O1: 20, M2_phase: 215, S2_phase: 255, K1_phase: 185, O1_phase: 145 },
+            { id: 'nagoya', name: '名古屋 (Nagoya)', lat: 35.08, lng: 136.88, z0: 120, M2: 55, S2: 24, K1: 32, O1: 26, M2_phase: 205, S2_phase: 245, K1_phase: 175, O1_phase: 135 },
+            { id: 'hakata', name: '博多 (Hakata)', lat: 33.60, lng: 130.40, z0: 110, M2: 48, S2: 21, K1: 22, O1: 18, M2_phase: 240, S2_phase: 280, K1_phase: 200, O1_phase: 160 },
+            { id: 'kashima', name: '鹿島 (Kashima)', lat: 35.95, lng: 140.70, z0: 95, M2: 42, S2: 18, K1: 27, O1: 21, M2_phase: 180, S2_phase: 220, K1_phase: 160, O1_phase: 120 },
+            { id: 'wakayama', name: '和歌山 (Wakayama)', lat: 34.21, lng: 135.15, z0: 100, M2: 42, S2: 19, K1: 25, O1: 20, M2_phase: 200, S2_phase: 240, K1_phase: 175, O1_phase: 135 },
+            { id: 'himeji', name: '姫路 (Himeji)', lat: 34.78, lng: 134.68, z0: 95, M2: 36, S2: 16, K1: 24, O1: 19, M2_phase: 220, S2_phase: 260, K1_phase: 190, O1_phase: 150 },
+            { id: 'hiroshima', name: '広島 (Hiroshima)', lat: 34.35, lng: 132.45, z0: 160, M2: 85, S2: 36, K1: 34, O1: 28, M2_phase: 260, S2_phase: 300, K1_phase: 210, O1_phase: 170 },
+            { id: 'naha', name: '那覇 (Naha)', lat: 26.21, lng: 127.67, z0: 110, M2: 52, S2: 22, K1: 28, O1: 22, M2_phase: 190, S2_phase: 225, K1_phase: 165, O1_phase: 125 }
+        ];
+
+        // -------------------------------------------------------------
+        // 2. TIDE CALCULATION ALGORITHM
+        // -------------------------------------------------------------
+        // Frequency per hour for primary constituents (degrees/hour)
+        const SPEED_M2 = 28.9841042;
+        const SPEED_S2 = 30.0000000;
+        const SPEED_K1 = 15.0410686;
+        const SPEED_O1 = 13.9430356;
+
+        function getTideHeight(station, dateObj, hourFloat) {
+            // Calculate day offset from epoch 2026-01-01
+            const epoch = new Date(2026, 0, 1).getTime();
+            const currentMs = dateObj.getTime() + hourFloat * 3600 * 1000;
+            const hoursFromEpoch = (currentMs - epoch) / (1000 * 3600);
+
+            const m2Rad = ((SPEED_M2 * hoursFromEpoch - station.M2_phase) * Math.PI) / 180;
+            const s2Rad = ((SPEED_S2 * hoursFromEpoch - station.S2_phase) * Math.PI) / 180;
+            const k1Rad = ((SPEED_K1 * hoursFromEpoch - station.K1_phase) * Math.PI) / 180;
+            const o1Rad = ((SPEED_O1 * hoursFromEpoch - station.O1_phase) * Math.PI) / 180;
+
+            const height = station.z0 +
+                station.M2 * Math.cos(m2Rad) +
+                station.S2 * Math.cos(s2Rad) +
+                station.K1 * Math.cos(k1Rad) +
+                station.O1 * Math.cos(o1Rad);
+
+            return Math.round(height);
+        }
+
+        // Calculate Tide Category (潮回り) from Moon Phase approximation
+        function getTideType(dateObj) {
+            const year = dateObj.getFullYear();
+            const month = dateObj.getMonth() + 1;
+            const day = dateObj.getDate();
+            
+            // Approximate moon age
+            const c = (year - 2000) * 11 % 30;
+            const moonAge = (c + month + day) % 30;
+
+            if ((moonAge >= 28 || moonAge <= 2) || (moonAge >= 13 && moonAge <= 16)) {
+                return '大潮 (Spring Tide)';
+            } else if ((moonAge >= 3 && moonAge <= 6) || (moonAge >= 10 && moonAge <= 12) || (moonAge >= 17 && moonAge <= 20) || (moonAge >= 25 && moonAge <= 27)) {
+                return '中潮 (Medium Tide)';
+            } else if ((moonAge >= 7 && moonAge <= 8) || (moonAge >= 21 && moonAge <= 22)) {
+                return '小潮 (Neap Tide)';
+            } else if (moonAge === 9 || moonAge === 23) {
+                return '長潮 (Long Tide)';
+            } else {
+                return '若潮 (Young Tide)';
+            }
+        }
+
+        // -------------------------------------------------------------
+        // 3. APPLICATION STATE & ROUTING
+        // -------------------------------------------------------------
+        let map = null;
+        let chart = null;
+        let currentStation = STATIONS[0];
+        let currentDate = new Date();
+
+        window.onload = function () {
+            initMap();
+            initChart();
+            handleHashChange();
+            window.addEventListener('hashchange', handleHashChange);
+        };
+
+        function formatDateISO(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        function updateHash() {
+            const dateStr = formatDateISO(currentDate);
+            window.location.hash = `station=${currentStation.id}&date=${dateStr}`;
+        }
+
+        function handleHashChange() {
+            const hash = window.location.hash.substring(1);
+            const params = new URLSearchParams(hash);
+            
+            const stationId = params.get('station');
+            const dateStr = params.get('date');
+
+            if (stationId) {
+                const found = STATIONS.find(s => s.id === stationId);
+                if (found) currentStation = found;
+            }
+
+            if (dateStr) {
+                const parsedDate = new Date(dateStr);
+                if (!isNaN(parsedDate.getTime())) {
+                    currentDate = parsedDate;
+                }
+            }
+
+            if (stationId) {
+                switchView('graph');
+                renderGraphView();
+            } else {
+                switchView('map');
+            }
+        }
+
+        function switchView(view) {
+            const mapEl = document.getElementById('view-map');
+            const graphEl = document.getElementById('view-graph');
+            const btnMap = document.getElementById('btn-map-view');
+
+            if (view === 'graph') {
+                mapEl.classList.add('hidden');
+                graphEl.classList.remove('hidden');
+                btnMap.classList.remove('hidden');
+            } else {
+                graphEl.classList.add('hidden');
+                mapEl.classList.remove('hidden');
+                btnMap.classList.add('hidden');
+                if (map) map.invalidateSize();
+            }
+        }
+
+        function goHome() {
+            window.location.hash = '';
+            switchView('map');
+        }
+
+        // -------------------------------------------------------------
+        // 4. MAP INITIALIZATION (Leaflet.js)
+        // -------------------------------------------------------------
+        function initMap() {
+            map = L.map('map').setView([35.2, 137.0], 6);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+
+            STATIONS.forEach(st => {
+                const marker = L.marker([st.lat, st.lng]).addTo(map);
+                
+                const popupContent = `
+                    <div class="p-2 text-center">
+                        <div class="text-xs text-cyan-600 font-bold uppercase">潮汐観測点</div>
+                        <div class="text-base font-bold text-slate-800 my-1">${st.name}</div>
+                        <button onclick="selectStation('${st.id}')" class="mt-2 w-full px-3 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white font-medium text-xs rounded-lg transition shadow">
+                            潮見表を見る
+                        </button>
+                    </div>
+                `;
+                marker.bindPopup(popupContent);
+            });
+        }
+
+        function selectStation(stationId) {
+            const found = STATIONS.find(s => s.id === stationId);
+            if (found) {
+                currentStation = found;
+                updateHash();
+            }
+        }
+
+        // -------------------------------------------------------------
+        // 5. CHART INITIALIZATION & GRAPH RENDERING
+        // -------------------------------------------------------------
+        function initChart() {
+            const ctx = document.getElementById('tideChart').getContext('2d');
+            
+            const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+            gradient.addColorStop(0, 'rgba(14, 165, 233, 0.4)');
+            gradient.addColorStop(1, 'rgba(14, 165, 233, 0.0)');
+
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: '潮位 (cm)',
+                        data: [],
+                        borderColor: '#0284c7',
+                        borderWidth: 3,
+                        fill: true,
+                        backgroundColor: gradient,
+                        tension: 0.4,
+                        pointBackgroundColor: '#0284c7',
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#0f172a',
+                            padding: 10,
+                            displayColors: false,
+                            callbacks: {
+                                label: function(context) {
+                                    return `潮位: ${context.parsed.y} cm`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: 'rgba(226, 232, 240, 0.6)' },
+                            ticks: { color: '#64748b' }
+                        },
+                        y: {
+                            grid: { color: 'rgba(226, 232, 240, 0.6)' },
+                            ticks: { color: '#64748b' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderGraphView() {
+            // Update Headers & Controls
+            document.getElementById('station-name').innerText = currentStation.name;
+            document.getElementById('station-coords').innerText = `緯度: ${currentStation.lat} / 経度: ${currentStation.lng}`;
+            document.getElementById('date-picker').value = formatDateISO(currentDate);
+
+            // Compute 24-hour tide curve (10-minute resolution for peak detection)
+            const labels = [];
+            const dataPoints = [];
+            const fineData = []; // for high/low tide detection
+
+            for (let h = 0; h <= 24; h++) {
+                labels.push(`${String(h).padStart(2, '0')}:00`);
+                dataPoints.push(getTideHeight(currentStation, currentDate, h));
+            }
+
+            for (let m = 0; m <= 24 * 60; m += 10) {
+                const hourFloat = m / 60;
+                const hVal = getTideHeight(currentStation, currentDate, hourFloat);
+                fineData.push({ timeMinutes: m, height: hVal });
+            }
+
+            // Update Chart
+            chart.data.labels = labels;
+            chart.data.datasets[0].data = dataPoints;
+            chart.update();
+
+            // Analyze Extremes (High & Low tides)
+            const highTides = [];
+            const lowTides = [];
+
+            for (let i = 1; i < fineData.length - 1; i++) {
+                const prev = fineData[i - 1].height;
+                const curr = fineData[i].height;
+                const next = fineData[i + 1].height;
+
+                if (curr > prev && curr >= next) {
+                    highTides.push(fineData[i]);
+                } else if (curr < prev && curr <= next) {
+                    lowTides.push(fineData[i]);
+                }
+            }
+
+            // Render High/Low Tides UI
+            const highEl = document.getElementById('high-tides-list');
+            const lowEl = document.getElementById('low-tides-list');
+
+            highEl.innerHTML = highTides.map(t => {
+                const hh = String(Math.floor(t.timeMinutes / 60)).padStart(2, '0');
+                const mm = String(t.timeMinutes % 60).padStart(2, '0');
+                return `<div class="flex justify-between items-center p-2.5 bg-blue-50/60 rounded-xl border border-blue-100">
+                    <span class="font-semibold text-slate-700">${hh}:${mm}</span>
+                    <span class="font-extrabold text-blue-700">${t.height} cm</span>
+                </div>`;
+            }).join('') || '<p class="text-xs text-slate-400">該当なし</p>';
+
+            lowEl.innerHTML = lowTides.map(t => {
+                const hh = String(Math.floor(t.timeMinutes / 60)).padStart(2, '0');
+                const mm = String(t.timeMinutes % 60).padStart(2, '0');
+                return `<div class="flex justify-between items-center p-2.5 bg-emerald-50/60 rounded-xl border border-emerald-100">
+                    <span class="font-semibold text-slate-700">${hh}:${mm}</span>
+                    <span class="font-extrabold text-emerald-700">${t.height} cm</span>
+                </div>`;
+            }).join('') || '<p class="text-xs text-slate-400">該当なし</p>';
+
+            // Stats
+            const maxVal = Math.max(...dataPoints);
+            const minVal = Math.min(...dataPoints);
+            document.getElementById('max-tide').innerText = `${maxVal} cm`;
+            document.getElementById('min-tide').innerText = `${minVal} cm`;
+            document.getElementById('tide-type').innerText = getTideType(currentDate);
+
+            // Approximate Sunrise / Sunset (Fixed aesthetic defaults for demo)
+            document.getElementById('sun-times').innerText = `06:12 - 17:05`;
+        }
+
+        // -------------------------------------------------------------
+        // 6. DATE CONTROLLERS & UTILITIES
+        // -------------------------------------------------------------
+        function changeDate(days) {
+            currentDate.setDate(currentDate.getDate() + days);
+            updateHash();
+        }
+
+        function setToday() {
+            currentDate = new Date();
+            updateHash();
+        }
+
+        function onDatePickerChange(value) {
+            if (!value) return;
+            currentDate = new Date(value);
+            updateHash();
+        }
+
+        function copyShareUrl() {
+            const textToCopy = window.location.href;
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(textToCopy);
+            } else {
+                // Fallback for older browsers
+                const textArea = document.createElement("textarea");
+                textArea.value = textToCopy;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+            }
+
+            showToast("URLをクリップボードにコピーしました");
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-message').innerText = msg;
+            toast.classList.remove('opacity-0', 'translate-y-5', 'pointer-events-none');
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-5', 'pointer-events-none');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
