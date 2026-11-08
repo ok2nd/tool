@@ -39,8 +39,8 @@ select{font:inherit;font-size:14px;padding:3px 4px;max-width:60vw}
 <body>
 <div id="map"></div>
 <div id="bar">
-<div id="tools"><button id="ib" type="button" title="使い方・読み込み状況" aria-label="使い方・読み込み状況" aria-expanded="false">ℹ️</button><button id="sb" type="button" title="地名検索" aria-label="地名検索" aria-expanded="false">🔍</button></div>
-<div id="info" class="pn" hidden>🌊 マーカー、または地図上の任意の場所をクリックして潮見表へ<br>気象庁の潮位観測地点（赤）と周辺の港（灰）を表示。海上の任意の場所もクリックできます<br><span id="status">読み込み中…</span><br><span id="st3"></span></div>
+<div id="tools"><button id="ib" type="button" title="使い方" aria-label="使い方" aria-expanded="false">ℹ️</button><button id="sb" type="button" title="地名検索" aria-label="地名検索" aria-expanded="false">🔍</button></div>
+<div id="info" class="pn" hidden>🌊 赤いマーカー（気象庁の潮位観測地点）、または地図上の任意の場所をクリックすると、潮見表を表示できます。</div>
 <div id="sp" class="pn" hidden><form id="sf" style="display:flex;gap:4px"><input id="q" placeholder="地名で検索" style="flex:1;padding:6px;border:1px solid #9bbcc0;border-radius:5px;font:inherit"><button>検索</button></form><div id="res"></div></div>
 </div>
 <div id="view" hidden></div>
@@ -48,7 +48,6 @@ select{font:inherit;font-size:14px;padding:3px 4px;max-width:60vw}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script>
 // ---------- 設定 ----------
-const NOAA = 'https://api.tidesandcurrents.noaa.gov';
 const OM   = 'https://marine-api.open-meteo.com/v1/marine';
 const stations = {};
 
@@ -69,57 +68,12 @@ L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribu
 
 function addStation(s){
   stations[s.id]=s;
-  L.circleMarker([s.lat,s.lng],{radius:s.osm?6:s.src==='j'?9:6,color:'#fff',weight:1.5,fillColor:s.osm?'#5b7c99':s.src==='j'?'#d1495b':'#0e7c86',fillOpacity:.9})
+  L.circleMarker([s.lat,s.lng],{radius:s.src==='j'?9:6,color:'#fff',weight:1.5,fillColor:s.src==='j'?'#d1495b':'#0e7c86',fillOpacity:.9})
    .addTo(map)
    .bindTooltip(s.name,{direction:'top'}).bindPopup(()=>`<b>${s.name}</b><br>${s.sub}${refInfo(s)}<br>緯度 ${s.lat.toFixed(3)} / 経度 ${s.lng.toFixed(3)}<br><a href="#/tide/${s.id}/${todayStr()}">潮見表（タイドグラフ）を表示</a>`);
 }
 map.on('click',e=>{const la=e.latlng.lat.toFixed(2),ln=e.latlng.wrap().lng.toFixed(2);
   L.popup().setLatLng(e.latlng).setContent(`<b>この地点の潮見表</b><br>${la}, ${ln}<br><a href="#/tide/pt_${la}_${ln}/${todayStr()}">潮見表（タイドグラフ）を表示</a>`).openOn(map);});
-
-fetch(NOAA+'/mdapi/prod/webapi/stations.json?type=tidepredictions').then(r=>r.json()).then(j=>{
-  j.stations.forEach(s=>addStation({id:'us-'+s.id,name:s.name+(s.state?', '+s.state:''),lat:s.lat,lng:s.lng,src:'us',sub:'NOAA 潮汐予測観測点'}));
-  $('#status').textContent='NOAA '+j.stations.length+'地点（米国）';
-}).catch(()=>$('#status').textContent='NOAA地点リストを取得できませんでした（日本の港のみ）');
-
-// ---------- OpenStreetMap の港（Overpass API）を区画ごとに取得・キャッシュ ----------
-const OVERPASS='https://overpass-api.de/api/interpreter';
-const OSMF=['["harbour"="yes"]','["leisure"="marina"]','["seamark:type"="harbour"]','["landuse"="harbour"]','["amenity"="ferry_terminal"]','["industrial"="port"]'];
-const osmQ=bb=>`[out:json][timeout:60];(${OSMF.map(x=>`nwr${x}["name"](${bb});`).join('')});out center tags;`;
-async function ovp(q){
-  for(let k=0;k<2;k++){
-    for(const u of [OVERPASS,'https://overpass.kumi.systems/api/interpreter','https://overpass.private.coffee/api/interpreter']){
-      try{const r=await fetch(u,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'data='+encodeURIComponent(q)}); if(r.ok) return await r.json();}catch(e){}
-    }
-    await new Promise(r=>setTimeout(r,3000));
-  }
-  throw new Error('overpass');
-}
-function addOsm(name,lat,lon){
-  const id='pt_'+lat.toFixed(2)+'_'+lon.toFixed(2);
-  if(stations[id]) return 0;
-  addStation({id,name,lat,lng:lon,src:'jp',sub:'港・マリーナ（OpenStreetMap）',osm:1}); return 1;
-}
-async function loadJapan(){
-  const KEY='tide-osm-jp-v2', st=$('#st3'); let c=null;
-  try{c=JSON.parse(localStorage.getItem(KEY)||'null');}catch(e){}
-  if(!c||Date.now()-c.t>6048e5) c={t:Date.now(),k:{}};
-  const tiles=[[24,122,27,128],[24,128,27,132],[27,128,30,132],[27,140,30,144],[30,128,33,132],[30,132,33,136],[33,128,36,132],[33,132,36,136],[33,136,36,140],[33,140,36,144],[36,132,39,136],[36,136,39,140],[36,140,39,144],[39,138,42,142],[39,142,42,146],[42,139,45.6,143],[42,143,45.6,146]];
-  let fail=0,n=0;
-  for(let i=0;i<tiles.length;i++){
-    const key=tiles[i].join('_');
-    if(!c.k[key]){
-      st.textContent=`周辺の港を読み込み中… ${i+1}/${tiles.length}`;
-      try{
-        const j=await ovp(osmQ(tiles[i].join(',')));
-        c.k[key]=j.elements.filter(e=>(e.center||e).lat!=null).map(e=>{const p=e.center||e,t=e.tags||{};return [t['name:ja']||t.name,+p.lat.toFixed(4),+p.lon.toFixed(4)];});
-        try{localStorage.setItem(KEY,JSON.stringify(c));}catch(e){}
-      }catch(e){fail++;continue;}
-      await new Promise(r=>setTimeout(r,500));
-    }
-    c.k[key].forEach(r=>{n+=addOsm(r[0],r[1],r[2]);});
-  }
-  st.textContent=`周辺の港 ${n}件`+(fail?`（${fail}区画は取得失敗。再読み込みで再試行）`:'');
-}
 
 // ---------- 地名検索（Nominatim） ----------
 const toggle=(btn,box,cb)=>$(btn).addEventListener('click',()=>{
@@ -228,13 +182,7 @@ async function load(st,day,refCode){
     }
     return {pts,ext,ref,tz:j.timezone,moon:moonInfo(day),datum:'平均海面基準の海洋モデル値（約8km格子の参考値）'};
   }
-  const id=st.id.slice(3), f=d=>d.replace(/-/g,'');
-  const j=await (await fetch(`${NOAA}/api/prod/datagetter?product=predictions&application=tide-map&begin_date=${f(a)}&end_date=${f(b)}&datum=MLLW&station=${id}&time_zone=lst_ldt&units=metric&interval=hilo&format=json`)).json();
-  if(j.error) throw new Error(j.error.message);
-  const ext=j.predictions.map(p=>({t:mins(p.t,day),h:+p.v*100,type:p.type})), pts=[];
-  for(let i=0;i<ext.length-1;i++){const e0=ext[i],e1=ext[i+1]; for(let t=e0.t;t<e1.t;t+=10){const k=(t-e0.t)/(e1.t-e0.t); pts.push([t,e0.h+(e1.h-e0.h)*(1-Math.cos(Math.PI*k))/2]);}}
-  pts.push([ext.at(-1).t,ext.at(-1).h]);
-  return {pts,ext,moon:moonInfo(day),datum:'最低低潮面(MLLW)基準・NOAA予測'};
+  throw new Error('この地点の潮位データはありません');
 }
 
 // ---------- グラフ（W=画面幅px。スマホでは文字を大きく・縦を高く） ----------
@@ -275,10 +223,6 @@ function graph(data,day,W){
 // ---------- 潮見表ページ ----------
 async function getStation(id){
   if(stations[id]) return stations[id];
-  if(id.startsWith('us-')){
-    const j=await (await fetch(`${NOAA}/mdapi/prod/webapi/stations/${id.slice(3)}.json`)).json(), s=j.stations[0];
-    return stations[id]={id,name:s.name+(s.state?', '+s.state:''),lat:s.lat,lng:s.lng,src:'us',sub:'NOAA 潮汐予測観測点'};
-  }
   const m=id.match(/^pt_(-?[\d.]+)_(-?[\d.]+)$/);
   if(m) return stations[id]={id,name:'地点 '+m[1]+', '+m[2],lat:+m[1],lng:+m[2],src:'jp',sub:'地図で選んだ地点'};
   throw new Error('地点が見つかりません');
@@ -306,7 +250,6 @@ window.go = d => { if(d) location.hash = location.hash.replace(/\/\d{4}-\d\d-\d\
 addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>{const v=$('#view');if(cur&&!v.hidden&&v.clientWidth!==lastW)paint();},250);});
 
 // ---------- 起動・ルーティング ----------
-loadJapan();
 function route(){
   const m=location.hash.match(/^#\/tide\/([\w.\-~]+)\/(\d{4}-\d\d-\d\d)$/), v=$('#view');
   if(!m){ v.hidden=true; document.title='潮見表マップ'; return; }
