@@ -70,10 +70,10 @@ function addStation(s){
   stations[s.id]=s;
   L.circleMarker([s.lat,s.lng],{radius:s.src==='j'?9:6,color:'#fff',weight:1.5,fillColor:s.src==='j'?'#d1495b':'#0e7c86',fillOpacity:.9})
    .addTo(map)
-   .bindTooltip(s.name,{direction:'top'}).bindPopup(()=>`<b>${s.name}</b><br>${s.sub}${refInfo(s)}<br>緯度 ${s.lat.toFixed(3)} / 経度 ${s.lng.toFixed(3)}<br><a href="#/tide/${s.id}/${todayStr()}">潮見表（タイドグラフ）を表示</a>`);
+   .bindTooltip(s.name,{direction:'top'}).bindPopup(()=>`<b>${s.name}</b><br>${s.sub}${refInfo(s)}<br>緯度 ${s.lat.toFixed(3)} / 経度 ${s.lng.toFixed(3)}<br><a href="#/tide/${s.id}">潮見表（タイドグラフ）を表示</a>`);
 }
 map.on('click',e=>{const la=e.latlng.lat.toFixed(2),ln=e.latlng.wrap().lng.toFixed(2);
-  L.popup().setLatLng(e.latlng).setContent(`<b>この地点の潮見表</b><br>${la}, ${ln}<br><a href="#/tide/pt_${la}_${ln}/${todayStr()}">潮見表（タイドグラフ）を表示</a>`).openOn(map);});
+  L.popup().setLatLng(e.latlng).setContent(`<b>この地点の潮見表</b><br>${la}, ${ln}<br><a href="#/tide/pt_${la}_${ln}">潮見表（タイドグラフ）を表示</a>`).openOn(map);});
 
 // ---------- 地名検索（Nominatim） ----------
 const toggle=(btn,box,cb)=>$(btn).addEventListener('click',()=>{
@@ -93,7 +93,7 @@ $('#sf').addEventListener('submit',async e=>{
       b.onclick=()=>{
         const la=(+x.lat).toFixed(2), ln=(+x.lon).toFixed(2);
         map.flyTo([x.lat,x.lon],12);
-        L.popup().setLatLng([x.lat,x.lon]).setContent(`<b>${x.name||q}</b><br><a href="#/tide/pt_${la}_${ln}/${todayStr()}">潮見表（タイドグラフ）を表示</a>`).openOn(map);
+        L.popup().setLatLng([x.lat,x.lon]).setContent(`<b>${x.name||q}</b><br><a href="#/tide/pt_${la}_${ln}">潮見表（タイドグラフ）を表示</a>`).openOn(map);
       };
       r.appendChild(b);
     });
@@ -245,15 +245,17 @@ function paint(){
   ${graph(data,day,W)}
   <p class="note">${data.ref?data.ref+'。':''}${data.datum}。時刻は現地時間。航海・釣り・潮干狩りなど安全に関わる判断には、海上保安庁「潮汐表」や気象庁の公式情報を確認してください。</p></div>`;
 }
-window.setRef = c => { location.hash = location.hash.replace(/^#\/tide\/([\w.\-]+)(~\w+)?\//,'#/tide/$1~'+c+'/'); };
-window.go = d => { if(d) location.hash = location.hash.replace(/\/\d{4}-\d\d-\d\d$/,'/'+d); };
+window.setRef = c => { location.hash = '#/tide/'+curId.split('~')[0]+'~'+c; };
+window.go = d => { if(d&&curId){ curDay=d; show(curId,d); } };
 addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>{const v=$('#view');if(cur&&!v.hidden&&v.clientWidth!==lastW)paint();},250);});
 
 // ---------- 起動・ルーティング ----------
+let curId=null, curDay=null;
 function route(){
-  const m=location.hash.match(/^#\/tide\/([\w.\-~]+)\/(\d{4}-\d\d-\d\d)$/), v=$('#view');
-  if(!m){ v.hidden=true; document.title='潮見表マップ'; return; }
-  v.hidden=false; show(m[1],m[2]);
+  const m=location.hash.match(/^#\/tide\/([\w.\-~]+)(?:\/(\d{4}-\d\d-\d\d))?$/), v=$('#view');
+  if(!m){ curId=curDay=null; v.hidden=true; document.title='潮見表マップ'; return; }
+  curId=m[1]; curDay=m[2]||curDay||todayStr();
+  v.hidden=false; show(curId,curDay);
 }
 addEventListener('hashchange',route); route();
 </script>
