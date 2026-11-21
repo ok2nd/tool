@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>手書き漢字認識</title>
+<style>
+:root{--bg:#f6f4ef;--card:#fff;--tx:#222;--sub:#666;--ac:#b3261e;--bd:#d8d3c8;--grid:#e6dfd0;--ink:#111;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1b1a18;--card:#262421;--tx:#eee;--sub:#aaa;--ac:#ff8a80;--bd:#45413a;--grid:#3a3731;--ink:#f2efe8}}
+:root[data-theme="dark"]{--bg:#1b1a18;--card:#262421;--tx:#eee;--sub:#aaa;--ac:#ff8a80;--bd:#45413a;--grid:#3a3731;--ink:#f2efe8}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:'Hiragino Sans','Yu Gothic','Noto Sans JP',sans-serif;padding:16px}
+h1{font-size:1.2rem;margin:0 0 12px}
+.wrap{display:flex;flex-wrap:wrap;gap:16px;max-width:760px;margin:auto}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px;flex:1 1 320px}
+canvas{width:100%;max-width:320px;aspect-ratio:1;display:block;margin:auto;border:1px solid var(--bd);border-radius:8px;touch-action:none;background:var(--card)}
+.btns{display:flex;gap:8px;margin-top:10px;justify-content:center}
+button{font:inherit;padding:8px 16px;border-radius:8px;border:1px solid var(--bd);background:var(--card);color:var(--tx);cursor:pointer}
+button:hover{border-color:var(--ac)}
+.cands{display:flex;flex-wrap:wrap;gap:8px;min-height:56px}
+.cands button{font-size:1.9rem;width:56px;height:56px;padding:0}
+.cands button.on{background:var(--ac);color:var(--card);border-color:var(--ac)}
+.hint{color:var(--sub);font-size:.85rem}
+#detail{margin-top:14px;display:flex;gap:14px;align-items:center}
+#big{font-size:4rem;line-height:1}
+#detail p{margin:3px 0;font-size:.95rem}
+</style></head><body>
+<h1>✍ 手書き漢字認識</h1>
+<div class="wrap">
+ <div class="card">
+  <canvas id="cv" width="320" height="320"></canvas>
+  <div class="btns"><button id="undo">戻す</button><button id="clear">全て戻す</button></div>
+  <p class="hint" style="text-align:center">枠の中に漢字を書いてください</p>
+ </div>
+ <div class="card">
+  <b>漢字候補</b>
+  <div class="cands" id="cands"><span class="hint">ここに候補が表示されます</span></div>
+  <div id="detail"></div>
+  <p class="hint" id="src"></p>
+ </div>
+</div>
+<script>
+const DATA=`日|ニチ・ジツ|ひ・か|太陽。一日。
+月|ゲツ・ガツ|つき|空の月。暦の月。
+火|カ|ひ|燃える火。
+水|スイ|みず|液体の水。
+木|モク・ボク|き|樹木。
+金|キン・コン|かね|金属。お金。
+土|ド・ト|つち|地面。土。
+山|サン|やま|高くそびえる山。
+川|セン|かわ|水の流れる川。
+田|デン|た|稲を作る田。
+人|ジン・ニン|ひと|人間。
+口|コウ・ク|くち|くち。出入口。
+目|モク|め|め。見ること。
+耳|ジ|みみ|みみ。
+手|シュ|て|て。
+足|ソク|あし・た(りる)|あし。十分である。
+力|リョク・リキ|ちから|ちから。
+心|シン|こころ|こころ。気持ち。
+大|ダイ・タイ|おお(きい)|大きい。
+小|ショウ|ちい(さい)|小さい。
+中|チュウ|なか|なか。真ん中。
+上|ジョウ|うえ・あ(げる)|うえ。
+下|カ・ゲ|した・さ(げる)|した。
+左|サ|ひだり|ひだり。
+右|ウ・ユウ|みぎ|みぎ。
+本|ホン|もと|書物。もと。
+学|ガク|まな(ぶ)|学ぶ。
+校|コウ| |学校。
+先|セン|さき|先。前の。
+生|セイ・ショウ|い(きる)・う(まれる)|生きる。生まれる。
+年|ネン|とし|とし。一年。
+天|テン|あめ・あま|空。天国。
+空|クウ|そら・あ(く)|そら。から。
+雨|ウ|あめ|雨。
+花|カ|はな|花。
+草|ソウ|くさ|草。
+林|リン|はやし|木が並ぶ林。
+森|シン|もり|木が茂る森。
+石|セキ・シャク|いし|石。
+竹|チク|たけ|竹。
+虫|チュウ|むし|昆虫。
+犬|ケン|いぬ|いぬ。
+車|シャ|くるま|乗り物の車。
+門|モン|かど|出入口の門。
+電|デン| |電気。
+気|キ・ケ| |気持ち。空気。
+見|ケン|み(る)|見る。
+行|コウ・ギョウ|い(く)・おこな(う)|行く。行う。
+食|ショク|た(べる)|食べる。
+飲|イン|の(む)|飲む。
+来|ライ|く(る)|来る。
+出|シュツ|で(る)・だ(す)|出る。出す。
+入|ニュウ|い(る)・はい(る)|入る。
+休|キュウ|やす(む)|休む。
+立|リツ|た(つ)|立つ。
+言|ゲン|い(う)|言う。言葉。
+話|ワ|はな(す)|話す。話。
+語|ゴ|かた(る)|言葉。語る。
+読|ドク|よ(む)|読む。
+書|ショ|か(く)|書く。
+聞|ブン|き(く)|聞く。
+思|シ|おも(う)|思う。
+名|メイ|な|名前。
+男|ダン・ナン|おとこ|男性。
+女|ジョ|おんな|女性。
+子|シ|こ|子ども。
+父|フ|ちち|父親。
+母|ボ|はは|母親。
+友|ユウ|とも|友だち。
+国|コク|くに|くに。
+外|ガイ|そと|そと。
+内|ナイ|うち|うち。内側。
+北|ホク|きた|北。
+南|ナン|みなみ|南。
+東|トウ|ひがし|東。
+西|セイ|にし|西。
+春|シュン|はる|季節の春。
+夏|カ|なつ|季節の夏。
+秋|シュウ|あき|季節の秋。
+冬|トウ|ふゆ|季節の冬。
+朝|チョウ|あさ|朝。
+昼|チュウ|ひる|昼。
+夜|ヤ|よる|夜。
+今|コン|いま|現在。
+前|ゼン|まえ|前。
+後|ゴ・コウ|のち・うし(ろ)|後ろ。あと。
+時|ジ|とき|時間。
+分|ブン|わ(ける)|分ける。分。
+半|ハン|なか(ば)|半分。
+多|タ|おお(い)|多い。
+少|ショウ|すく(ない)|少ない。
+高|コウ|たか(い)|高い。
+長|チョウ|なが(い)|長い。
+新|シン|あたら(しい)|新しい。
+古|コ|ふる(い)|古い。
+白|ハク|しろ|白。
+赤|セキ|あか|赤。
+青|セイ|あお|青。
+黒|コク|くろ|黒。
+円|エン|まる(い)|丸い。通貨の円。
+文|ブン|ふみ|文章。
+字|ジ|あざ|文字。
+店|テン|みせ|みせ。
+町|チョウ|まち|まち。
+村|ソン|むら|むら。
+海|カイ|うみ|うみ。
+魚|ギョ|さかな|さかな。
+鳥|チョウ|とり|とり。
+馬|バ|うま|うま。
+牛|ギュウ|うし|うし。
+米|ベイ|こめ|こめ。
+茶|チャ・サ| |お茶。
+道|ドウ|みち|みち。
+一|イチ|ひと(つ)|数の1。
+二|ニ|ふた(つ)|数の2。
+三|サン|みっ(つ)|数の3。
+四|シ|よん・よっ(つ)|数の4。
+五|ゴ|いつ(つ)|数の5。
+六|ロク|むっ(つ)|数の6。
+七|シチ|なな|数の7。
+八|ハチ|やっ(つ)|数の8。
+九|キュウ・ク|ここの(つ)|数の9。
+十|ジュウ|とお|数の10。
+百|ヒャク| |数の100。
+千|セン|ち|数の1000。
+万|マン|よろず|数の1万。`.trim().split('\n').map(l=>{const[k,on,kun,m]=l.split('|');return{k,on,kun:kun.trim()||'―',m}});
+const F="'Hiragino Sans','Yu Gothic','Noto Sans JP','Noto Sans CJK JP',sans-serif";
+const N=32;
+function vec(c){
+  const w=c.width,h=c.height,d=c.getContext('2d').getImageData(0,0,w,h).data;
+  let x0=w,y0=h,x1=-1,y1=-1;
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++)if(d[(y*w+x)*4]<128){if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y}
+  if(x1<0)return null;
+  const bw=x1-x0+1,bh=y1-y0+1,s=26/Math.max(bw,bh);
+  const o=document.createElement('canvas');o.width=o.height=N;
+  const g=o.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,N,N);
+  g.drawImage(c,x0,y0,bw,bh,(N-bw*s)/2,(N-bh*s)/2,bw*s,bh*s);
+  const p=g.getImageData(0,0,N,N).data;let a=new Float32Array(N*N);
+  for(let i=0;i<N*N;i++)a[i]=1-p[i*4]/255;
+  for(let k=0;k<2;k++){const b=new Float32Array(N*N);
+    for(let y=0;y<N;y++)for(let x=0;x<N;x++){let t=0,n=0;
+      for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const X=x+dx,Y=y+dy;if(X>=0&&Y>=0&&X<N&&Y<N){t+=a[Y*N+X];n++}}
+      b[y*N+x]=t/n}
+    a=b}
+  let m=0;for(const v of a)m+=v;m/=a.length;
+  let nr=0;for(let i=0;i<a.length;i++){a[i]-=m;nr+=a[i]*a[i]}
+  nr=Math.sqrt(nr)||1;for(let i=0;i<a.length;i++)a[i]/=nr;
+  return a;
+}
+function tmpl(k){
+  const c=document.createElement('canvas');c.width=c.height=160;
+  const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,160,160);
+  g.fillStyle='#000';g.font='bold 120px '+F;g.textAlign='center';g.textBaseline='middle';
+  g.fillText(k,80,86);return vec(c);
+}
+const T=DATA.map(e=>({e,v:tmpl(e.k)}));
+const cv=document.getElementById('cv'),ctx=cv.getContext('2d');
+let strokes=[],cur=null;
+function paint(g,guide){
+  const W=cv.width;
+  g.clearRect(0,0,W,W);
+  if(!guide){g.fillStyle='#fff';g.fillRect(0,0,W,W)}
+  else{g.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue('--grid');g.lineWidth=1;g.setLineDash([5,5]);
+    g.beginPath();g.moveTo(W/2,0);g.lineTo(W/2,W);g.moveTo(0,W/2);g.lineTo(W,W/2);g.stroke();g.setLineDash([])}
+  g.strokeStyle=guide?getComputedStyle(document.documentElement).getPropertyValue('--ink'):'#000';
+  g.lineWidth=guide?8:14;g.lineCap=g.lineJoin='round';
+  for(const s of strokes){g.beginPath();s.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));
+    if(s.length===1)g.lineTo(s[0][0]+.1,s[0][1]);g.stroke()}
+}
+const pos=e=>{const r=cv.getBoundingClientRect();return[(e.clientX-r.left)*cv.width/r.width,(e.clientY-r.top)*cv.height/r.height,Math.round(performance.now())]};
+cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);cur=[pos(e)];strokes.push(cur);paint(ctx,true)});
+cv.addEventListener('pointermove',e=>{if(!cur)return;cur.push(pos(e));paint(ctx,true)});
+const end=()=>{if(cur){cur=null;recog()}};
+cv.addEventListener('pointerup',end);cv.addEventListener('pointercancel',end);
+document.getElementById('undo').onclick=()=>{strokes.pop();paint(ctx,true);recog()};
+document.getElementById('clear').onclick=()=>{strokes=[];paint(ctx,true);recog()};
+const API='https://inputtools.google.com/request?itc=ja-t-i0-handwrit&app=demopage';
+let seq=0;
+async function online(){
+  const t0=strokes[0][0][2];
+  const ink=strokes.map(s=>[s.map(p=>Math.round(p[0])),s.map(p=>Math.round(p[1])),s.map(p=>p[2]-t0)]);
+  const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({options:'enable_pre_space',requests:[{writing_guide:{writing_area_width:cv.width,writing_area_height:cv.height},ink,language:'ja'}]})});
+  const d=await r.json();
+  if(d[0]!=='SUCCESS')throw 0;
+  const all=d[1][0][1],one=all.filter(x=>[...x].length===1);
+  return (one.length?one:all).slice(0,12);
+}
+function local(){
+  const off=document.createElement('canvas');off.width=off.height=cv.width;
+  paint(off.getContext('2d'),false);
+  const u=vec(off);if(!u)return[];
+  return T.map(t=>{let s=0;for(let i=0;i<u.length;i++)s+=u[i]*t.v[i];return{k:t.e.k,s}}).sort((a,b)=>b.s-a.s).slice(0,10).map(x=>x.k);
+}
+const html=(k,on,kun,m)=>`<div id="big">${k}</div><div><p><b>音読み：</b>${on}</p><p><b>訓読み：</b>${kun}</p><p><b>意味：</b>${m}</p></div>`;
+async function show(k){
+  const d=document.getElementById('detail');d.dataset.k=k;
+  const e=DATA.find(x=>x.k===k);
+  if(e){d.innerHTML=html(k,e.on.trim()||'―',e.kun,e.m);return}
+  d.innerHTML=`<div id="big">${k}</div><p class="hint">読み込み中…</p>`;
+  try{
+    const j=await (await fetch('https://kanjiapi.dev/v1/kanji/'+encodeURIComponent(k))).json();
+    if(d.dataset.k!==k)return;
+    d.innerHTML=html(k,j.on_readings.join('・')||'―',j.kun_readings.join('・')||'―',(j.meanings.slice(0,4).join(', ')||'―')+'（英語）');
+  }catch(err){if(d.dataset.k===k)d.innerHTML=html(k,'―','―','辞書を取得できませんでした')}
+}
+async function recog(){
+  const my=++seq,box=document.getElementById('cands'),src=document.getElementById('src');
+  document.getElementById('detail').innerHTML='';
+  if(!strokes.length){box.innerHTML='<span class="hint">ここに候補が表示されます</span>';src.textContent='';return}
+  let list,mode;
+  try{list=await online();mode='認識エンジン：Google手書き認識'}
+  catch(err){list=local();mode='オンライン認識に接続できないため、簡易認識（収録約140字のみ）で表示中'}
+  if(my!==seq)return;
+  src.textContent=mode;box.innerHTML='';
+  list.forEach(k=>{const b=document.createElement('button');b.textContent=k;
+    b.onclick=()=>{box.querySelectorAll('button').forEach(q=>q.classList.remove('on'));b.classList.add('on');show(k)};
+    box.appendChild(b)});
+}
+paint(ctx,true);
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>paint(ctx,true));
+</script></body></html>

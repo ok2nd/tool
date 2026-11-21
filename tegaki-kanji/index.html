@@ -231,17 +231,30 @@ function local(){
   const u=vec(off);if(!u)return[];
   return T.map(t=>{let s=0;for(let i=0;i<u.length;i++)s+=u[i]*t.v[i];return{k:t.e.k,s}}).sort((a,b)=>b.s-a.s).slice(0,10).map(x=>x.k);
 }
-const html=(k,on,kun,m)=>`<div id="big">${k}</div><div><p><b>音読み：</b>${on}</p><p><b>訓読み：</b>${kun}</p><p><b>意味：</b>${m}</p></div>`;
+const html=(k,on,kun,m,en)=>`<div id="big">${k}</div><div><p><b>音読み：</b>${on}</p><p><b>訓読み：</b>${kun}</p><p><b>意味：</b>${m}</p><p><b>英語：</b>${en}</p></div>`;
+async function tr(w){
+  const j=await (await fetch('https://api.mymemory.translated.net/get?langpair=en|ja&q='+encodeURIComponent(w))).json();
+  const t=j.responseData&&j.responseData.translatedText;
+  if(!t||/MYMEMORY|QUERY LENGTH|INVALID/i.test(t))throw 0;
+  return t;
+}
 async function show(k){
   const d=document.getElementById('detail');d.dataset.k=k;
   const e=DATA.find(x=>x.k===k);
-  if(e){d.innerHTML=html(k,e.on.trim()||'―',e.kun,e.m);return}
-  d.innerHTML=`<div id="big">${k}</div><p class="hint">読み込み中…</p>`;
-  try{
-    const j=await (await fetch('https://kanjiapi.dev/v1/kanji/'+encodeURIComponent(k))).json();
-    if(d.dataset.k!==k)return;
-    d.innerHTML=html(k,j.on_readings.join('・')||'―',j.kun_readings.join('・')||'―',(j.meanings.slice(0,4).join(', ')||'―')+'（英語）');
-  }catch(err){if(d.dataset.k===k)d.innerHTML=html(k,'―','―','辞書を取得できませんでした')}
+  let on=e?(e.on.trim()||'―'):'…',kun=e?e.kun:'…',m=e?e.m:'翻訳中…',en='読み込み中…';
+  const draw=()=>{if(d.dataset.k===k)d.innerHTML=html(k,on,kun,m,en)};
+  draw();
+  let j;
+  try{j=await (await fetch('https://kanjiapi.dev/v1/kanji/'+encodeURIComponent(k))).json()}
+  catch(err){en='取得できませんでした';if(!e){on=kun='―';m='辞書を取得できませんでした'}draw();return}
+  const ms=(j.meanings||[]).slice(0,4);
+  en=ms.join(', ')||'―';
+  if(!e){on=(j.on_readings||[]).join('・')||'―';kun=(j.kun_readings||[]).join('・')||'―'}
+  draw();
+  if(!e){
+    try{m=(await Promise.all(ms.map(tr))).join('、')||'―'}catch(err){m='翻訳できませんでした（英語欄を参照）'}
+    draw();
+  }
 }
 async function recog(){
   const my=++seq,box=document.getElementById('cands'),src=document.getElementById('src');
