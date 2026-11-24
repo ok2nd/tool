@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>オンラインHTMLエディター</title>
+<style>
+:root{--bg:#f5f6f8;--panel:#fff;--text:#1d2530;--sub:#5d6877;--line:#d5dae1;--accent:#1c6e8c;--accent-t:#fff;--ed-bg:#fff;--ed-text:#1d2530}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#14181d;--panel:#1d232b;--text:#e6eaf0;--sub:#9aa5b4;--line:#323b47;--accent:#5bb5d5;--accent-t:#0c1a21;--ed-bg:#1d232b;--ed-text:#e6eaf0}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#14181d;--panel:#1d232b;--text:#e6eaf0;--sub:#9aa5b4;--line:#323b47;--accent:#5bb5d5;--accent-t:#0c1a21;--ed-bg:#1d232b;--ed-text:#e6eaf0}
+*{box-sizing:border-box}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--text);font:14px/1.6 "Hiragino Sans","Yu Gothic UI","Meiryo",system-ui,sans-serif;display:flex;flex-direction:column}
+header{display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--panel);border-bottom:1px solid var(--line);flex-wrap:wrap}
+header h1{font-size:16px;margin:0;margin-right:auto}
+label.sw{display:flex;align-items:center;gap:6px;color:var(--sub);cursor:pointer}
+#toolbar{display:flex;flex-wrap:wrap;gap:4px;padding:8px 16px;background:var(--panel);border-bottom:1px solid var(--line);align-items:center}
+.grp{display:flex;gap:2px;padding-right:8px;margin-right:4px;border-right:1px solid var(--line)}
+.grp:last-child{border:0}
+button,select,input[type=text],input[type=number]{font:inherit;color:var(--text);background:var(--panel);border:1px solid var(--line);border-radius:5px;padding:4px 9px;min-height:30px}
+button{cursor:pointer}
+button:hover{border-color:var(--accent)}
+button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible,[contenteditable]:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+button.primary{background:var(--accent);color:var(--accent-t);border-color:var(--accent)}
+input[type=number]{width:56px}
+#bar{display:none;gap:6px;padding:8px 16px;background:var(--panel);border-bottom:1px solid var(--line);align-items:center;flex-wrap:wrap}
+#bar.on{display:flex}
+#bar input[type=text]{flex:1;min-width:160px}
+main{flex:1;min-height:0;display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:12px 16px}
+.pane{display:flex;flex-direction:column;min-height:0;min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.pane h2{margin:0;padding:6px 12px;font-size:12px;font-weight:600;color:var(--sub);border-bottom:1px solid var(--line);display:flex;gap:8px;align-items:center}
+.pane h2 span{margin-right:auto}
+#wys{flex:1;overflow:auto;padding:14px 18px;background:var(--ed-bg);color:var(--ed-text);min-height:0}
+#wys.invert{background:#1b1f24;color:#e8ecf1}
+#wys table{border-collapse:collapse;max-width:100%}
+#wys th,#wys td{border:1px dashed var(--line);padding:4px 8px;min-width:40px}
+#wys img{max-width:100%}
+#wys blockquote{margin:1em 0;padding-left:12px;border-left:3px solid var(--line)}
+#wys pre,#wys code{font-family:ui-monospace,Menlo,Consolas,monospace}
+#wys a{color:var(--accent)}
+#src{flex:1;border:0;resize:none;padding:14px 18px;font:13px/1.6 ui-monospace,Menlo,Consolas,monospace;background:var(--ed-bg);color:var(--ed-text);min-height:0;tab-size:2;white-space:pre}
+#src.invert{background:#1b1f24;color:#e8ecf1}
+#preview{flex:1;border:0;background:#fff;min-height:0}
+.tabs{display:none;gap:4px;padding:8px 16px 0}
+.tabs button.on{background:var(--accent);color:var(--accent-t);border-color:var(--accent)}
+#msg{color:var(--sub);font-size:12px}
+@media (max-width:820px){main{grid-template-columns:1fr}.tabs{display:flex}.pane{display:none}.pane.show{display:flex}}
+footer{padding:6px 16px;color:var(--sub);font-size:12px;display:flex;gap:12px}
+</style>
+</head>
+<body>
+<header>
+  <h1>オンラインHTMLエディター</h1>
+  <label class="sw"><input type="checkbox" id="invert"> エディターの背景色を反転する</label>
+  <label class="sw"><input type="checkbox" id="pretty" checked> ソースを整形する</label>
+</header>
+
+<div id="toolbar" role="toolbar" aria-label="編集ツール">
+  <div class="grp">
+    <button data-cmd="undo" title="元に戻す">↶</button>
+    <button data-cmd="redo" title="やり直し">↷</button>
+  </div>
+  <div class="grp">
+    <select id="block" aria-label="見出し">
+      <option value="p">段落</option><option value="h1">見出し1</option><option value="h2">見出し2</option>
+      <option value="h3">見出し3</option><option value="h4">見出し4</option><option value="h5">見出し5</option>
+      <option value="h6">見出し6</option><option value="pre">整形済み</option>
+    </select>
+  </div>
+  <div class="grp">
+    <button data-cmd="bold" title="太字"><b>B</b></button>
+    <button data-cmd="italic" title="斜体"><i>I</i></button>
+    <button data-cmd="underline" title="下線"><u>U</u></button>
+    <button data-cmd="strikeThrough" title="取り消し線"><s>S</s></button>
+    <button data-cmd="subscript" title="下付き">x₂</button>
+    <button data-cmd="superscript" title="上付き">x²</button>
+  </div>
+  <div class="grp">
+    <button data-cmd="insertUnorderedList" title="箇条書き">• リスト</button>
+    <button data-cmd="insertOrderedList" title="番号付きリスト">1. リスト</button>
+    <button data-cmd="outdent" title="インデント解除">⇤</button>
+    <button data-cmd="indent" title="インデント">⇥</button>
+    <button id="bq" title="引用">❝</button>
+  </div>
+  <div class="grp">
+    <button id="bLink">リンク</button>
+    <button data-cmd="unlink">リンク解除</button>
+    <button id="bImg">画像</button>
+    <button data-cmd="insertHorizontalRule" title="水平線">―</button>
+    <button id="bCode" title="コード">&lt;/&gt;</button>
+  </div>
+  <div class="grp">
+    <input type="number" id="rows" value="3" min="1" max="30" aria-label="行数"> ×
+    <input type="number" id="cols" value="3" min="1" max="12" aria-label="列数">
+    <button id="bTable">表を挿入</button>
+    <button id="addRow">行追加</button>
+    <button id="delRow">行削除</button>
+    <button id="addCol">列追加</button>
+    <button id="delCol">列削除</button>
+  </div>
+  <div class="grp">
+    <button data-cmd="removeFormat">書式クリア</button>
+    <button id="bCopy">コピー</button>
+    <button id="bSave">保存</button>
+    <button id="bClear">全消去</button>
+  </div>
+</div>
+
+<div id="bar">
+  <input type="text" id="barIn" aria-label="入力">
+  <button class="primary" id="barOk">挿入</button>
+  <button id="barNg">キャンセル</button>
+</div>
+
+<div class="tabs">
+  <button data-tab="p1" class="on">エディター</button>
+  <button data-tab="p2">ソース</button>
+  <button data-tab="p3">プレビュー</button>
+</div>
+
+<main>
+  <section class="pane show" id="p1"><h2><span>エディター</span></h2>
+    <div id="wys" contenteditable="true" spellcheck="false"></div></section>
+  <section class="pane" id="p2"><h2><span>HTMLソース</span></h2>
+    <textarea id="src" spellcheck="false" aria-label="HTMLソース"></textarea></section>
+  <section class="pane" id="p3"><h2><span>プレビュー</span></h2>
+    <iframe id="preview" sandbox title="プレビュー"></iframe></section>
+</main>
+<footer><span id="count">0 文字</span><span id="msg"></span></footer>
+
+<script>
+(()=>{
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const wys=$('#wys'), src=$('#src'), prev=$('#preview');
+const ALLOW={href:1,src:1,alt:1,colspan:1,rowspan:1,target:0,title:1};
+const BLOCK=/^(h[1-6]|p|ul|ol|li|table|thead|tbody|tfoot|tr|td|th|blockquote|pre|hr|div)$/;
+let saved=null, barMode=null;
+
+/* 不要な属性（style, class, border, cellpadding など）を除去したHTMLを返す */
+function clean(html){
+  const d=document.createElement('div'); d.innerHTML=html;
+  d.querySelectorAll('script,style,iframe,object,embed,link,meta').forEach(e=>e.remove());
+  d.querySelectorAll('*').forEach(el=>{
+    [...el.attributes].forEach(a=>{
+      const n=a.name.toLowerCase();
+      if(!ALLOW[n]||/^\s*javascript:/i.test(a.value)) el.removeAttribute(a.name);
+    });
+    if(el.tagName==='B') swap(el,'strong');
+    else if(el.tagName==='I') swap(el,'em');
+    else if(el.tagName==='STRIKE') swap(el,'s');
+    else if(el.tagName==='SPAN'&&!el.attributes.length) el.replaceWith(...el.childNodes);
+    else if(el.tagName==='FONT') el.replaceWith(...el.childNodes);
+  });
+  return d.innerHTML;
+}
+function swap(el,tag){const n=document.createElement(tag);n.append(...el.childNodes);[...el.attributes].forEach(a=>n.setAttribute(a.name,a.value));el.replaceWith(n)}
+
+/* ソース整形 */
+function pretty(html){
+  const d=document.createElement('div'); d.innerHTML=html;
+  const out=[];
+  (function walk(n,lv){
+    const pad='  '.repeat(lv);
+    [...n.childNodes].forEach(c=>{
+      if(c.nodeType===3){const t=c.textContent.trim(); if(t) out.push(pad+t); return}
+      if(c.nodeType!==1) return;
+      const t=c.tagName.toLowerCase();
+      const hasBlock=[...c.children].some(x=>BLOCK.test(x.tagName.toLowerCase()));
+      if(BLOCK.test(t)&&hasBlock){
+        const open=c.outerHTML.match(/^<[^>]*>/)[0];
+        out.push(pad+open); walk(c,lv+1); out.push(pad+'</'+t+'>');
+      } else out.push(pad+c.outerHTML);
+    });
+  })(d,0);
+  return out.join('\n');
+}
+
+function toSource(){
+  const h=clean(wys.innerHTML);
+  src.value=$('#pretty').checked?pretty(h):h;
+  update(h);
+}
+function fromSource(){
+  wys.innerHTML=clean(src.value);
+  update(src.value);
+}
+function update(h){
+  prev.srcdoc='<!DOCTYPE html><meta charset="utf-8"><body style="font:14px/1.7 sans-serif;padding:12px">'+clean(h);
+  $('#count').textContent=(wys.textContent||'').length+' 文字';
+}
+
+wys.addEventListener('input',toSource);
+src.addEventListener('input',fromSource);
+wys.addEventListener('paste',e=>{
+  e.preventDefault();
+  const t=e.clipboardData.getData('text/html');
+  const txt=e.clipboardData.getData('text/plain');
+  document.execCommand('insertHTML',false,t?clean(t):txt.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])).replace(/\n/g,'<br>'));
+});
+src.addEventListener('keydown',e=>{
+  if(e.key==='Tab'){e.preventDefault();const s=src.selectionStart;src.setRangeText('  ',s,src.selectionEnd,'end');fromSource()}
+});
+
+/* 選択範囲の保存 */
+document.addEventListener('selectionchange',()=>{
+  const s=getSelection();
+  if(s.rangeCount&&wys.contains(s.anchorNode)){saved=s.getRangeAt(0).cloneRange();syncBlock()}
+});
+function restore(){wys.focus();if(saved){const s=getSelection();s.removeAllRanges();s.addRange(saved)}}
+function exec(c,v){restore();document.execCommand('styleWithCSS',false,false);document.execCommand(c,false,v||null);toSource()}
+function syncBlock(){
+  let n=getSelection().anchorNode; while(n&&n!==wys&&!/^(H[1-6]|P|PRE)$/.test(n.nodeName)) n=n.parentNode;
+  $('#block').value=(n&&n!==wys)?n.nodeName.toLowerCase():'p';
+}
+
+$$('[data-cmd]').forEach(b=>{b.addEventListener('mousedown',e=>e.preventDefault());b.addEventListener('click',()=>exec(b.dataset.cmd))});
+$('#block').addEventListener('change',e=>exec('formatBlock',e.target.value));
+$('#bq').onclick=()=>exec('formatBlock','blockquote');
+$('#bCode').onclick=()=>{
+  restore();const t=getSelection().toString();
+  exec('insertHTML','<code>'+(t||'code').replace(/</g,'&lt;')+'</code>');
+};
+
+/* リンク・画像の入力バー */
+function openBar(mode,ph,val){barMode=mode;$('#bar').classList.add('on');const i=$('#barIn');i.placeholder=ph;i.value=val||'';i.focus()}
+function closeBar(){$('#bar').classList.remove('on');barMode=null}
+$('#bLink').onclick=()=>openBar('link','リンク先URL（例: https://example.com）','https://');
+$('#bImg').onclick=()=>openBar('img','画像のURL（例: https://example.com/a.png）','https://');
+$('#barNg').onclick=closeBar;
+$('#barIn').addEventListener('keydown',e=>{if(e.key==='Enter')$('#barOk').click();if(e.key==='Escape')closeBar()});
+$('#barOk').onclick=()=>{
+  const v=$('#barIn').value.trim(); if(!v||/^\s*javascript:/i.test(v)){closeBar();return}
+  const esc=v.replace(/"/g,'&quot;');
+  if(barMode==='link'){
+    restore();
+    if(getSelection().isCollapsed) exec('insertHTML','<a href="'+esc+'">'+esc+'</a>');
+    else exec('createLink',v);
+  } else exec('insertHTML','<img src="'+esc+'" alt="">');
+  closeBar();
+};
+
+/* 表 */
+$('#bTable').onclick=()=>{
+  const r=Math.min(30,+$('#rows').value||1), c=Math.min(12,+$('#cols').value||1);
+  let h='<table><tbody>';
+  for(let i=0;i<r;i++){h+='<tr>';for(let j=0;j<c;j++)h+=(i?'<td>':'<th>')+'&nbsp;'+(i?'</td>':'</th>');h+='</tr>'}
+  exec('insertHTML',h+'</tbody></table><p><br></p>');
+};
+function cell(){let n=saved&&saved.startContainer;while(n&&n!==wys&&!/^(TD|TH)$/.test(n.nodeName))n=n.parentNode;return n&&n!==wys?n:null}
+function tbl(fn){const c=cell();if(!c){note('表のセル内にカーソルを置いてください');return}fn(c,c.parentNode,c.closest('table'));toSource()}
+$('#addRow').onclick=()=>tbl((c,tr)=>{const n=tr.cloneNode(true);n.querySelectorAll('th,td').forEach(x=>{const t=document.createElement('td');t.innerHTML='&nbsp;';x.replaceWith(t)});tr.after(n)});
+$('#delRow').onclick=()=>tbl((c,tr,t)=>{tr.remove();if(!t.rows.length)t.remove()});
+$('#addCol').onclick=()=>tbl((c,tr,t)=>{const i=c.cellIndex;[...t.rows].forEach(r=>{const x=document.createElement(r.cells[i]&&r.cells[i].tagName==='TH'?'th':'td');x.innerHTML='&nbsp;';r.cells[i]?r.cells[i].after(x):r.append(x)})});
+$('#delCol').onclick=()=>tbl((c,tr,t)=>{const i=c.cellIndex;[...t.rows].forEach(r=>r.cells[i]&&r.cells[i].remove());if(!t.rows[0]||!t.rows[0].cells.length)t.remove()});
+
+/* その他 */
+function note(t){$('#msg').textContent=t;setTimeout(()=>$('#msg').textContent='',2500)}
+$('#bCopy').onclick=async()=>{
+  try{await navigator.clipboard.writeText(src.value);note('HTMLをコピーしました')}
+  catch{src.select();document.execCommand('copy');note('HTMLをコピーしました')}
+};
+$('#bSave').onclick=()=>{
+  const b=new Blob(['<!DOCTYPE html>\n<html lang="ja">\n<head>\n<meta charset="utf-8">\n<title></title>\n</head>\n<body>\n'+src.value+'\n</body>\n</html>'],{type:'text/html'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='index.html';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+};
+$('#bClear').onclick=()=>{if($('#bClear').dataset.ok){wys.innerHTML='';toSource();$('#bClear').textContent='全消去';delete $('#bClear').dataset.ok}else{$('#bClear').dataset.ok=1;$('#bClear').textContent='もう一度押すと消去';setTimeout(()=>{$('#bClear').textContent='全消去';delete $('#bClear').dataset.ok},2500)}};
+$('#invert').onchange=e=>{wys.classList.toggle('invert',e.target.checked);src.classList.toggle('invert',e.target.checked)};
+$('#pretty').onchange=toSource;
+$$('.tabs button').forEach(b=>b.onclick=()=>{
+  $$('.tabs button').forEach(x=>x.classList.toggle('on',x===b));
+  $$('.pane').forEach(p=>p.classList.toggle('show',p.id===b.dataset.tab));
+});
+
+wys.innerHTML='<h1>見出し</h1><p>ここに文章を入力します。<strong>太字</strong>や<a href="https://example.com">リンク</a>も使えます。</p><ul><li>リスト1</li><li>リスト2</li></ul>';
+toSource();
+})();
+</script>
+</body>
+</html>
