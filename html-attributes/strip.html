@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HTMLタグ 属性除去</title>
+<style>
+  body {
+    background-color: #e6f9fd;
+    font-family: "Meiryo", "Hiragino Kaku Gothic ProN", sans-serif;
+    color: #111;
+    margin: 0;
+    padding: 20px;
+  }
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  header {
+    text-align: center;
+    margin-bottom: 18px;
+  }
+  h1 {
+    font-size: 28px;
+    margin: 10px 0 8px;
+    letter-spacing: 0.03em;
+  }
+  .top-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .btn-group {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  button {
+    padding: 4px 12px;
+    font-size: 13px;
+    cursor: pointer;
+    background-color: #f0f0f0;
+    border: 1px solid #767676;
+    border-radius: 3px;
+    color: #000;
+  }
+  button:hover {
+    background-color: #e2e2e2;
+  }
+  button:active {
+    background-color: #d4d4d4;
+  }
+  .editor-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  @media (max-width: 768px) {
+    .editor-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  textarea {
+    width: 100%;
+    height: 300px;
+    box-sizing: border-box;
+    padding: 8px;
+    font-family: "MS Gothic", "Consolas", monospace;
+    font-size: 13px;
+    line-height: 1.45;
+    border: 1px solid #888;
+    border-radius: 2px;
+    background-color: #fff;
+    resize: vertical;
+  }
+  .controls {
+    text-align: center;
+    margin: 16px 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    font-size: 14px;
+  }
+  .controls label {
+    cursor: pointer;
+    user-select: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .keep-box {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .keep-box input[type="text"] {
+    width: 150px;
+    padding: 3px 6px;
+    font-size: 13px;
+    border: 1px solid #888;
+    border-radius: 2px;
+  }
+  .preview-section {
+    margin-top: 24px;
+    text-align: center;
+  }
+  .preview-section h2 {
+    font-size: 18px;
+    margin-bottom: 12px;
+  }
+  #previewArea {
+    background-color: #fff;
+    border: 1px solid #bbb;
+    border-radius: 2px;
+    padding: 16px;
+    text-align: left;
+    min-height: 80px;
+    overflow-x: auto;
+  }
+  #previewArea table {
+    border-collapse: collapse;
+  }
+  #previewArea th,
+  #previewArea td {
+    border: 1px solid #999;
+    padding: 4px 8px;
+  }
+  .status-msg {
+    font-size: 12px;
+    color: #0066cc;
+    margin-left: 6px;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>HTMLタグ 属性除去</h1>
+  </header>
+
+  <div class="top-actions">
+    <div class="btn-group">
+      <button type="button" id="clearBtn">クリア</button>
+<!--    <button type="button" id="sampleBtn">サンプル入力</button> -->
+    </div>
+    <div class="btn-group">
+      <button type="button" id="copyBtn">結果をコピー</button>
+      <span id="copyStatus" class="status-msg"></span>
+    </div>
+  </div>
+
+  <div class="editor-grid">
+    <div>
+      <textarea id="inputHtml" placeholder="HTMLデータをここに貼り付けて！"></textarea>
+    </div>
+    <div>
+      <textarea id="outputHtml" placeholder="除去後データがここに表示されます。" readonly></textarea>
+    </div>
+  </div>
+
+  <div class="controls">
+    <label>
+      <input type="checkbox" id="formatCheck" checked>
+      整形する
+    </label>
+    <div class="keep-box">
+      <label for="keepAttrs">残す属性:</label>
+      <input type="text" id="keepAttrs" value="href, src, alt, colspan, rowspan" placeholder="例: href, src, alt">
+    </div>
+    <button type="button" id="convertBtn">変換</button>
+  </div>
+
+  <div class="preview-section">
+    <h2>プレビュー</h2>
+    <div id="previewArea"></div>
+  </div>
+</div>
+
+<script>
+(function() {
+  const inputEl = document.getElementById("inputHtml");
+  const outputEl = document.getElementById("outputHtml");
+  const formatCheckEl = document.getElementById("formatCheck");
+  const keepAttrsEl = document.getElementById("keepAttrs");
+  const convertBtn = document.getElementById("convertBtn");
+  const clearBtn = document.getElementById("clearBtn");
+  const sampleBtn = document.getElementById("sampleBtn");
+  const copyBtn = document.getElementById("copyBtn");
+  const copyStatusEl = document.getElementById("copyStatus");
+  const previewArea = document.getElementById("previewArea");
+
+  const VOID_TAGS = new Set([
+    "area", "base", "br", "col", "embed", "hr", "img", "input",
+    "link", "meta", "param", "source", "track", "wbr"
+  ]);
+
+  const INLINE_TAGS = new Set([
+    "a", "abbr", "b", "bdi", "bdo", "br", "cite", "code", "data",
+    "dfn", "em", "i", "kbd", "mark", "q", "rp", "rt", "ruby",
+    "s", "samp", "small", "span", "strong", "sub", "sup", "time",
+    "u", "var", "wbr"
+  ]);
+
+  function getAllowedAttributes() {
+    const raw = keepAttrsEl.value.trim();
+    if (!raw) return new Set();
+    return new Set(
+      raw.split(",")
+        .map(s => s.trim().toLowerCase())
+        .filter(Boolean)
+    );
+  }
+
+  function cleanNode(node, allowedAttrs) {
+    if (node.nodeType === Node.ELEMENT_NODE) {
+      const attrs = Array.from(node.attributes);
+      for (const attr of attrs) {
+        if (!allowedAttrs.has(attr.name.toLowerCase())) {
+          node.removeAttribute(attr.name);
+        }
+      }
+    }
+    const children = Array.from(node.childNodes);
+    for (const child of children) {
+      cleanNode(child, allowedAttrs);
+    }
+  }
+
+  function escapeHtmlText(str) {
+    return str
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
+
+  function escapeAttrValue(str) {
+    return str
+      .replace(/&/g, "&amp;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function serializeCompact(node) {
+    if (node.nodeType === Node.TEXT_NODE) {
+      return escapeHtmlText(node.nodeValue);
+    }
+    if (node.nodeType === Node.COMMENT_NODE) {
+      return "<!--" + node.nodeValue + "-->";
+    }
+    if (node.nodeType !== Node.ELEMENT_NODE) {
+      return "";
+    }
+    const tag = node.tagName.toLowerCase();
+    let attrStr = "";
+    for (const attr of node.attributes) {
+      attrStr += " " + attr.name.toLowerCase() + '="' + escapeAttrValue(attr.value) + '"';
+    }
+    if (VOID_TAGS.has(tag)) {
+      return "<" + tag + attrStr + ">";
+    }
+    let inner = "";
+    for (const child of node.childNodes) {
+      inner += serializeCompact(child);
+    }
+    return "<" + tag + attrStr + ">" + inner + "</" + tag + ">";
+  }
+
+  function serializeFormatted(node, depth) {
+    const indent = "  ".repeat(depth);
+    if (node.nodeType === Node.TEXT_NODE) {
+      const trimmed = node.nodeValue.replace(/\s+/g, " ").trim();
+      return trimmed ? indent + escapeHtmlText(trimmed) + "\n" : "";
+    }
+    if (node.nodeType === Node.COMMENT_NODE) {
+      return indent + "<!--" + node.nodeValue + "-->\n";
+    }
+    if (node.nodeType !== Node.ELEMENT_NODE) {
+      return "";
+    }
+
+    const tag = node.tagName.toLowerCase();
+    let attrStr = "";
+    for (const attr of node.attributes) {
+      attrStr += " " + attr.name.toLowerCase() + '="' + escapeAttrValue(attr.value) + '"';
+    }
+
+    if (VOID_TAGS.has(tag)) {
+      return indent + "<" + tag + attrStr + ">\n";
+    }
+
+    const childNodes = Array.from(node.childNodes).filter(n => {
+      if (n.nodeType === Node.TEXT_NODE) {
+        return n.nodeValue.trim().length > 0;
+      }
+      return true;
+    });
+
+    if (childNodes.length === 0) {
+      return indent + "<" + tag + attrStr + "></" + tag + ">\n";
+    }
+
+    const hasOnlyInlineOrText = childNodes.every(n =>
+      n.nodeType === Node.TEXT_NODE ||
+      (n.nodeType === Node.ELEMENT_NODE && INLINE_TAGS.has(n.tagName.toLowerCase()) && n.tagName.toLowerCase() !== "br")
+    );
+
+    if (hasOnlyInlineOrText) {
+      let inlineContent = "";
+      for (const child of node.childNodes) {
+        if (child.nodeType === Node.TEXT_NODE) {
+          inlineContent += escapeHtmlText(child.nodeValue.replace(/\s+/g, " "));
+        } else {
+          inlineContent += serializeCompact(child);
+        }
+      }
+      return indent + "<" + tag + attrStr + ">" + inlineContent.trim() + "</" + tag + ">\n";
+    }
+
+    let result = indent + "<" + tag + attrStr + ">\n";
+    for (const child of childNodes) {
+      result += serializeFormatted(child, depth + 1);
+    }
+    result += indent + "</" + tag + ">\n";
+    return result;
+  }
+
+  function convertHtml() {
+    const rawHtml = inputEl.value;
+    if (!rawHtml.trim()) {
+      outputEl.value = "";
+      previewArea.innerHTML = "";
+      return;
+    }
+
+    const allowedAttrs = getAllowedAttributes();
+    const isFullDocument = /<!doctype|<html[\s>]|<head[\s>]|<body[\s>]/i.test(rawHtml);
+
+    if (isFullDocument) {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(rawHtml, "text/html");
+      cleanNode(doc.documentElement, allowedAttrs);
+
+      const doctypeMatch = rawHtml.match(/<!doctype[^>]*>/i);
+      const doctypeStr = doctypeMatch ? "<!DOCTYPE html>\n" : "";
+
+      if (formatCheckEl.checked) {
+        outputEl.value = doctypeStr + serializeFormatted(doc.documentElement, 0).trim();
+      } else {
+        outputEl.value = doctypeStr + serializeCompact(doc.documentElement);
+      }
+      previewArea.innerHTML = doc.body ? doc.body.innerHTML : "";
+    } else {
+      const template = document.createElement("template");
+      template.innerHTML = rawHtml;
+      cleanNode(template.content, allowedAttrs);
+
+      if (formatCheckEl.checked) {
+        let out = "";
+        for (const child of template.content.childNodes) {
+          out += serializeFormatted(child, 0);
+        }
+        outputEl.value = out.trim();
+      } else {
+        let out = "";
+        for (const child of template.content.childNodes) {
+          out += serializeCompact(child);
+        }
+        outputEl.value = out;
+      }
+      previewArea.innerHTML = template.innerHTML;
+    }
+  }
+
+  convertBtn.addEventListener("click", convertHtml);
+  formatCheckEl.addEventListener("change", () => {
+    if (inputEl.value.trim()) convertHtml();
+  });
+
+  clearBtn.addEventListener("click", () => {
+    inputEl.value = "";
+    outputEl.value = "";
+    previewArea.innerHTML = "";
+    copyStatusEl.textContent = "";
+    inputEl.focus();
+  });
+
+  sampleBtn.addEventListener("click", () => {
+    inputEl.value = [
+      '<div id="main-box" class="wrapper active" data-id="1024" style="padding: 20px; background: #fff;">',
+      '  <h2 class="title" style="color: navy;">見出しテキスト</h2>',
+      '  <p class="lead" data-track="p1">サンプル段落です。<a href="https://example.com" target="_blank" rel="noopener" class="ext-link">リンクテキスト</a>を含みます。</p>',
+      '  <table class="data-tbl" border="1" cellpadding="5" style="width:100%;">',
+      '    <tr class="row-head" style="background:#eee;">',
+      '      <th colspan="2" class="cell-h">結合ヘッダ</th>',
+      '    </tr>',
+      '    <tr data-row="1">',
+      '      <td class="cell-a" width="120">項目1</td>',
+      '      <td class="cell-b" style="text-align:right;">1,200円</td>',
+      '    </tr>',
+      '  </table>',
+      '</div>'
+    ].join("\n");
+    convertHtml();
+  });
+
+  copyBtn.addEventListener("click", async () => {
+    if (!outputEl.value) return;
+    try {
+      await navigator.clipboard.writeText(outputEl.value);
+      copyStatusEl.textContent = "コピーしました";
+      setTimeout(() => { copyStatusEl.textContent = ""; }, 2000);
+    } catch (e) {
+      outputEl.select();
+      document.execCommand("copy");
+      copyStatusEl.textContent = "コピーしました";
+      setTimeout(() => { copyStatusEl.textContent = ""; }, 2000);
+    }
+  });
+})();
+</script>
+</body>
+</html>
